@@ -1,4 +1,6 @@
 #include "main.h"
+#include "led.h"
+#include "pros/rtos.hpp"
 
 /**
  * A callback function for LLEMU's center button.
@@ -7,13 +9,13 @@
  * "I was pressed!" and nothing.
  */
 void on_center_button() {
-	static bool pressed = false;
-	pressed = !pressed;
-	if (pressed) {
-		pros::lcd::set_text(2, "I was pressed!");
-	} else {
-		pros::lcd::clear_line(2);
-	}
+  // static bool pressed = false;
+  // pressed = !pressed;
+  // if (pressed) {
+  //   pros::lcd::set_text(2, "I was pressed!");
+  // } else {
+  //   pros::lcd::clear_line(2);
+  // }
 }
 
 /**
@@ -23,10 +25,24 @@ void on_center_button() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-	pros::lcd::initialize();
-	pros::lcd::set_text(1, "Hello PROS User!");
+  pros::lcd::initialize();
+  pros::lcd::set_text(1, "Hello PROS User!");
+  pros::adi::LED testLed {{1, 'a'}, 64};
 
-	pros::lcd::register_btn1_cb(on_center_button);
+  LedStrip testStrip {testLed};
+
+  pros::delay(100);
+  testStrip.setGradient(0xFFFFFF, 0xEEEEEE);
+
+  // pros::delay(2000);
+  // testStrip.clear();
+  // testLed.set_all(0x00FF00);
+  while (1) {
+    testStrip.shift();
+    pros::delay(30);
+  }
+
+  // pros::lcd::register_btn1_cb(on_center_button);
 }
 
 /**

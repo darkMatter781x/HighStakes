@@ -2,6 +2,8 @@
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
 
+#pragma once
+
 /**
  * @brief Configuration for the robot. Provides all devices and dimensions of
  * the robot

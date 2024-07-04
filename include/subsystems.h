@@ -1,6 +1,8 @@
 #include "pros/rtos.hpp"
 #include <map>
 
+#pragma once
+
 /**
  * @brief A Subsystem should provides an abstracted interface for controlling
  * said subsystem.
