@@ -1,21 +1,32 @@
 #include "robot.h"
+#include "pros/motor_group.hpp"
 
-Robot::Robot(RobotConfig& config)
-  : lemlib::Chassis {lemlib::Drivetrain {&config.motors.left,
-                                         &config.motors.right,
-                                         config.dimensions.trackWidth,
-                                         config.dimensions.driveWheelDiameter,
-                                         config.dimensions.driveWheelRpm,
-                                         config.tunables.horizontalDrift},
-                     config.tunables.lateralController,
-                     config.tunables.angularController,
-                     lemlib::OdomSensors {
-                         new lemlib::TrackingWheel(
-                             &config.sensors.vert,
-                             config.dimensions.vertEncDiameter,
-                             config.dimensions.vertEncDistance,
-                             config.dimensions.vertEncGearRatio),
-                         nullptr,
+lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
+  return {&this->motors.left,
+          &this->motors.right,
+          this->dimensions.trackWidth,
+          this->dimensions.driveWheelDiameter,
+          this->dimensions.driveWheelRpm,
+          this->tunables.horizontalDrift};
+}
+
+lemlib::OdomSensors RobotConfig::makeSensors() const {
+  return {new lemlib::TrackingWheel(&this->sensors.vert,
+                                    this->dimensions.vertEncDiameter,
+                                    this->dimensions.vertEncDistance,
+                                    this->dimensions.vertEncGearRatio),
+          nullptr,
+          new lemlib::TrackingWheel(&this->sensors.hori,
+                                    this->dimensions.horiEncDiameter,
+                                    this->dimensions.horiEncDistance,
+                                    this->dimensions.horiEncGearRatio),
+          nullptr, &this->sensors.imu};
+}
+
+Robot::Robot(const RobotConfig& config)
+  : lemlib::Chassis(config.makeDrivetrain(), config.tunables.lateralController,
+                    config.tunables.angularController, config.makeSensors(),
+                    &config.tunables.driveCurve),
                          new lemlib::TrackingWheel(
                              &config.sensors.hori,
                              config.dimensions.horiEncDiameter,
@@ -24,4 +35,5 @@ Robot::Robot(RobotConfig& config)
                          nullptr, &config.sensors.imu}},
     m_config(config) {}
 
-Robot* Robot::get() { return Robot::instance; }
+Robot& Robot::get() { return Robot::instance; }
+Robot Robot::instance {RobotConfig::config};
