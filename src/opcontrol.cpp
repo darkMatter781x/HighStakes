@@ -1,4 +1,17 @@
 #include "main.h"
+#include "robot.h"
+
+namespace ControllerMapping {
+const pros::controller_analog_e_t LEFT_DRIVE =
+    pros::E_CONTROLLER_ANALOG_RIGHT_Y;
+const pros::controller_analog_e_t RIGHT_DRIVE =
+    pros::E_CONTROLLER_ANALOG_RIGHT_Y;
+const pros::controller_digital_e_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
+const pros::controller_digital_e_t MOGO = pros::E_CONTROLLER_DIGITAL_R1;
+}; // namespace ControllerMapping
+namespace map = ControllerMapping;
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -13,21 +26,18 @@
  * task, not resume it from where it left off.
  */
 void opcontrol() {
-	pros::Controller master(pros::E_CONTROLLER_MASTER);
-	pros::MotorGroup left_mg({1, -2, 3});    // Creates a motor group with forwards ports 1 & 3 and reversed port 2
-	pros::MotorGroup right_mg({-4, 5, -6});  // Creates a motor group with forwards port 5 and reversed ports 4 & 6
+  pros::Controller master(pros::E_CONTROLLER_MASTER);
 
+  while (true) {
+    bot.tank(master.get_analog(map::LEFT_DRIVE),
+             master.get_analog(map::RIGHT_DRIVE));
 
-	while (true) {
-		pros::lcd::print(0, "%d %d %d", (pros::lcd::read_buttons() & LCD_BTN_LEFT) >> 2,
-		                 (pros::lcd::read_buttons() & LCD_BTN_CENTER) >> 1,
-		                 (pros::lcd::read_buttons() & LCD_BTN_RIGHT) >> 0);  // Prints status of the emulated screen LCDs
+    if (master.get_digital(map::INTAKE)) bot.intake.intake();
+    else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
+    else bot.intake.stop();
 
-		// Arcade control scheme
-		int dir = master.get_analog(ANALOG_LEFT_Y);    // Gets amount forward/backward from left joystick
-		int turn = master.get_analog(ANALOG_RIGHT_X);  // Gets the turn left/right from right joystick
-		left_mg.move(dir - turn);                      // Sets left motor voltage
-		right_mg.move(dir + turn);                     // Sets right motor voltage
-		pros::delay(20);                               // Run for 20 ms then update
-	}
+    if (master.get_digital_new_press(map::MOGO)) bot.mogo.toggle();
+
+    pros::delay(20); // Run for 20 ms then update
+  }
 }
