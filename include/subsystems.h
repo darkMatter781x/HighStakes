@@ -18,7 +18,7 @@ class Subsystem {
     Subsystem();
   public:
     /** @brief Is run every 10ms by the SubsystemHandler. */
-    virtual void update();
+    virtual void update() = 0;
 
     /** @brief Removes this Subsystem from the SubsystemHandler. As it should
      * never be called, it will create a log message. */

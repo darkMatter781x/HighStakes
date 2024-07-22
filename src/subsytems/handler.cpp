@@ -11,7 +11,13 @@ SubsystemHandler::SubsystemHandler()
       }
     }} {}
 
-SubsystemHandler* SubsystemHandler::get() { return SubsystemHandler::instance; }
+SubsystemHandler* SubsystemHandler::instance;
+
+SubsystemHandler* SubsystemHandler::get() {
+  if (SubsystemHandler::instance == nullptr)
+    SubsystemHandler::instance = new SubsystemHandler();
+  return SubsystemHandler::instance;
+}
 
 int SubsystemHandler::addSubsystem(Subsystem* subsystem) {
   m_subsystems.emplace(++m_lastUsedId, subsystem);
