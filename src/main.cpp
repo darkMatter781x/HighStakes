@@ -1,6 +1,5 @@
 #include "main.h"
-#include "led.h"
-#include "pros/rtos.hpp"
+#include "robot.h"
 
 /**
  * A callback function for LLEMU's center button.
@@ -27,22 +26,26 @@ void on_center_button() {
 void initialize() {
   pros::lcd::initialize();
   pros::lcd::set_text(1, "Hello PROS User!");
-  pros::adi::LED testLed {{1, 'a'}, 64};
+  pros::lcd::register_btn1_cb(on_center_button);
 
-  LedStrip testStrip {testLed};
+  // ensure robot is initialized
+  Robot::get();
+  
+  // pros::lcd::set_text(1, "Hello PROS User!");
+  // pros::adi::LED testLed {{1, 'a'}, 64};
 
-  pros::delay(100);
-  testStrip.setGradient(0xFFFFFF, 0xEEEEEE);
+  // LedStrip testStrip {testLed};
 
-  // pros::delay(2000);
-  // testStrip.clear();
-  // testLed.set_all(0x00FF00);
-  while (1) {
-    testStrip.shift();
-    pros::delay(30);
-  }
+  // pros::delay(100);
+  // testStrip.setGradient(0xFFFFFF, 0xEEEEEE);
 
-  // pros::lcd::register_btn1_cb(on_center_button);
+  // // pros::delay(2000);
+  // // testStrip.clear();
+  // // testLed.set_all(0x00FF00);
+  // while (1) {
+  //   testStrip.shift();
+  //   pros::delay(30);
+  // }
 }
 
 /**
