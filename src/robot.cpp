@@ -27,12 +27,9 @@ Robot::Robot(const RobotConfig& config)
   : lemlib::Chassis(config.makeDrivetrain(), config.tunables.lateralController,
                     config.tunables.angularController, config.makeSensors(),
                     &config.tunables.driveCurve),
-                         new lemlib::TrackingWheel(
-                             &config.sensors.hori,
-                             config.dimensions.horiEncDiameter,
-                             config.dimensions.horiEncDistance,
-                             config.dimensions.horiEncGearRatio),
-                         nullptr, &config.sensors.imu}},
+    m_mogo(MogoClamp {config.pneumatics.mogoClamp}),
+    mogo(m_mogo), m_intake(Intake {config.motors.intake, m_mogo.getState()}),
+    intake(m_intake),
     m_config(config) {}
 
 Robot& Robot::get() { return Robot::instance; }

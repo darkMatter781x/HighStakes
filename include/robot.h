@@ -24,7 +24,9 @@ class Robot : public lemlib::Chassis {
      * this method will construct it
      */
     static Robot& get();
-
+    
+    Intake& intake;
+    MogoClamp& mogo;
 };
 
 inline Robot& bot = Robot::get();
