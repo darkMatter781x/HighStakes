@@ -508,6 +508,27 @@
                     "src\\main.cpp"
                 ],
                 "version": "4.1.0"
+            },
+            "units": {
+                "location": "C:\\Users\\user\\AppData\\Roaming\\PROS\\templates\\units@0.3.0+ace856",
+                "metadata": {
+                    "origin": "local"
+                },
+                "name": "units",
+                "py/object": "pros.conductor.templates.local_template.LocalTemplate",
+                "supported_kernels": "^4.1.0",
+                "system_files": [
+                    "include/units/Vector2D.hpp",
+                    "firmware/units.a",
+                    "include/units/Temperature.hpp",
+                    "include/units/Vector3D.hpp",
+                    "include/units/Pose.hpp",
+                    "include/units/units.hpp",
+                    "include/units/Angle.hpp"
+                ],
+                "target": "v5",
+                "user_files": [],
+                "version": "0.3.0+ace856"
             }
         },
         "upload_options": {},
