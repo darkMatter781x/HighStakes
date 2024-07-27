@@ -23,8 +23,8 @@ class Robot : public lemlib::Chassis {
      * If it has not been previously constructed (instance == nullptr), then
      * this method will construct it
      */
-    static Robot& get();
-    
+    inline static Robot& get() { return instance; };
+
     Intake& intake;
     MogoClamp& mogo;
 };

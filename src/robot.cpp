@@ -27,10 +27,8 @@ Robot::Robot(const RobotConfig& config)
   : lemlib::Chassis(config.makeDrivetrain(), config.tunables.lateralController,
                     config.tunables.angularController, config.makeSensors(),
                     &config.tunables.driveCurve),
-    m_mogo(MogoClamp {config.pneumatics.mogoClamp}),
-    mogo(m_mogo), m_intake(Intake {config.motors.intake, m_mogo.getState()}),
-    intake(m_intake),
-    m_config(config) {}
+    m_mogo(MogoClamp {config.pneumatics.mogoClamp}), mogo(m_mogo),
+    m_intake(Intake {config.motors.intake, m_mogo.getState()}),
+    intake(m_intake), m_config(config) {}
 
-Robot& Robot::get() { return Robot::instance; }
 Robot Robot::instance {RobotConfig::config};
