@@ -3,7 +3,7 @@
 
 namespace ControllerMapping {
 const pros::controller_analog_e_t LEFT_DRIVE =
-    pros::E_CONTROLLER_ANALOG_RIGHT_Y;
+    pros::E_CONTROLLER_ANALOG_LEFT_Y;
 const pros::controller_analog_e_t RIGHT_DRIVE =
     pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 const pros::controller_digital_e_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
