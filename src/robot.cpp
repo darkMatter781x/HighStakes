@@ -29,6 +29,8 @@ Robot::Robot(const RobotConfig& config)
                     &config.tunables.driveCurve),
     m_mogo(MogoClamp {config.pneumatics.mogoClamp}), mogo(m_mogo),
     m_intake(Intake {config.motors.intake, m_mogo.getState()}),
-    intake(m_intake), m_config(config) {}
+    intake(m_intake),
+    m_lift(config.motors.lift, config.sensors.lift, Lift::Config::config),
+    lift(m_lift), m_config(config) {}
 
 Robot Robot::instance {RobotConfig::config};

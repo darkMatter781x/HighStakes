@@ -32,6 +32,7 @@ struct RobotConfig {
     struct Sensors {
         pros::Rotation vert;
         pros::Rotation hori;
+        pros::Rotation lift;
         pros::IMU imu;
       private:
         friend struct RobotConfig;
