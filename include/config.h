@@ -73,8 +73,9 @@ struct RobotConfig {
 
     struct LEDs {
         pros::adi::LED lift;
-        pros::adi::LED underGlow;
-      private:
+        pros::adi::LED leftUnderGlow;
+        pros::adi::LED rightUnderGlow;
+        // private:
         friend struct RobotConfig;
         static LEDs leds;
     };

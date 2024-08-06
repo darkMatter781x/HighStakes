@@ -30,22 +30,29 @@ void initialize() {
 
   // ensure robot is initialized
   Robot::get();
-  
-  // pros::lcd::set_text(1, "Hello PROS User!");
-  // pros::adi::LED testLed {{1, 'a'}, 64};
 
-  // LedStrip testStrip {testLed};
+  // // LED Testing
+  // LedStrip leftStrip {RobotConfig::LEDs::leds.leftUnderGlow};
+  // LedStrip rightStrip {RobotConfig::LEDs::leds.rightUnderGlow};
+  // pros::delay(500);
+  // leftStrip.clear();
+  // pros::delay(500);
+  // rightStrip.clear();
+  // // static color
+  // leftStrip.setAll(0x550055);
+  // rightStrip.setAll(0x550055);
 
-  // pros::delay(100);
-  // testStrip.setGradient(0xFFFFFF, 0xEEEEEE);
-
-  // // pros::delay(2000);
-  // // testStrip.clear();
-  // // testLed.set_all(0x00FF00);
+  // // rotating gradient
+  // leftStrip.setGradient(0x220022, 0x220000);
+  // rightStrip.setGradient(0x220022, 0x220000);
+  // bool a;
   // while (1) {
-  //   testStrip.shift();
+  //   a = !a;
+  //   if (a) leftStrip.shift();
+  //   else rightStrip.shift();
   //   pros::delay(30);
   // }
+
 }
 
 /**
