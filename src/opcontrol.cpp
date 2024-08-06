@@ -6,7 +6,8 @@ namespace controller_mapping {
 const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
 const pros::controller_analog_e_t RIGHT_DRIVE =
     pros::E_CONTROLLER_ANALOG_RIGHT_Y;
-const pros::controller_digital_e_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t INTAKE_MOGO = pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t INTAKE_LIFT = pros::E_CONTROLLER_DIGITAL_R2;
 const pros::controller_digital_e_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 const pros::controller_digital_e_t MOGO = pros::E_CONTROLLER_DIGITAL_R1;
 const pros::controller_digital_e_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
@@ -35,7 +36,8 @@ void opcontrol() {
              master.get_analog(map::RIGHT_DRIVE));
 
     // Intake control
-    if (master.get_digital(map::INTAKE)) bot.intake.intake();
+    if (master.get_digital(map::INTAKE_MOGO)) bot.intake.intake();
+    else if (master.get_digital(map::INTAKE_LIFT)) bot.intake.intakeToLift();
     else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
 

@@ -5,4 +5,5 @@ RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .hori {12},
     .lift {13},
     .imu {14},
+    .intake {6}
 };
