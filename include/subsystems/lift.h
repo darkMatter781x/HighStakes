@@ -37,7 +37,7 @@ class Lift : Subsystem {
         /** default config */
         static Config config;
     };
-  private:
+  // private:
     State m_state;
     Config& m_config;
     pros::MotorGroup& m_motors;

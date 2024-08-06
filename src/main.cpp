@@ -1,20 +1,16 @@
 #include "main.h"
+#include "config.h"
+#include "led.h"
+#include "pros/rtos.hpp"
 #include "robot.h"
 
-/**
- * A callback function for LLEMU's center button.
- *
- * When this callback is fired, it will toggle line 2 of the LCD text between
- * "I was pressed!" and nothing.
- */
-void on_center_button() {
-  // static bool pressed = false;
-  // pressed = !pressed;
-  // if (pressed) {
-  //   pros::lcd::set_text(2, "I was pressed!");
-  // } else {
-  //   pros::lcd::clear_line(2);
-  // }
+void screen() {
+  while (1) {
+    pros::lcd::print(0, "target\tang\t=err");
+    pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
+                     bot.lift.calcLiftAngle(), bot.lift.calcError());
+    pros::delay(50);
+  }
 }
 
 /**
@@ -25,8 +21,6 @@ void on_center_button() {
  */
 void initialize() {
   pros::lcd::initialize();
-  pros::lcd::set_text(1, "Hello PROS User!");
-  pros::lcd::register_btn1_cb(on_center_button);
 
   // ensure robot is initialized
   Robot::get();
@@ -53,6 +47,7 @@ void initialize() {
   //   pros::delay(30);
   // }
 
+  new pros::Task {screen};
 }
 
 /**

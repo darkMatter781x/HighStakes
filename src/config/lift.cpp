@@ -2,11 +2,11 @@
 #include "lemlib/chassis/chassis.hpp"
 
 Lift::Config Lift::Config::config {
-    .bottom = 120,
+    .bottom = 275,
     /** parallel to ground ish */
-    .middle = 80,
-    .top = 50,
-    .gearRatio = 1.0 / 3,
+    .middle = 320,
+    .top = 355,
+    .gearRatio = 1.0,
     .controllerSettings =
-        lemlib::ControllerSettings {2, 0.01, 0, 5, 3, 150, 5, 300, 0},
+        lemlib::ControllerSettings {40, 10, 30, 0, 3, 150, 5, 300, 0},
 };
