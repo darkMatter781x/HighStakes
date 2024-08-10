@@ -1,9 +1,8 @@
 #include "config.h"
 
 RobotConfig::Motors RobotConfig::Motors::motors {
-    .left {-1, -2, -8},
-    .right {3, 4, 9},
-    .intake {5},
-    // 5.5Ws
-    .lift {6, 7},
+    .left {-11, -12, -15},
+    .right {16, 17, 18},
+    .intake {-20},
+    .lift {14},
 };

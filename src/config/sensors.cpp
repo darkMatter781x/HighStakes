@@ -1,5 +1,9 @@
 #include "config.h"
 
-RobotConfig::Sensors RobotConfig::Sensors::sensors {.vert {11},
-                                                    .hori {12},
-                                                    .imu {13}};
+RobotConfig::Sensors RobotConfig::Sensors::sensors {
+    .vert {13},
+    .hori {19},
+    .lift {5},
+    .imu {4},
+    .intake {6}
+};

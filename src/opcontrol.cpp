@@ -1,16 +1,19 @@
 #include "main.h"
+#include "pros/misc.h"
 #include "robot.h"
 
-namespace ControllerMapping {
-const pros::controller_analog_e_t LEFT_DRIVE =
-    pros::E_CONTROLLER_ANALOG_LEFT_Y;
+namespace controller_mapping {
+const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
 const pros::controller_analog_e_t RIGHT_DRIVE =
     pros::E_CONTROLLER_ANALOG_RIGHT_Y;
-const pros::controller_digital_e_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t INTAKE_MOGO = pros::E_CONTROLLER_DIGITAL_L1;
+const pros::controller_digital_e_t INTAKE_LIFT = pros::E_CONTROLLER_DIGITAL_R2;
 const pros::controller_digital_e_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 const pros::controller_digital_e_t MOGO = pros::E_CONTROLLER_DIGITAL_R1;
-}; // namespace ControllerMapping
-namespace map = ControllerMapping;
+const pros::controller_digital_e_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
+const pros::controller_digital_e_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
+}; // namespace controller_mapping
+namespace map = controller_mapping;
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -32,12 +35,19 @@ void opcontrol() {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
-    if (master.get_digital(map::INTAKE)) bot.intake.intake();
+    // Intake control
+    if (master.get_digital(map::INTAKE_MOGO)) bot.intake.intake();
+    else if (master.get_digital(map::INTAKE_LIFT)) bot.intake.intakeToLift();
     else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
 
+    // Mogo control
     if (master.get_digital_new_press(map::MOGO)) bot.mogo.toggle();
 
-    pros::delay(20); // Run for 20 ms then update
+    // Lift control
+    if (master.get_digital_new_press(map::LIFT_UP)) bot.lift.goUp();
+    if (master.get_digital_new_press(map::LIFT_DOWN)) bot.lift.goDown();
+
+    pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

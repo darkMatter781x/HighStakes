@@ -1,6 +1,7 @@
 #pragma once
 #include "config.h"
 #include "subsystems/intake.h"
+#include "subsystems/lift.h"
 
 /**
  * @brief Provides an abstracted interface for controlling the robot and reading
@@ -17,6 +18,7 @@ class Robot : public lemlib::Chassis {
 
     MogoClamp m_mogo;
     Intake m_intake;
+    Lift m_lift;
   public:
     /**
      * @brief Gets the robot instance.
@@ -25,6 +27,7 @@ class Robot : public lemlib::Chassis {
      */
     inline static Robot& get() { return instance; };
 
+    Lift& lift;
     Intake& intake;
     MogoClamp& mogo;
 };
