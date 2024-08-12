@@ -1,4 +1,6 @@
 #pragma once
+
+#include "leds/led.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/optical.hpp"
 
@@ -69,9 +71,9 @@ struct RobotConfig {
     };
 
     struct LEDs {
-        pros::adi::LED lift;
-        pros::adi::LED leftUnderGlow;
-        pros::adi::LED rightUnderGlow;
+        std::shared_ptr<LedStrip> lift;
+        std::shared_ptr<LedStrip> leftUnderGlow;
+        std::shared_ptr<LedStrip> rightUnderGlow;
         // private:
         friend struct RobotConfig;
         static LEDs leds;
