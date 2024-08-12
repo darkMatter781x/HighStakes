@@ -60,6 +60,11 @@ class RGBBuffer {
     /** @return Raw const buffer */
     const std::vector<HexRGB>& getBuffer() const;
 
+    /**
+     * @brief Force updates the buffer's hash (indirectly updates the associated LedStrip).
+     */
+    void update();
+
     const size_t& getHash() const;
   protected:
     /** @brief Fakes hashing. Incremented when the buffer is modified. */

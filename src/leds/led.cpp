@@ -74,6 +74,8 @@ const std::vector<HexRGB>& RGBBuffer::getBuffer() const { return m_buffer; };
 
 const size_t& RGBBuffer::getHash() const { return m_hash; }
 
+void RGBBuffer::update() { updateHash(); }
+
 std::shared_ptr<LedStrip>
 LedStrip::create(pros::adi::ext_adi_port_pair_t port_pair, size_t length,
                  float wattsPerPixelChannel) {
