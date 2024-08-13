@@ -3,6 +3,7 @@
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
 #include "pros/motor_group.hpp"
+#include "pros/optical.hpp"
 #include "pros/rotation.hpp"
 #include <cstdio>
 
@@ -32,7 +33,9 @@ struct RobotConfig {
     struct Sensors {
         pros::Rotation vert;
         pros::Rotation hori;
+        pros::Rotation lift;
         pros::IMU imu;
+        pros::Optical intake;
       private:
         friend struct RobotConfig;
         static Sensors sensors;
@@ -72,8 +75,9 @@ struct RobotConfig {
 
     struct LEDs {
         pros::adi::LED lift;
-        pros::adi::LED underGlow;
-      private:
+        pros::adi::LED leftUnderGlow;
+        pros::adi::LED rightUnderGlow;
+        // private:
         friend struct RobotConfig;
         static LEDs leds;
     };
