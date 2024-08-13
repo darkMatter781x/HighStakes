@@ -16,8 +16,14 @@ WARNFLAGS+=
 EXTRA_CFLAGS=
 EXTRA_CXXFLAGS=
 
+ifndef VEXIDE_SIMULATION
 # Set to 1 to enable hot/cold linking
 USE_PACKAGE:=1
+else
+USE_PACKAGE:=0
+EXTRA_CFLAGS+=-DVEXIDE_SIMULATION
+EXTRA_CXXFLAGS+=-DVEXIDE_SIMULATION
+endif
 
 # Add libraries you do not wish to include in the cold image here
 # EXCLUDE_COLD_LIBRARIES:= $(FWDIR)/your_library.a
