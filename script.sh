@@ -1,4 +1,4 @@
-#/usr/bin/env bash
+#!/usr/bin/env /usr/bin/bash
 # To run this script, you need to have the following installed:
 # qemu
 # rust
@@ -34,7 +34,7 @@ if [ ! -d vex-v5-qemu ]; then
     cd "$start_dir"
 fi
 
-PATH="$PATH:/c/Program Files/qemu:$HOME/AppData/Roaming/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-windows/usr/bin"
+PATH="/usr/bin:$PATH:/c/Program Files/qemu:$HOME/AppData/Roaming/Code/User/globalStorage/sigbots.pros/install/pros-toolchain-windows/usr/bin"
 
 if ! command qemu-system-arm --version &>/dev/null; then
     echo "An 8.x.x version of qemu must be installed. Please install qemu and try again.
