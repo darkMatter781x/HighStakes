@@ -22,9 +22,12 @@ void screen() {
 void initialize() {
   pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
   printf("Hello PROS User!\n");
-  #ifdef VEXIDE_SIMULATION
-  printf("whats up simulator!?\n");
-  #endif
+#ifdef VEXIDE_SIMULATION
+  while (1) {
+    printf("Im running in a codespace!!\n");
+    pros::delay(100);
+  }
+#endif
   pros::lcd::initialize();
 
   // ensure robot is initialized
