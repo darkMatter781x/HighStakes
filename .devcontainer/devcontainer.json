@@ -2,5 +2,13 @@
   "build": {
     "dockerfile": "Dockerfile",
     "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "sigbots.pros",
+        "llvm-vs-code-extensions.vscode-clangd"
+      ]
+    }
   }
 }
