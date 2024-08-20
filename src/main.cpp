@@ -20,14 +20,14 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+  #ifdef VEXIDE_SIMULATION
   pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
-  printf("Hello PROS User!\n");
-#ifdef VEXIDE_SIMULATION
-  while (1) {
+  printf("whats up simulator!?\n");
+    while (1) {
     printf("Im running in a codespace!!\n");
     pros::delay(100);
   }
-#endif
+  #endif
   pros::lcd::initialize();
 
   // ensure robot is initialized
