@@ -14,3 +14,6 @@ temp.log
 temp.errors
 *.ini
 .d/
+
+# Vscode per machine settings
+.vscode/c_cpp_properties.json
