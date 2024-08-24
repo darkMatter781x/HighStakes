@@ -1,5 +1,4 @@
 #include "kalman/odom.h"
-#include "Eigen/src/Core/Matrix.h"
 
 KalmanOdom::KalmanOdom(const Config config)
   : m_processModel(config.processNoise), m_stateOps(),
@@ -13,7 +12,7 @@ KalmanOdom::KalmanOdom(const Config config)
     m_time(0) {}
 
 kalman::State<KalmanOdom::N> KalmanOdom::predict(Time t) const {
-  return {m_ukf.predict(m_processModel, (t - m_time).internal()).mean};
+  return {m_ukf.predictConst(m_processModel, (t - m_time).internal()).mean};
 }
 
 KalmanOdom::ProcessModel::ProcessModel(Eigen::Matrix<float, N, N> noise)
@@ -22,20 +21,22 @@ KalmanOdom::ProcessModel::ProcessModel(Eigen::Matrix<float, N, N> noise)
 Eigen::Vector<float, KalmanOdom::N>
 KalmanOdom::ProcessModel::predict(const Eigen::Vector<float, N>& inVec,
                                   float dT) const {
-  const State in {const_cast<Eigen::Vector<float, N>&>(inVec)};
+  /** input state */
+  const State::Refs i {const_cast<Eigen::Vector<float, N>&>(inVec)};
   Eigen::Vector<float, N> outVec;
-  State out {outVec};
+  /** output state */
+  State::Refs o {outVec};
 
   const float dT2 = dT * dT;
-  out.xRef() = in.xRef() + dT * in.xVelRef() + dT2 * .5 * in.xAccelRef();
-  out.xVelRef() = in.xVelRef() + dT * in.xAccelRef();
-  out.xAccelRef() = in.xAccelRef();
-  out.yRef() = in.yRef() + dT * in.yVelRef() + dT2 * .5 * in.yAccelRef();
-  out.yVelRef() = in.yVelRef() + dT * in.yAccelRef();
-  out.yAccelRef() = in.yAccelRef();
-  out.thetaRef() = in.thetaRef() + dT * in.thetaVelRef() + dT2 * .5 * in.thetaAccelRef();
-  out.thetaVelRef() = in.thetaVelRef() + dT * in.thetaAccelRef();
-  out.thetaAccelRef() = in.thetaAccelRef();
+  o.x<0>() = i.x<0>() + dT * i.x<1>() + dT2 * .5 * i.x<2>();
+  o.x<1>() = i.x<1>() + dT * i.x<2>();
+  o.x<2>() = i.x<2>();
+  o.y<0>() = i.y<0>() + dT * i.y<1>() + dT2 * .5 * i.y<2>();
+  o.y<1>() = i.y<1>() + dT * i.y<2>();
+  o.y<2>() = i.y<2>();
+  o.theta<0>() = i.theta<0>() + dT * i.theta<1>() + dT2 * .5 * i.theta<2>();
+  o.theta<1>() = i.theta<1>() + dT * i.theta<2>();
+  o.theta<2>() = i.theta<2>();
 
   return outVec;
 }

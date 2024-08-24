@@ -4,26 +4,12 @@
 #pragma once
 
 #include "kalman/ukf.h"
-#include "kalman/unscented_transform.h"
-#include "units/Angle.hpp"
 #include "units/Pose.hpp"
 #include "units/Vector2D.hpp"
 #include "units/units.hpp"
 
-#define __KALMAN_ODOM_INTERNAL_STATE_COEFF(name, upper_name, i, quantity,      \
-                                           type)                               \
-  inline type name() const { return get<i>(quantity); }                        \
-  inline const float& name##Ref() const { return getRef<i>(); }                \
-  inline float& name##Ref() { return getRef<i>(); }                            \
-  inline void set##upper_name(type value) { getRef<i>() = value.internal(); }
-
-#define __KALMAN_ODOM_INTERNAL_STATE_COEFFS(name, upper_name, i, q, q_prime,   \
-                                            q_prime2, t, t_prime, t_prime2)    \
-  __KALMAN_ODOM_INTERNAL_STATE_COEFF(name, upper_name, i, q, t)                \
-  __KALMAN_ODOM_INTERNAL_STATE_COEFF(name##Vel, upper_name##Vel, i + 1,        \
-                                     q_prime, t_prime)                         \
-  __KALMAN_ODOM_INTERNAL_STATE_COEFF(name##Accel, upper_name##Accel, i + 2,    \
-                                     q_prime2, t_prime2)
+template <isQuantity Q, size_t Deriv> using TimeDerivative =
+    Divided<Q, Exponentiated<Time, std::ratio<Deriv>>>;
 
 class KalmanOdom {
   protected:
@@ -36,41 +22,69 @@ class KalmanOdom {
       public:
         /** x, x', x'', y, y', y'', theta, theta', theta'' */
         Eigen::Vector<float, N>& m_vector;
-      private:
-        template <uint Index> inline float& getRef() const {
-          static_assert(Index < N, "");
-          return m_vector(Index);
+
+        struct Refs {
+          private:
+            Eigen::Vector<float, N>& m_vector;
+
+            template <size_t Index, size_t Deriv = 0>
+            inline float& getRef() const {
+              static_assert(Index < N, "");
+              static_assert(0 <= Deriv && Deriv <= 2,
+                            "Deriv must be 0, 1, or 2");
+              return m_vector(Index + Deriv);
+            }
+          public:
+            template <size_t Deriv = 0> inline float& x() {
+              return getRef<0, Deriv>();
+            }
+
+            template <size_t Deriv = 0> const inline float& x() const {
+              return getRef<0, Deriv>();
+            }
+
+            template <size_t Deriv = 0> inline float& y() {
+              return getRef<3, Deriv>();
+            }
+
+            template <size_t Deriv = 0> const inline float& y() const {
+              return getRef<3, Deriv>();
+            }
+
+            template <size_t Deriv = 0> inline float& theta() {
+              return getRef<6, Deriv>();
+            }
+
+            template <size_t Deriv = 0> const inline float& theta() const {
+              return getRef<6, Deriv>();
+            }
+
+            inline Refs(Eigen::Vector<float, N>& vector) : m_vector(vector) {}
+        } r {m_vector};
+
+        template <size_t Deriv = 0>
+        inline TimeDerivative<Length, Deriv> x() const {
+          return r.x<Deriv>() * TimeDerivative<Length, Deriv> {1.0};
         }
 
-        template <uint Index, isQuantity Q> inline Q get(Q q) const {
-          static_assert(Index < N, "");
-          return getRef<Index>() * q;
-        }
-      public:
-        __KALMAN_ODOM_INTERNAL_STATE_COEFFS(x, X, 0, m, mps, mps2, Length,
-                                            LinearVelocity, LinearAcceleration)
-        __KALMAN_ODOM_INTERNAL_STATE_COEFFS(y, Y, 0, m, mps, mps2, Length,
-                                            LinearVelocity, LinearAcceleration)
-        __KALMAN_ODOM_INTERNAL_STATE_COEFFS(theta, Theta, 0, rad, radps, radps2,
-                                            Angle, AngularVelocity,
-                                            AngularAcceleration)
-
-        inline units::V2Position vec() const { return {x(), y()}; }
-
-        inline units::V2Velocity vecVel() const { return {xVel(), yVel()}; }
-
-        inline units::V2Acceleration vecAccel() const {
-          return {xAccel(), yAccel()};
+        template <size_t Deriv = 0>
+        inline TimeDerivative<Length, Deriv> y() const {
+          return r.y<Deriv>() * TimeDerivative<Length, Deriv> {1.0};
         }
 
-        inline units::Pose pose() const { return {vec(), theta()}; }
-
-        inline units::VelocityPose poseVel() const {
-          return {vecVel(), thetaVel()};
+        template <size_t Deriv = 0>
+        inline TimeDerivative<Angle, Deriv> theta() const {
+          return r.theta<Deriv>() * TimeDerivative<Angle, Deriv> {1.0};
         }
 
-        inline units::AccelerationPose poseAccel() const {
-          return {vecAccel(), thetaAccel()};
+        template <size_t Deriv = 0>
+        inline units::Vector2D<TimeDerivative<Length, Deriv>> vec() const {
+          return {x<Deriv>(), y<Deriv>()};
+        }
+
+        template <size_t Deriv = 0>
+        inline units::AbstractPose<std::ratio<Deriv>> pose() const {
+          return {vec<Deriv>(), theta<Deriv>()};
         }
     };
 
