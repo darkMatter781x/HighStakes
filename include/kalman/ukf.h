@@ -90,17 +90,30 @@ template <size_t N> class UnscentedKalmanFilter {
      * @param sigmas_f The matrix to store the sigma points in.
      * @return State<N> The new state.
      */
+    template <
+        bool MUT_SIGMAS,
+        typename __Sigmas = std::conditional<
+            MUT_SIGMAS, Eigen::Matrix<float, N, SIGMA_N>&, std::nullptr_t>>
     State<N> _predict(const ProcessModel& model, float dt,
-                      Eigen::Matrix<float, N, SIGMA_N>& sigmas_f) const {
+                      __Sigmas sigmas_f_raw) const {
+      Eigen::Matrix<float, N, SIGMA_N>* sigmas_f;
+      if constexpr (MUT_SIGMAS) {
+        sigmas_f = &sigmas_f_raw;
+      } else {
+        Eigen::Matrix<float, N, SIGMA_N> sigmas_f_storage;
+        sigmas_f = &sigmas_f_storage;
+      }
+
       Eigen::Matrix<float, N, SIGMA_N> sigmas =
           m_sigmas.computeSigmaPoints(m_mean, m_covar);
       for (size_t i = 0; i < SIGMA_N; i++) {
-        sigmas_f.col(i) = model.predict(sigmas.col(i), dt);
+        sigmas_f->col(i) = model.predict(sigmas.col(i), dt);
       }
 
       State newState =
-          UT::transform<N, SIGMA_N>(sigmas_f, m_sigmas.m_weights, m_stateOps);
+          UT::transform<N, SIGMA_N>(*sigmas_f, m_sigmas.m_weights, m_stateOps);
       return newState;
+      return {};
     }
   public:
     /**
@@ -122,7 +135,7 @@ template <size_t N> class UnscentedKalmanFilter {
      * @param dt Delta time; how far to predict forward in time.
      */
     State<N> predictConst(const ProcessModel& model, float dt) const {
-      return _predict(model, dt, {});
+      return _predict<false>(model, dt, nullptr);
     }
 
     /**
