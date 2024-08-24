@@ -81,17 +81,19 @@ template <size_t N> class UnscentedKalmanFilter {
      * @symbol P
      */
     Eigen::Matrix<float, N, N> m_covar;
-
+  private:
     /**
-     * @brief Perform prediction step.
+     * @brief Internal function for prediction. Updates the sigmas_f matrix.
      *
      * @param model Model to use for prediction.
      * @param dt Delta time; how far to predict forward in time.
+     * @param sigmas_f The matrix to store the sigma points in.
+     * @return State<N> The new state.
      */
-    State<N> predict(const ProcessModel& model, float dt) const {
+    State<N> _predict(const ProcessModel& model, float dt,
+                      Eigen::Matrix<float, N, SIGMA_N>& sigmas_f) const {
       Eigen::Matrix<float, N, SIGMA_N> sigmas =
           m_sigmas.computeSigmaPoints(m_mean, m_covar);
-      Eigen::Matrix<float, N, SIGMA_N> sigmas_f;
       for (size_t i = 0; i < SIGMA_N; i++) {
         sigmas_f.col(i) = model.predict(sigmas.col(i), dt);
       }
@@ -99,6 +101,28 @@ template <size_t N> class UnscentedKalmanFilter {
       State newState =
           UT::transform<N, SIGMA_N>(sigmas_f, m_sigmas.m_weights, m_stateOps);
       return newState;
+    }
+  public:
+    /**
+     * @brief Perform prediction step, updating the state estimate.
+     *
+     * @param model Model to use for prediction.
+     * @param dt Delta time; how far to predict forward in time.
+     */
+    void predict(const ProcessModel& model, float dt) {
+      State newState = _predict(model, dt, m_sigmas_f);
+      m_mean = newState.mean;
+      m_covar = newState.covar;
+    }
+
+    /**
+     * @brief Predict the state without updating the internal state.
+     *
+     * @param model Model to use for prediction.
+     * @param dt Delta time; how far to predict forward in time.
+     */
+    State<N> predictConst(const ProcessModel& model, float dt) const {
+      return _predict(model, dt, {});
     }
 
     /**
