@@ -7,8 +7,9 @@
 
 namespace kalman {
 
-template <size_t N> class UnscentedKalmanFilter {
+template <size_t __N> class UnscentedKalmanFilter {
   public:
+    static constexpr size_t N = __N;
     using SigmaPts = MerweSigmaPts<N>;
     static constexpr size_t SIGMA_N = SigmaPts::SIGMA_N;
 
@@ -37,8 +38,10 @@ template <size_t N> class UnscentedKalmanFilter {
      *
      * @tparam M Dimensionality of measurement
      */
-    template <size_t M> class MeasurementModel {
+    template <size_t __M> class MeasurementModel {
       public:
+        static constexpr size_t M = __M;
+        static constexpr size_t N = __N;
         using SigmaPts = MerweSigmaPts<M>;
         static constexpr size_t SIGMA_M = SigmaPts::SIGMA_N;
 

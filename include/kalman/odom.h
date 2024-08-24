@@ -12,10 +12,10 @@ template <isQuantity Q, size_t Deriv> using TimeDerivative =
     Divided<Q, Exponentiated<Time, std::ratio<Deriv>>>;
 
 class KalmanOdom {
-  protected:
+  public:
     static constexpr uint N = 9;
-
     using UKF = kalman::UKF<N>;
+  protected:
     UKF m_ukf;
   public:
     struct State {
@@ -107,7 +107,8 @@ class KalmanOdom {
              const Eigen::Vector<float, N>& rhs) const override;
     };
 
-    template <size_t M> class Measurement {
+    template <size_t __M> struct Measurement {
+        static constexpr size_t M = __M;
         /** @brief  (sensor data) */
         Eigen::Vector<float, M> vector;
         UKF::MeasurementModel<M>& model;
