@@ -10,7 +10,7 @@ namespace kalman {
 template <size_t N> class UnscentedKalmanFilter {
   public:
     using SigmaPts = MerweSigmaPts<N>;
-    using SigmaPts::SIGMA_N;
+    static constexpr size_t SIGMA_N = SigmaPts::SIGMA_N;
 
     class ProcessModel {
       public:
@@ -22,7 +22,7 @@ template <size_t N> class UnscentedKalmanFilter {
          * @param dt How far forward in time to project the state mean.
          */
         virtual Eigen::Matrix<float, N, 1>
-        predict(const Eigen::Matrix<float, N, 1>& mean, float dt) = 0;
+        predict(const Eigen::Matrix<float, N, 1>& mean, float dt) const = 0;
         /**
          * @brief Process noise.
          * @symbol Q
@@ -40,7 +40,7 @@ template <size_t N> class UnscentedKalmanFilter {
     template <size_t M> class MeasurementModel {
       public:
         using SigmaPts = MerweSigmaPts<M>;
-        using SigmaPts::SIGMA_M;
+        static constexpr size_t SIGMA_M = SigmaPts::SIGMA_N;
 
         /**
          * @brief Converts state mean to measurement space.
@@ -58,16 +58,16 @@ template <size_t N> class UnscentedKalmanFilter {
         /**
          * @brief Measurement sigma point operators.
          */
-        unscented_transform::Operators<M, SIGMA_M> ops;
+        UT::Operators<M, SIGMA_M> ops;
     };
 
     template <size_t M> using H = MeasurementModel<M>;
 
     struct Config {
-        MerweScaledSigmaPoints<N>::Config sigmas;
+        SigmaPts::Config sigmas;
         Eigen::Matrix<float, N, 1> initialState;
         Eigen::Matrix<float, N, N> initialCovar;
-        unscented_transform::Operators<N, SIGMA_N> stateOps;
+        UT::Operators<N, SIGMA_N>& stateOps;
     };
 
     /**
@@ -88,18 +88,18 @@ template <size_t N> class UnscentedKalmanFilter {
      * @param model Model to use for prediction.
      * @param dt Delta time; how far to predict forward in time.
      */
-    void predict(ProcessModel& model, float dt) {
+    State<N> predict(const ProcessModel& model, float dt) const {
       Eigen::Matrix<float, N, SIGMA_N> sigmas =
           m_sigmas.computeSigmaPoints(m_mean, m_covar);
-
+      Eigen::Matrix<float, N, SIGMA_N> sigmas_f;
       for (size_t i = 0; i < SIGMA_N; i++) {
-        m_sigmas_f.col(i) = model.predict(sigmas.col(i), dt);
+        sigmas_f.col(i) = model.predict(sigmas.col(i), dt);
       }
+      m_sigmas_f = sigmas_f;
 
-      State newState = unscented_transform::transform(
-          m_sigmas_f, m_sigmas.weights, m_stateOps);
-      m_mean = newState.mean;
-      m_covar = newState.covar + model.noise;
+      State newState =
+          UT::transform<N, SIGMA_N>(m_sigmas_f, m_sigmas.m_weights, m_stateOps);
+      return newState;
     }
 
     /**
@@ -113,10 +113,11 @@ template <size_t N> class UnscentedKalmanFilter {
                                     Eigen::Matrix<float, M, 1>& measurement) {
       Eigen::Matrix<float, M, SIGMA_N> sigmas_h;
       for (size_t i = 0; i < SIGMA_N; i++) {
-        sigmas_h.col(i) = model.function(m_sigmas_f.col(i));
+        Eigen::Vector<float, N> a = model.function(m_sigmas_f.col(i));
+        sigmas_h.col(i) = a;
       }
       State expected_measurement =
-          unscented_transform::transform(sigmas_h, m_sigmas.weights, model.ops);
+          UT::transform(sigmas_h, m_sigmas.weights, model.ops);
       /** @symbol mu_z */
       auto mean_z = expected_measurement.mean;
       /** @symbol P_z */
@@ -135,14 +136,14 @@ template <size_t N> class UnscentedKalmanFilter {
      *
      * @param config Configuration for the UKF.
      */
-    UnscentedKalmanFilter(const Config& config);
+    UnscentedKalmanFilter(const Config config);
   private:
     /** @brief The sigma points for the state. */
     Eigen::Matrix<float, N, SIGMA_N> m_sigmas_f;
 
     /** @brief Algorithm for generating sigma points. */
     const SigmaPts m_sigmas;
-    const unscented_transform::Operators<N, SIGMA_N> m_stateOps;
+    const UT::Operators<N, SIGMA_N> m_stateOps;
 };
 
 template <size_t N> using UKF = UnscentedKalmanFilter<N>;
