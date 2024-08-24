@@ -2,6 +2,7 @@
 
 #include "Eigen/Dense"
 
+namespace kalman {
 
 /**
  * @brief Compute the cross-covariance matrix between two sets of points.
@@ -29,3 +30,5 @@ crossCovariance(const Eigen::Matrix<float, N_A, M>& aPts,
   }
   return crossCovar;
 }
+
+} // namespace kalman
