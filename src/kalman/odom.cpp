@@ -39,3 +39,15 @@ KalmanOdom::ProcessModel::predict(const Eigen::Vector<float, N>& inVec,
 
   return outVec;
 }
+
+Eigen::Matrix<float, KalmanOdom::N, 1> KalmanOdom::StateOps::mean(
+    const Eigen::Matrix<float, N, UKF::SIGMA_N>& sigma_points,
+    const Eigen::Matrix<float, UKF::SIGMA_N, 1>& weights) const {
+  return sigma_points * weights;
+}
+
+Eigen::Matrix<float, KalmanOdom::N, 1>
+KalmanOdom::StateOps::diff(const Eigen::Vector<float, N>& sigma_points,
+                           const Eigen::Vector<float, N>& weights) const {
+  return sigma_points - weights;
+}

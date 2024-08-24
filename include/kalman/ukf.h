@@ -95,10 +95,9 @@ template <size_t N> class UnscentedKalmanFilter {
       for (size_t i = 0; i < SIGMA_N; i++) {
         sigmas_f.col(i) = model.predict(sigmas.col(i), dt);
       }
-      m_sigmas_f = sigmas_f;
 
       State newState =
-          UT::transform<N, SIGMA_N>(m_sigmas_f, m_sigmas.m_weights, m_stateOps);
+          UT::transform<N, SIGMA_N>(sigmas_f, m_sigmas.m_weights, m_stateOps);
       return newState;
     }
 

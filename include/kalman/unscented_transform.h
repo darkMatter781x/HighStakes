@@ -21,7 +21,7 @@ template <size_t N, size_t SIGMA_N> struct Operators {
      */
     virtual Eigen::Matrix<float, N, 1>
     mean(const Eigen::Matrix<float, N, SIGMA_N>& sigma_points,
-         const Eigen::Matrix<float, SIGMA_N, 1>& weights) {
+         const Eigen::Matrix<float, SIGMA_N, 1>& weights) const {
       return sigma_points * weights;
     };
 
@@ -30,7 +30,7 @@ template <size_t N, size_t SIGMA_N> struct Operators {
      */
     virtual Eigen::Matrix<float, N, 1>
     diff(const Eigen::Matrix<float, N, 1>& lhs,
-         const Eigen::Matrix<float, N, 1>& rhs) {
+         const Eigen::Matrix<float, N, 1>& rhs) const {
       return lhs - rhs;
     }
 };

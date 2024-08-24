@@ -86,10 +86,11 @@ class KalmanOdom {
     struct StateOps : kalman::UT::Operators<N, UKF::SIGMA_N> {
         Eigen::Matrix<float, N, 1>
         mean(const Eigen::Matrix<float, N, UKF::SIGMA_N>& sigma_points,
-             const Eigen::Matrix<float, UKF::SIGMA_N, 1>& weights) override;
+             const Eigen::Matrix<float, UKF::SIGMA_N, 1>& weights)
+            const override;
         Eigen::Matrix<float, N, 1>
         diff(const Eigen::Vector<float, N>& lhs,
-             const Eigen::Vector<float, N>& rhs) override;
+             const Eigen::Vector<float, N>& rhs) const override;
     };
 
     template <size_t M> class Measurement {
