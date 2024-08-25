@@ -1,6 +1,6 @@
 FROM rust:1.67 as builder
 
-RUN git clone https://github.com/meiszwflz/vex-v5-qemu.git --branch feat/sim/env-var-opts /vex-v5-qemu
+RUN git clone https://github.com/vexide/vex-v5-qemu.git /vex-v5-qemu
 
 WORKDIR /vex-v5-qemu
 RUN rustup override set nightly
