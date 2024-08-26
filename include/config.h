@@ -2,10 +2,7 @@
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
-#include "pros/motor_group.hpp"
-#include "pros/optical.hpp"
-#include "pros/rotation.hpp"
-#include <cstdio>
+#include "subsystems/intake.h"
 
 /**
  * @brief Configuration for the robot. Provides all devices and dimensions of
@@ -24,7 +21,7 @@ struct RobotConfig {
 
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
-        pros::adi::Pneumatics ringClaw;
+        pros::adi::Pneumatics ringKicker;
       private:
         friend struct RobotConfig;
         static Pneumatics pneumatics;

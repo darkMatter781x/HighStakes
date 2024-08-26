@@ -36,8 +36,10 @@ void opcontrol() {
              master.get_analog(map::RIGHT_DRIVE));
 
     // Intake control
-    if (master.get_digital(map::INTAKE_MOGO)) bot.intake.intake();
-    else if (master.get_digital(map::INTAKE_LIFT)) bot.intake.intakeToLift();
+    if (master.get_digital(map::INTAKE_MOGO))
+      bot.intake.intakeBothTo(Intake::MOGO);
+    else if (master.get_digital(map::INTAKE_LIFT))
+      bot.intake.intakeBothTo(Intake::LIFT);
     else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
 
