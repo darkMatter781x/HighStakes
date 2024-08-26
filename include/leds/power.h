@@ -1,7 +1,7 @@
 #pragma once
 
 #include "subsystems.h"
-#include "leds/led.h"
+#include "leds/strip.h"
 
 /**
  * @brief Responsible for ensuring LEDs don't over-current by reducing pixel

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "leds/led.h"
+#include "leds/strip.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/optical.hpp"
 

@@ -1,7 +1,5 @@
-#include "leds/led.h"
-#include "leds/handler.h"
-#include <cstdint>
-#include <memory>
+#include "leds/strip.h"
+#include "leds/power.h"
 
 RGBBuffer::RGBBuffer(size_t length) : m_buffer {length} {}
 

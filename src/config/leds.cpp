@@ -1,5 +1,4 @@
 #include "config.h"
-#include "leds/led.h"
 
 RobotConfig::LEDs RobotConfig::LEDs::leds = {
     .lift = LedStrip::create({0, 'A'}, 64, 0.1),
