@@ -79,8 +79,8 @@ void RGBBuffer::update() { updateHash(); }
 std::shared_ptr<LedStrip>
 LedStrip::create(pros::adi::ext_adi_port_pair_t port_pair, size_t length,
                  float wattsPerPixelChannel) {
-  std::shared_ptr<LedStrip> strip =
-      std::make_shared<LedStrip>(port_pair, length, wattsPerPixelChannel);
+  std::shared_ptr<LedStrip> strip {
+      new LedStrip {port_pair, length, wattsPerPixelChannel}};
   LedPowerHandler::get().registerStrip(strip);
   return strip;
 }

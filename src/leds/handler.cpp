@@ -34,6 +34,8 @@ void LedPowerHandler::registerStrip(std::shared_ptr<LedStrip> strip) {
   m_strips.insert({strip->getADIExpander(), strip});
 };
 
+LedPowerHandler* LedPowerHandler::instance = nullptr;
+
 LedPowerHandler& LedPowerHandler::get() {
   if (LedPowerHandler::instance == nullptr)
     LedPowerHandler::instance = new LedPowerHandler();
