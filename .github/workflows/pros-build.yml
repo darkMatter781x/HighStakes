@@ -1,0 +1,17 @@
+name: Build Template
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run LemLib/pros-build
+        id: build-test
+        uses: LemLib/pros-build@v2.0.2
