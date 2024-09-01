@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "subsystems/selector.h"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
 
@@ -19,6 +20,8 @@ class Robot : public lemlib::Chassis {
     MogoClamp m_mogo;
     Intake m_intake;
     Lift m_lift;
+    pros::Controller m_gamepad;
+    Intake::Sensor m_intakeSensor;
   public:
     /**
      * @brief Gets the robot instance.
@@ -30,6 +33,8 @@ class Robot : public lemlib::Chassis {
     Lift& lift;
     Intake& intake;
     MogoClamp& mogo;
+    pros::Controller& gamepad;
+    AutonSelector& selector;
 };
 
 inline Robot& bot = Robot::get();

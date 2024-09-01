@@ -36,6 +36,7 @@ struct RobotConfig {
         pros::Rotation lift;
         pros::IMU imu;
         pros::Optical intake;
+        pros::adi::Potentiometer autonSelector;
       private:
         friend struct RobotConfig;
         static Sensors sensors;

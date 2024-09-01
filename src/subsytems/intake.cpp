@@ -2,19 +2,19 @@
 #include "pros/llemu.hpp"
 #include "pros/optical.hpp"
 
-Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical)
-  : m_motors(motors), m_optical(optical) {
+Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
   m_optical.set_led_pwm(100);
 }
+
+Intake::Intake(pros::MotorGroup& motors, Sensor& sensor)
+  : m_motors(motors), m_sensor(sensor) {}
 
 const Intake::State& Intake::getState() const { return m_state; }
 
 void Intake::update() {
   const State prevState = m_state;
 
-  int proximity = m_optical.get_proximity();
-  pros::lcd::print(5, "intake: %i", proximity);
-  if (proximity > 128) {
+  if (m_sensor.getRing().has_value()) {
     if (m_startSensingRingTimestamp == 0)
       m_startSensingRingTimestamp = pros::millis();
   } else m_startSensingRingTimestamp = 0;
