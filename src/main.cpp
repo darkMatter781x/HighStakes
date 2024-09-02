@@ -23,8 +23,27 @@ void initialize() {
 
   // ensure robot is initialized
   Robot::get();
+  // LED Testing
+  pros::delay(1000);
+  while (true) {
+    for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
+      pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
+      strip.set_all(0xFFFFFF);
+      pros::delay(250);
+    }
+  }
 
-  // // LED Testing
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550000);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x005500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x000055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.lift.set_all(0x550055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x555500);
   // LedStrip leftStrip {RobotConfig::LEDs::leds.leftUnderGlow};
   // LedStrip rightStrip {RobotConfig::LEDs::leds.rightUnderGlow};
   // pros::delay(500);
