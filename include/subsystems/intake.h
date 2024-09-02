@@ -61,10 +61,6 @@ class Intake : public Subsystem {
     };
 
     struct IntakingToKick : public FilteringState {
-        size_t startTime;
-        Filtering afterState;
-
-        COLOR color;
         DESTINATION dest = KICK;
 
         IntakingToKick(Filtering afterState, COLOR color);
@@ -73,10 +69,6 @@ class Intake : public Subsystem {
     };
 
     struct IdlingToKick : public FilteringState {
-        size_t startTime;
-        Filtering afterState;
-
-        COLOR color;
         DESTINATION dest = KICK;
 
         IdlingToKick(Filtering afterState, COLOR color);
