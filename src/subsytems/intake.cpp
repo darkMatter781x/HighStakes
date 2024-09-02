@@ -21,7 +21,12 @@ Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical,
   m_optical.set_led_pwm(100);
 }
 
-Intake::Config Intake::Config::config = {1000, 1000, 1000, 1000};
+Intake::Config Intake::Config::config = {
+    .intakingToLiftDuration = 100,
+    .outtakingToLiftDuration = 500,
+    .intakingToKickDuration = 0,
+    .idlingToKickDuration = 250,
+};
 
 const Intake::State& Intake::getState() const { return m_state; }
 
