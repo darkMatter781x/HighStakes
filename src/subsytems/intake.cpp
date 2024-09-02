@@ -1,4 +1,6 @@
 #include "subsystems/intake.h"
+#include <cmath>
+
 std::string destToStr(Intake::DESTINATION dest) {
   switch (dest) {
     case Intake::MOGO: return "MOGO";
@@ -181,8 +183,13 @@ void Intake::intakeBothTo(DESTINATION dest) {
 }
 
 std::optional<Intake::COLOR> Intake::getSensedRing() {
-  if (m_optical.get_proximity() < 128) return std::nullopt;
+  if (pros::millis() % 200 < 10)
+    printf("proximity:\t%d\n", m_optical.get_proximity());
+  if (m_optical.get_proximity() < 200) return std::nullopt;
+  printf("proximity:\t%d\n", m_optical.get_proximity());
+  const float hueRem = std::remainder(m_optical.get_hue(), 360);
+  printf("hue:\t\t%f\n", hueRem);
   // todo: check
-  if (m_optical.get_hue() < 100) return RED;
+  if (std::abs(hueRem) < 60) return RED;
   return BLUE;
 }
