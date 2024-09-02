@@ -13,7 +13,7 @@ void Lift::update() {
   const float error = calcError();
   const float output = m_pid.update(error);
   bool shouldBrake = m_exitCondition.update(error);
-  if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error, output);
+  // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error, output);
   if (shouldBrake) {
     // if error > smallError, then don't brake and reset exit condition
     if (std::abs(error) > m_config.controllerSettings.smallError)

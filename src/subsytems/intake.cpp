@@ -1,4 +1,16 @@
 #include "subsystems/intake.h"
+std::string destToStr(Intake::DESTINATION dest) {
+  switch (dest) {
+    case Intake::MOGO: return "MOGO";
+    case Intake::KICK: return "KICK";
+    case Intake::LIFT: return "LIFT";
+  }
+}
+
+void printFiltering(Intake::Filtering& filter) {
+  printf("filtering:\tr:\t%s\tb:\t%s\n", destToStr(filter.red).c_str(),
+         destToStr(filter.blue).c_str());
+}
 
 Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical,
                pros::adi::Pneumatics& kicker, Config conf)
@@ -32,12 +44,18 @@ Intake::OuttakingToLift::OuttakingToLift(Filtering afterState, COLOR color)
 
 void Intake::IntakingToKick::update(Intake& intake) {
   intake.m_motors.move(127);
-  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration)
+  if (pros::millis() % 200 < 10)  printf("intaking to kick\n");
+  printFiltering(afterState);
+  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
+    printf("naturally switching to idle\n");
     intake.setState(IdlingToKick {afterState, color});
+  }
 }
 
 void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   FilteringState::switchDest(intake, dest);
+  printf("switch from intaking to kick to %s\n", destToStr(dest).c_str());
+  printFiltering(afterState);
   if (dest == LIFT) {
     IntakingToLift newState(afterState, color);
     newState.startTime = this->startTime;
@@ -48,9 +66,13 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::IdlingToKick::update(Intake& intake) {
-  intake.m_motors.move(0);
+  intake.m_motors.move(127);
   intake.m_kicker.set_value(true);
+  printf("idling to kick\n");
+  printFiltering(afterState);
+  if (pros::millis() % 200 < 10) printf("idling to kick\n");
   if (pros::millis() - startTime > intake.m_conf.idlingToKickDuration) {
+    printf("naturally switching to filtering\n");
     intake.m_kicker.set_value(false);
     intake.setState(afterState);
   }
@@ -58,12 +80,14 @@ void Intake::IdlingToKick::update(Intake& intake) {
 
 void Intake::IntakingToLift::update(Intake& intake) {
   intake.m_motors.move(127);
+  if (pros::millis() % 200 < 10) printf("intaking to lift\n");
   if (pros::millis() - startTime > intake.m_conf.intakingToLiftDuration)
     intake.setState(OuttakingToLift {afterState, color});
 }
 
 void Intake::OuttakingToLift::update(Intake& intake) {
   intake.m_motors.move(-127);
+  if (pros::millis() % 200 < 10) printf("outtaking to lift\n");
   if (pros::millis() - startTime > intake.m_conf.outtakingToLiftDuration)
     intake.setState(afterState);
 }
@@ -81,6 +105,8 @@ void Intake::IntakingToLift::switchDest(Intake& intake, DESTINATION dest) {
 
 void Intake::Filtering::update(Intake& intake) {
   intake.m_motors.move(127);
+
+  if (pros::millis() % 200 < 10) printFiltering(*this);
 
   auto maybeColor = intake.getSensedRing();
   if (!maybeColor.has_value()) return;
