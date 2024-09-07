@@ -9,7 +9,7 @@
  * from sensors. Follows the singleton pattern.
  */
 class Robot : public lemlib::Chassis {
-  private:
+  public:
     Robot(const RobotConfig& config);
 
     /** @brief Should ever be one instance of Robot, and that's this one. */

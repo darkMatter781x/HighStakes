@@ -1,6 +1,7 @@
 #include "main.h"
 #include "pros/misc.h"
 #include "robot.h"
+#include "tuning.h"
 
 namespace controller_mapping {
 const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
@@ -81,6 +82,12 @@ void opcontrol() {
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
+
+#ifdef TUNING
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+      tuningCLI();
+#endif
 
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
