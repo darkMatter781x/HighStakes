@@ -1,10 +1,8 @@
 #include "subsystems/intake.h"
 #include "pros/llemu.hpp"
 #include "pros/optical.hpp"
-
-Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
-  m_optical.set_led_pwm(100);
-}
+#include "pros/rtos.hpp"
+#include <cmath>
 
 Intake::Intake(pros::MotorGroup& motors, Sensor& sensor)
   : m_motors(motors), m_sensor(sensor) {}
@@ -51,3 +49,18 @@ void Intake::intake() { setState(IN); }
 void Intake::outtake() { setState(OUT); }
 
 void Intake::intakeToLift() { setState(IN_TO_LIFT); }
+
+Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
+  m_optical.set_led_pwm(100);
+}
+
+std::optional<COLOR> Intake::Sensor::getRing() const {
+  if (pros::millis() % 200 < 10)
+    printf("proximity: %d\n", m_optical.get_proximity());
+
+  if (m_optical.get_proximity() < 200) return std::nullopt;
+  const float hueRem = std::remainder(m_optical.get_hue(), 360);
+  printf("hueRem: %f\n", hueRem);
+  if (std::abs(hueRem) < 60) return COLOR::RED;
+  return COLOR::BLUE;
+}

@@ -20,7 +20,7 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  pros::lcd::initialize();
+  // pros::lcd::initialize();
 
   // ensure robot is initialized
   Robot::get();
@@ -47,7 +47,7 @@ void initialize() {
   //   pros::delay(30);
   // }
 
-  new pros::Task {screen};
+  // new pros::Task {screen};
 }
 
 /**
