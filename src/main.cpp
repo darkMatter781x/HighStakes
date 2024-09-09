@@ -24,7 +24,7 @@ void initialize() {
 
   // ensure robot is initialized
   Robot::get();
-
+  bot.calibrate();
   // // LED Testing
   // LedStrip leftStrip {RobotConfig::LEDs::leds.leftUnderGlow};
   // LedStrip rightStrip {RobotConfig::LEDs::leds.rightUnderGlow};
