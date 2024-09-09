@@ -9,6 +9,9 @@ void screen() {
     pros::lcd::print(0, "target\tang\t=err");
     pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
                      bot.lift.calcLiftAngle(), bot.lift.calcError());
+    pros::lcd::print(3, "x:\t%fin", bot.getPose().x);
+    pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
+    pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
     pros::delay(50);
   }
 }
