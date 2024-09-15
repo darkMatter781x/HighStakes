@@ -4,41 +4,38 @@
 #include "power.h"
 #include "strip.h"
 #include "subsystems/intake.h"
-
-class LedMaster {
-    public:
-    /** this function doesn't have a definition */
-    virtual void control() =0;
-};
-
-class IntakeFilterLedDisplay : LedMaster {
-    void control() override;
+class IntakeFilterLedDisplay{
+    
 
 };
 
-class MotorDisconnectLedDisplay : LedMaster{
+class MotorDisconnectLedDisplay{
 
 };
 
-class AllianceColorLedDisplay : LedMaster{
+class AllianceColor{
+
+public:
+
+enum allianceColor{ red, blue };
+allianceColor m_state;
+void AllianceColorLedDisplay();
 
 };
 
-class AutonWarningLedDisplay : LedMaster{
+class AutonWarningLedDisplay{
 
 };
 
 class LEDs : public Subsystem{
 
 public: 
+
 enum matchState{ preAuton, auton, driver };
 matchState m_state;
-
-void setMaster(LedMaster& callback) {
-    ledController = callback;
-}
 void mainControl();
+
 private:
-LedMaster& ledController;
+
 pros::Optical& m_optical;
 };
