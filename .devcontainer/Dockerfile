@@ -1,20 +1,25 @@
 FROM rust:1.67 as builder
 
-RUN git clone https://github.com/meiszwflz/vex-v5-qemu.git --branch feat/sim/env-var-opts /vex-v5-qemu
+RUN git clone https://github.com/vexide/vex-v5-qemu.git /vex-v5-qemu
 
 WORKDIR /vex-v5-qemu
-RUN rustup override set nightly
-RUN rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
-RUN cd kernel; cargo build
+RUN cd packages/kernel; cargo build --target-dir /target/kernel
 
-RUN cd simulator; cargo install --path .
+RUN cd packages/client-cli; cargo install --path . --root /target/client-cli
+RUN ls -R /target
+
+RUN find /target -iname "client-cli"
+RUN find /target -iname "kernel"
 
 FROM mcr.microsoft.com/devcontainers/cpp:1.0-jammy
 
 RUN sudo apt-get update
-RUN sudo apt-get -y install qemu-system
+RUN sudo apt-get -y install qemu-system python3 gdb-multiarch
 
-COPY --from=builder /usr/local/cargo/bin/simulator /usr/local/bin/simulator
+# add pros toolchain to path 
+ENV PATH="$PATH:/home/vscode/.vscode-remote/data/User/globalStorage/sigbots.pros/install/pros-toolchain-linux/bin" 
 
-ENV V5_SIM_KERNEL=$HOME/.vex-v5-qemu/kernel 
-COPY --from=builder /vex-v5-qemu/kernel/target/armv7a-none-eabi/debug/kernel $V5_SIM_KERNEL
+COPY --from=builder /target/client-cli/bin/client-cli /usr/local/bin/simulator
+
+ENV V5_SIM_KERNEL_PATH="$HOME/.vex-v5-qemu/kernel"
+COPY --from=builder /target/kernel/armv7a-none-eabi/debug/kernel $V5_SIM_KERNEL_PATH

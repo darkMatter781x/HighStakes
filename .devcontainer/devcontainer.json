@@ -6,8 +6,14 @@
   "customizations": {
     "vscode": {
       "extensions": [
+        "jeff-hykin.better-cpp-syntax",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "streetsidesoftware.code-spell-checker",
+        "cschlosser.doxdocgen",
+        "mhutchie.git-graph",
         "sigbots.pros",
-        "llvm-vs-code-extensions.vscode-clangd"
+        "eamodio.gitlens",
+        "vivaxy.vscode-conventional-commits"
       ]
     }
   }
