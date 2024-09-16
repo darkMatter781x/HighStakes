@@ -13,7 +13,8 @@
         "mhutchie.git-graph",
         "sigbots.pros",
         "eamodio.gitlens",
-        "vivaxy.vscode-conventional-commits"
+        "vivaxy.vscode-conventional-commits",
+        "hediet.debug-visualizer"
       ]
     }
   }

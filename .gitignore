@@ -17,3 +17,6 @@ temp.errors
 
 # Vscode per machine settings
 .vscode/c_cpp_properties.json
+
+# python pretty printer
+__pycache__
