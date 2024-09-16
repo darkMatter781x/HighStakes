@@ -1,0 +1,47 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build for Sim",
+      "type": "shell",
+      "command": "make",
+      "args": [
+        "VEXIDE_SIMULATION=1",
+        "quick",
+        "-j"
+      ],
+      "options": {
+        "env": {
+          "PATH": "${env:PATH}:/home/vscode/.vscode-remote/data/User/globalStorage/sigbots.pros/install/pros-toolchain-linux/bin"
+        }
+      },
+      "group": "build"
+    },
+    {
+      "label": "Run Sim in GDB Mode",
+      "type": "shell",
+      "command": "echo \"starting simulator in debug mode!\" && simulator ./bin/monolith.bin --gdb",
+      "isBackground": true,
+      "dependsOn": "Build for Sim",
+      "problemMatcher": [
+        {
+          "pattern": [
+            {
+              "regexp": ".",
+              "file": 1,
+              "location": 2,
+              "message": 3
+            }
+          ],
+          "background": {
+            "activeOnStart": true,
+            "beginsPattern": ".",
+            "endsPattern": "starting simulator in debug mode!",
+          }
+        }
+      ]
+    }
+  ]
+}
