@@ -1,13 +1,8 @@
-#include "pros/adi.hpp"
-#include <cfloat>
-#include <climits>
-#include <cmath>
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <vector>
-
 #pragma once
+
+#include <cfloat>
+#include <cmath>
+#include <cstdint>
 
 using HexRGB = uint32_t;
 
@@ -118,65 +113,3 @@ template <typename T> RGB<T> hsvToRgb(const HSV<T>& hsv) {
 
   return rgb + m;
 }
-
-/**
- * @brief Provides additional functionality to the LED object
- */
-class LedStrip : protected pros::adi::LED {
-  public:
-    LedStrip(pros::adi::LED& strip);
-
-    /**
-     * @brief Sets the color of the specified pixel on the strip.
-     *
-     * @param index Zero based index of desired pixel.
-     * @param color Desired color.
-     */
-    void setPixel(size_t index, HexRGB color);
-
-    /**
-     * @brief Sets all the pixels to the specified color.
-     */
-    void setAll(HexRGB color);
-
-    /**
-     * @brief Sets all the pixels to 0.
-     */
-    void clear();
-
-    /**
-     * @brief Sets all the pixels to be a gradient between startColor and
-     * endColor.
-     * @param startColor The desired color of the first pixel.
-     * @param endColor The desired color of the last pixel.
-     */
-    void setGradient(uint32_t startColor, uint32_t endColor);
-
-    /**
-     * @brief Shifts colors of all pixels by distance pixel positions.
-     * So, if the strip was [red, green, blue], then after this a shift
-     * with distance 1, it would then be [blue, red, green].
-     * @param distance How far the pixels should be shifted.
-     */
-    void shift(size_t distance = 1);
-
-    void
-    cycle(float speed,
-          std::function<uint32_t(HexRGB a, HexRGB b, float t)> interpolator);
-
-    /** @brief Force update the led. */
-    void update();
-
-    /** @return the length of the strip */
-    size_t getLength() const;
-
-    /** @return the color at index */
-    const HexRGB& operator[](int index) const;
-    /** @return the color at index */
-    const HexRGB& at(int index) const;
-
-    std::vector<HexRGB>& getBuffer();
-    const std::vector<HexRGB>& getBuffer() const;
-  private:
-    using super = pros::adi::LED;
-};

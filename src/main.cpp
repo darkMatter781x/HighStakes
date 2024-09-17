@@ -1,6 +1,5 @@
 #include "main.h"
 #include "config.h"
-#include "led.h"
 #include "pros/rtos.hpp"
 #include "robot.h"
 
@@ -24,8 +23,45 @@ void initialize() {
 
   // ensure robot is initialized
   Robot::get();
+  // LED Testing
+  // pros::delay(1000);
+  // std::vector<std::shared_ptr<LedStrip>> strips;
+  // for (char adiPort = 'A'; adiPort <= 'H'; adiPort++) {
+  //   strips.push_back(
+  //       LedStrip::create({8, adiPort}, size_t(adiPort - 'A' + 1), 0.1));
+  // }
 
-  // // LED Testing
+  while (true) {
+    // for (auto strip : strips) {
+    //   strip->buf().setAll(0x550000);
+    //   pros::delay(1000);
+    // }
+    // for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
+    //   // pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
+    //   // strip.set_all(0xFFFFFF);
+    //   // pros::delay(250);
+    // }
+    RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.rightUnderGlow->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.leftLift->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.rightLift->buf().setAll(0xFF0000);
+    pros::delay(250);
+  }
+
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550000);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x005500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x000055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.lift.set_all(0x550055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x555500);
   // LedStrip leftStrip {RobotConfig::LEDs::leds.leftUnderGlow};
   // LedStrip rightStrip {RobotConfig::LEDs::leds.rightUnderGlow};
   // pros::delay(500);
@@ -79,4 +115,6 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+  setLedController(IntakeFilterDisplay);
+}

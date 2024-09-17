@@ -1,5 +1,9 @@
 #include "config.h"
 
-RobotConfig::LEDs RobotConfig::LEDs::leds = {.lift =pros::adi::LED{'A', 64},
-                                             .leftUnderGlow = pros::adi::LED{{10, 'A'}, 45},
-                                             .rightUnderGlow = pros::adi::LED{{10, 'E'}, 45}};
+// 1, 3, 4, 6 adi ports work
+RobotConfig::LEDs RobotConfig::LEDs::leds = {
+    .leftLift = LedStrip::create({8, 'C'}, 33, 0.1) /* nullptr */,
+    .rightLift = LedStrip::create({8, 'H'}, 33, 0.1) /* nullptr */,
+    .leftUnderGlow = LedStrip::create({8, 'E'}, 45, 0.1) /* nullptr */,
+    .rightUnderGlow = LedStrip::create({8, 'F'}, 45, 0.1) /* nullptr */,
+};
