@@ -24,13 +24,31 @@ void initialize() {
   // ensure robot is initialized
   Robot::get();
   // LED Testing
-  pros::delay(1000);
+  // pros::delay(1000);
+  // std::vector<std::shared_ptr<LedStrip>> strips;
+  // for (char adiPort = 'A'; adiPort <= 'H'; adiPort++) {
+  //   strips.push_back(
+  //       LedStrip::create({8, adiPort}, size_t(adiPort - 'A' + 1), 0.1));
+  // }
+
   while (true) {
-    for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
-      pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
-      strip.set_all(0xFFFFFF);
-      pros::delay(250);
-    }
+    // for (auto strip : strips) {
+    //   strip->buf().setAll(0x550000);
+    //   pros::delay(1000);
+    // }
+    // for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
+    //   // pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
+    //   // strip.set_all(0xFFFFFF);
+    //   // pros::delay(250);
+    // }
+    RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.rightUnderGlow->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.leftLift->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.rightLift->buf().setAll(0xFF0000);
+    pros::delay(250);
   }
 
   // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550000);

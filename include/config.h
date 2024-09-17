@@ -71,7 +71,8 @@ struct RobotConfig {
     };
 
     struct LEDs {
-        std::shared_ptr<LedStrip> lift;
+        std::shared_ptr<LedStrip> leftLift;
+        std::shared_ptr<LedStrip> rightLift;
         std::shared_ptr<LedStrip> leftUnderGlow;
         std::shared_ptr<LedStrip> rightUnderGlow;
         // private:

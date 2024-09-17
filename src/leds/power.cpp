@@ -13,6 +13,9 @@ void LedPowerHandler::update() {
     for (auto j = range.first; j != range.second; ++j) {
       auto strip = j->second;
       const float current = strip->getCurrent();
+
+      // if (pros::millis() % 100 < 10)
+        // printf("⇃ %ipx, %fW\n", strip->size(), current);
       // stripCurrents.push_back(current);
       expanderCurrent += current;
     }
@@ -24,7 +27,7 @@ void LedPowerHandler::update() {
       // If wouldn't over-current, then don't reduce the brightness
       strip->applyReduction(reduction);
     }
-
+    if (pros::millis() % 100 < 10) printf("reduction: %f\n", reduction);
     // Move to the next key
     i = range.second;
   }
@@ -44,4 +47,4 @@ LedPowerHandler& LedPowerHandler::get() {
 
 LedPowerHandler::LedPowerHandler() : Subsystem(), m_strips() {}
 
-const float LedPowerHandler::currentLimit = 1.95;
+const float LedPowerHandler::currentLimit = 2;

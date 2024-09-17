@@ -1,7 +1,8 @@
 #include "leds/strip.h"
 #include "leds/power.h"
+#include "pros/rtos.hpp"
 
-RGBBuffer::RGBBuffer(size_t length) : m_buffer {length} {}
+RGBBuffer::RGBBuffer(size_t length) : m_buffer(length) {}
 
 void RGBBuffer::setPixel(size_t index, HexRGB color) {
   if (m_buffer.at(index) != color) updateHash();
@@ -87,13 +88,19 @@ size_t LedStrip::size() const { return buf().size(); }
 
 float LedStrip::getCurrent() const {
   // If hash is the same, then use the cached current.
-  if (buf().getHash() == m_prevCurrent.first) return m_prevCurrent.second;
+  if (buf().getHash() == m_prevCurrent.first) {
+    // if (pros::millis() % 100 < 10) printf("current calc: cache hit!\n");
+    return m_prevCurrent.second;
+  }
+  printf("current calc: cache miss!\n");
 
   float current = 0;
   for (auto pixel : buf().getBuffer()) {
-    auto rgb = RGB<float>::fromHex(pixel);
-    current += (rgb.r + rgb.g + rgb.b) * m_wattsPerPixelChannel;
+    auto rgb = RGB<size_t>::fromHex(pixel) / 255.0f;
+    current += (rgb.r + rgb.g + rgb.b) * m_wattsPerPixelChannel / (10.f / 3);
+    // printf("%#08X, ", pixel);
   }
+  // printf("\n");
   m_prevCurrent = std::pair<size_t, float> {buf().getHash(), current};
   return current;
 }
