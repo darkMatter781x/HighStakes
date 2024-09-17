@@ -2,6 +2,9 @@
 
 #include "leds/strip.h"
 #include "lemlib/chassis/chassis.hpp"
+#include "pros/adi.hpp"
+#include "pros/imu.hpp"
+#include "subsystems/intake.h"
 #include "pros/optical.hpp"
 
 /**
@@ -21,7 +24,7 @@ struct RobotConfig {
 
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
-        pros::adi::Pneumatics ringClaw;
+        pros::adi::Pneumatics ringKicker;
       private:
         friend struct RobotConfig;
         static Pneumatics pneumatics;

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
+#include "subsystems/mogo.h"
 
 /**
  * @brief Provides an abstracted interface for controlling the robot and reading
