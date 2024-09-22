@@ -8,7 +8,7 @@
       "type": "cppdbg",
       "name": "Launch Program",
       "request": "launch",
-      "program": "${workspaceFolder}/bin/monolith.elf",
+      "program": "${env:V5_SIM_KERNEL_PATH}",
       "cwd": "${workspaceFolder}",
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
       "miDebuggerServerAddress": "localhost:1234",
@@ -21,6 +21,7 @@
           "ignoreFailures": false
         },
       ],
+      "customLaunchSetupCommands": [],
     }
   ]
 }

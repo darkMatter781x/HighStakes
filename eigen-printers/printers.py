@@ -26,7 +26,90 @@
 #      end
 
 log_file = None
+def merge_dicts(*dict_args):
+    """
+    Given any number of dictionaries, shallow copy and merge into a new dict,
+    precedence goes to key-value pairs in latter dictionaries.
+    """
+    result = {}
+    for dictionary in dict_args:
+        result.update(dictionary)
+    return result
 
+def register_commands():
+    class WriteConfig (gdb.Command):
+        """Greet the whole world."""
+
+        def __init__ (self):
+            super (WriteConfig, self).__init__ ("conf", gdb.COMMAND_USER, prefix=True)
+
+        def invoke (self, arg, from_tty):
+            try:
+                args = gdb.string_to_argv(arg)
+                file_name = args[0]
+                gdb_command = args[1:]
+                out_file = None
+                try:
+                    out_file = open(file_name, "w")
+                except Exception as err:
+                    print("failed to open config dump file: ", err)
+                out_file.write(gdb.execute(" ".join(gdb_command), False, True))
+                out_file.close()
+                print("wrote to file: {file_name}".format(file_name=file_name))
+            except Exception as err:
+                print("failed to write config: ", err)
+    WriteConfig()
+
+    class WriteAllConfig (gdb.Command):
+        """Greet the whole world."""
+
+        def __init__ (self):
+            super (WriteAllConfig, self).__init__ ("conf all", gdb.COMMAND_USER)
+
+        def invoke (self, arg, from_tty):
+            import re
+            import json
+
+            pattern = re.compile('^show .+ --')
+            def find_all_show_subcommands(cmd):
+                if cmd == None:
+                    cmd = "show"
+                sub_most_cmd = cmd.split(" ")[-1]
+                arr = [
+                    find_all_show_subcommands(line.split(" --")[0].split(",")[0])
+                    for line
+                    in gdb.execute("help " + cmd, False, True).split("\n")
+                    if pattern.match(line)
+                ]
+                if len(arr) == 0:
+                    return sub_most_cmd
+                return (sub_most_cmd, arr)
+            
+            def get_show_config(cmd, parents=[]):
+                if type(cmd) == str:
+                    return {cmd: gdb.execute(" ".join(parents) + " " + cmd , False, True)}
+                if type(cmd) == tuple:
+                    return {cmd[0]: merge_dicts(*(get_show_config(subcmd, parents=parents + [cmd[0]]) for subcmd in cmd[1])) }
+
+            try:
+                file_name = arg
+                out_file = None
+                
+                shows = find_all_show_subcommands(None)
+                result_dict = get_show_config(shows)["show"]
+                result_json = json.dumps(result_dict, indent=2)
+                try:
+                    out_file = open(file_name, "w")
+                except Exception as err:
+                    print("failed to open config dump file: ", err)
+                
+                out_file.write(str(result_json))
+                out_file.close()
+
+                print("wrote to file: {file_name}".format(file_name=file_name))
+            except Exception as err:
+                print("failed to create config file: ", err)
+    WriteAllConfig()
 
 def log(*a):
     pass
