@@ -1,7 +1,7 @@
 #include "main.h"
 #include "config.h"
 #include "led.h"
-#include "pros/rtos.hpp"
+#include "pros/apix.h"
 #include "robot.h"
 
 void screen() {
@@ -20,6 +20,14 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+  #ifdef VEXIDE_SIMULATION
+  pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
+  printf("whats up simulator!?\n");
+    while (1) {
+    printf("Im running in a codespace!!\n");
+    pros::delay(100);
+  }
+  #endif
   pros::lcd::initialize();
 
   // ensure robot is initialized

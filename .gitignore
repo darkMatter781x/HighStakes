@@ -8,10 +8,15 @@
 
 # PROS
 bin/
-.vscode/
 .cache/
 compile_commands.json
 temp.log
 temp.errors
 *.ini
 .d/
+
+# Vscode per machine settings
+.vscode/c_cpp_properties.json
+
+# python pretty printer
+__pycache__

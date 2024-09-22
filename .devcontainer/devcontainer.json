@@ -1,0 +1,24 @@
+{
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "clangd.path": "/usr/local/share/clangd/bin/clangd"
+      },
+      "extensions": [
+        "jeff-hykin.better-cpp-syntax",
+        "llvm-vs-code-extensions.vscode-clangd",
+        "streetsidesoftware.code-spell-checker",
+        "cschlosser.doxdocgen",
+        "mhutchie.git-graph",
+        "ms-azuretools.vscode-docker",
+        "eamodio.gitlens",
+        "vivaxy.vscode-conventional-commits",
+        "hediet.debug-visualizer"
+      ]
+    }
+  }
+}
