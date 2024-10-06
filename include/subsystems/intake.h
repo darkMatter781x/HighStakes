@@ -15,6 +15,18 @@ class Intake : public Subsystem {
 
     struct BaseState {
         virtual void update(Intake& intake) = 0;
+        /**
+         * @brief Run when intake state is switched to this.
+         * Do not run Intake::setState() here, as it may lead to infinite
+         * recursion.
+         */
+        virtual void start(Intake& intake);
+        /**
+         * @brief Run when intake state is switched from this.
+         * Do not run Intake::setState() here, as it may lead to infinite
+         * recursion.
+         */
+        virtual void end(Intake& intake);
     };
 
     /** @brief Waits until ring is sensed. */
@@ -24,11 +36,15 @@ class Intake : public Subsystem {
 
         void setDest(COLOR color, DESTINATION dest);
         void update(Intake& intake) override;
+
+        virtual void start(Intake& intake) override;
+        virtual void end(Intake& intake) override;
     };
 
     /** @brief State where a ring is being moved based on filter. */
     struct FilteringState : public BaseState {
         size_t startTime;
+        float startPosition;
         Filtering afterState;
 
         /** @brief currently handled ring color */
@@ -37,10 +53,15 @@ class Intake : public Subsystem {
         /** @brief destination of the ring */
         DESTINATION dest;
 
+        /** @return number of inches traveled by instascore chain */
+        float getInchesTraveled(const Intake& intake) const;
         /**
          * @brief Attempts to switch destination. May fail if too far along.
          * Updates afterState. */
         virtual void switchDest(Intake& intake, DESTINATION dest);
+
+        virtual void start(Intake& intake) override;
+        virtual void end(Intake& intake) override;
 
         FilteringState(Filtering afterState, COLOR color);
     };
@@ -71,6 +92,8 @@ class Intake : public Subsystem {
     struct IdlingToKick : public FilteringState {
         DESTINATION dest = KICK;
 
+        virtual void start(Intake& intake) override;
+        virtual void end(Intake& intake) override;
         IdlingToKick(Filtering afterState, COLOR color);
         void update(Intake& intake) override;
     };
@@ -88,10 +111,16 @@ class Intake : public Subsystem {
                      OuttakingToLift, Outtaking, Idling>;
 
     struct Config {
-        size_t intakingToLiftDuration;
+        size_t intakingToLiftInches;
         size_t outtakingToLiftDuration;
         size_t intakingToKickDuration;
         size_t idlingToKickDuration;
+
+        /**
+         * @brief ratio of motor rotations to inches traveled by instascore
+         * chain
+         */
+        float chainRatio;
 
         static Config config;
     };
