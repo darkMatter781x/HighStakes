@@ -1,4 +1,5 @@
 #include "subsystems/lift.h"
+#include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
 #include "pros/motors.h"
 #include "pros/rotation.hpp"
@@ -56,7 +57,9 @@ float Lift::calcLiftAngle() const {
   return m_rotation.get_angle() / 100.0 * m_config.gearRatio;
 }
 
-float Lift::calcError() const { return getTargetAngle() - calcLiftAngle(); }
+float Lift::calcError() const {
+  return lemlib::angleError(getTargetAngle(), calcLiftAngle(), false);
+}
 
 const Lift::State& Lift::getState() { return m_state; }
 
