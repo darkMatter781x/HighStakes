@@ -19,7 +19,12 @@ void Lift::update() {
     if (std::abs(error) > m_config.controllerSettings.smallError)
       m_exitCondition.reset();
     else {
-      m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+      switch (m_state) {
+        case State::BOTTOM:
+          m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+          break;
+        default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
+     };
       m_motors.brake();
       pros::lcd::print(2, "braking");
       return;
