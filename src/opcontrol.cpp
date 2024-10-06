@@ -27,6 +27,20 @@ inline Intake::COLOR operator!(Intake::COLOR color) {
   }
 }
 
+// TODO: deduplicate this with the one in intake.cpp
+template <class... Ts> struct overloads : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts> overloads(Ts...) -> overloads<Ts...>;
+
+std::string destToStrOp(Intake::DESTINATION dest) {
+  switch (dest) {
+    case Intake::MOGO: return "MOGO";
+    case Intake::KICK: return "KICK";
+    case Intake::LIFT: return "LIFT";
+  }
+}
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -42,9 +56,14 @@ inline Intake::COLOR operator!(Intake::COLOR color) {
  */
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
-
   /** The color of ring we are directing to the destination with the filter. */
   Intake::COLOR filterColor = Intake::COLOR::RED;
+  auto intakeStateToStr = overloads(
+      [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
+      [filterColor](Intake::Filtering& state) {
+        return destToStrOp(filterColor == Intake::BLUE ? state.blue : state.red);
+      },
+      [](Intake::BaseState& state) { return std::string("none"); });
   bool prevIntakeBtn = false;
 
   while (true) {
@@ -81,7 +100,9 @@ void opcontrol() {
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
-
+    auto intakeState = bot.intake.getState();
+    master.print(1, 0, "%s->%s", filterColor == Intake::COLOR::RED ? "R" : "B",
+                 std::visit(intakeStateToStr, intakeState));
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }
