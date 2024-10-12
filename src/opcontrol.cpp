@@ -1,6 +1,7 @@
 #include "main.h"
 #include "pros/misc.h"
 #include "robot.h"
+#include "tuning.h"
 
 namespace controller_mapping {
 const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
@@ -103,6 +104,12 @@ void opcontrol() {
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == Intake::COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
+#ifdef TUNING
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+      tuningCLI();
+#endif
+
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }
