@@ -3,33 +3,53 @@
 #include "leds/power.h"
 #include "leds/strip.h"
 #include "subsystems.h"
+#include <optional>
 
-void AllianceColorLedDisplay(){
+
+
+std::string LED::getAllianceColor(){
+  
+}
+
+int LED::getMotorDisconect(){
+}
+
+std::optional<Intake::DESTINATION> LED::getRingColorDestination(Intake::COLOR color){
+  
+}
+
+void LED::motorDisconnectDisplay(){
+  switch (getMotorDisconect()) {
+    case 16:
+    case 15:
+    case 14:
+    case 13:
+    case 12:
+    case 11:
+    case 17:
+    case 9:
+  };
+}
+
+void LED::allianceColorDisplay(){
 
 }
 
-void AutonWarningLedDisplay(){
+void LED::ringFilterDisplay(){
 
 }
 
-void MotorDisconnectLedDisplay(){
-
-}
-
-void IntakeFilterLedDisplay(){
-
-}
-
-void callFunctions(std::function<void(void)> callback){
-  callback();  
-}
-
-void LEDs::mainControl(){
-
-switch (m_state) {
-case preAuton: callFunctions(&AllianceColorLedDisplay);
-case auton: callFunctions(&AutonWarningLedDisplay);
-case driver: callFunctions(&IntakeFilterLedDisplay);
-}
-
+void LED::ledHandler(){
+  if (s_state != motorDisconnect){
+    switch (m_state){
+      case matchState::preAuton:
+        allianceColorDisplay();
+      case matchState::Auton:
+        
+      case matchState::Driver:
+        ringFilterDisplay(); 
+    };
+  } else{
+    motorDisconnectDisplay();
+  }
 }
