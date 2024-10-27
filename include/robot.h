@@ -2,13 +2,14 @@
 #include "config.h"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
+#include "subsystems/mogo.h"
 
 /**
  * @brief Provides an abstracted interface for controlling the robot and reading
  * from sensors. Follows the singleton pattern.
  */
 class Robot : public lemlib::Chassis {
-  private:
+  public:
     Robot(const RobotConfig& config);
 
     /** @brief Should ever be one instance of Robot, and that's this one. */

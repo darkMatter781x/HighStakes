@@ -28,7 +28,9 @@ Robot::Robot(const RobotConfig& config)
                     config.tunables.angularController, config.makeSensors(),
                     &config.tunables.driveCurve),
     m_mogo {config.pneumatics.mogoClamp}, mogo(m_mogo),
-    m_intake {config.motors.intake, config.sensors.intake}, intake(m_intake),
+    m_intake {config.motors.intake, config.sensors.intake,
+              config.pneumatics.ringKicker, Intake::Config::config},
+    intake(m_intake),
     m_lift {config.motors.lift, config.sensors.lift, Lift::Config::config},
     lift(m_lift), m_config(config) {}
 
