@@ -2,7 +2,7 @@
 #include "lemlib/chassis/chassis.hpp"
 
 Lift::Config Lift::Config::config {
-    .bottom = 289,
+    .bottom = 283,
     /** parallel to ground ish */
     .middle = 324,
     .top = 357.5,
