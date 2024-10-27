@@ -26,6 +26,6 @@ RobotConfig::Tunables RobotConfig::Tunables::tunables {
             350, // largeErrorTimeout
             0 // slew rate
         },
-    .horizontalDrift = 0.0,
+    .horizontalDrift = 10.0,
     .imuGain = 0.0,
     .driveCurve = lemlib::ExpoDriveCurve {0, 0, 1}};
