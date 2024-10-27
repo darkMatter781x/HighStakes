@@ -98,6 +98,14 @@ class Intake : public Subsystem {
         void update(Intake& intake) override;
     };
 
+    struct IntakingToMogo : public FilteringState {
+        DESTINATION dest = MOGO;
+
+        IntakingToMogo(Filtering afterState, COLOR color);
+        void update(Intake& intake) override;
+        void switchDest(Intake& intake, DESTINATION dest) override;
+    };
+
     struct Outtaking : public BaseState {
         void update(Intake& intake) override;
     };
@@ -108,10 +116,10 @@ class Intake : public Subsystem {
 
     using State =
         std::variant<Filtering, IntakingToKick, IdlingToKick, IntakingToLift,
-                     OuttakingToLift, Outtaking, Idling>;
+                     OuttakingToLift, Outtaking, Idling, IntakingToMogo>;
 
     struct Config {
-        size_t intakingToLiftInches;
+        float intakingToLiftInches;
         size_t outtakingToLiftDuration;
         size_t intakingToKickDuration;
         size_t idlingToKickDuration;
@@ -147,6 +155,15 @@ class Intake : public Subsystem {
     void update() override;
 
     const State& getState() const;
+
+    /** @brief Number of rings intaked. */
+    size_t numOfRings = 0;
+    /** @brief Number of rings intaked to lift. */
+    size_t numOfLiftRings = 0;
+    /** @brief Number of rings intaked to kicker. */
+    size_t numOfKickRings = 0;
+    /** @brief Number of rings intaked to mogo. */
+    size_t numOfMogoRings = 0;
 
     Intake(pros::MotorGroup& motors, pros::Optical& optical,
            pros::adi::Pneumatics& kicker, Config conf);
