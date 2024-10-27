@@ -36,6 +36,8 @@ constexpr float MIN_X = -MAX_X;
 constexpr float MAX_Y = TILE * 3;
 constexpr float MIN_Y = -MAX_Y;
 
+/** Diameter of the rings */
+constexpr float RING_DIAM = 7;
 } // namespace field
 
 namespace robot {
