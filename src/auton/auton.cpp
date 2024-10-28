@@ -101,7 +101,7 @@ void waitUntil(std::function<bool(void)> condition, int timeConditionIsTrue = 0,
  */
 float trigAngleToHeading(float angle) { return -(angle * 180 / M_PI) + 90; }
 
-// Autonomous for negative rush (side of the field with negative corners) 
+// Autonomous for negative rush (side of the field with negative corners)
 void autonomous() {
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
@@ -117,12 +117,21 @@ void autonomous() {
   // Robot facing blue alliance station.
   // Neil knows set
   bot.setPose(
-      {MIN_X + TILE - 2.5, TILE * 2 - 4.5 - DRIVE_WIDTH / 2, BLUE_STATION});
-  const lemlib::Pose preloadRing = {MIN_X + TILE + 6, TILE + 4};
+      {MIN_X + TILE - 3.75, TILE * 2 - 4.5 - DRIVE_WIDTH / 2, BLUE_STATION});
+  const lemlib::Pose preloadRing = {MIN_X + TILE, TILE + 4};
 
-  // move past mogo, and first stack of rings
+  // Deploy basket
+  bot.lift.goToMiddle();
+  bot.intake.outtake();
+
+  // Move past mogo, and first stack of rings
   bot.moveToPoint(-TILE * .75, bot.getPose().y, 2000, {.minSpeed = 64});
-  pros::delay(50);
+  pros::delay(350);
+
+  // Reset intake and lift
+  bot.lift.goToBottom();
+  bot.intake.stop();
+
   waitUntil(
       [] { return bot.getPose().x > MIN_X + TILE * 2 || !bot.isInMotion(); });
   bot.cancelMotion();
@@ -270,78 +279,106 @@ void autonomous() {
   bot.cancelMotion();
 
   // Once third ring is intaked, intake preload/4th ring
-  bot.moveToPose(preloadRing.x, preloadRing.y, STANDS, 1000, {.minSpeed = 48});
-  // Wait until passed ring
-  waitUntil(
-      [preloadRing] {
-        return bot.getPose().y < preloadRing.y || !bot.isInMotion();
-      },
-      0, 1000);
-  bot.cancelMotion();
-
-  const lemlib::Pose fourthStack {
-      -TILE * 2 + 7.5, 0 + 13 /* distance from center of robot to lift */};
-  // Get lift beside ring stack
-  bot.moveToPose(fourthStack.x, fourthStack.y, STANDS, 1000, {.maxSpeed = 64});
-  bot.waitUntilDone();
+  bot.moveToPose(preloadRing.x, preloadRing.y - 5, STANDS, 1000);
+  // Wait for third ring to be fully intaked into mogo
   pros::delay(500);
-
-  // Push red ring off of stack
-  bot.turnToHeading(STANDS + 60, 500, {.maxSpeed = 48});
-
-  // Wait until preload is fully intaked
-  waitUntil(
-      [startingMogoRings] {
-        return (startingMogoRings + 2) < bot.intake.numOfMogoRings;
-      },
-      0, 500);
-
-  // intake red ring that was pushed
+  // Intake preload to lift
   bot.intake.intakeTo(Intake::RED, Intake::LIFT);
   bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
 
-  tank(48, 48, 500, 0);
-  // Wait until ring is sensed by current
-  waitUntil(
-      [startingLiftRings, &hasSensedFirstRing] {
-        hasSensedFirstRing |=
-            bot.intake.getSensedRing() == Intake::RED ||
-            (bot.m_config.motors.intake.get_current_draw() / 1000) /*amps*/ *
-                    12 /*volts*/
-                < 9 /*watts*/;
-        return hasSensedFirstRing;
-      },
-      50, 500, true);
-  pros::delay(250);
-  bot.moveToPose(MIN_X - TILE * 1.5, 0, RED, 1000, {.forwards = false});
-
-  // wait until fully intaked
+  // Wait until ring is intaked
   waitUntil(
       [startingLiftRings] {
-        return (startingLiftRings + 1) < bot.intake.numOfLiftRings;
+        return (startingLiftRings + 1) < bot.intake.numOfMogoRings;
       },
-      0, 1300);
-  pros::delay(500);
-  bot.cancelMotion();
-  tank(-64, -64, 200, 0);
-  stop();
-  // Lift up lift and align with alliance stake
-  bot.lift.goToMiddle();
-  pros::delay(800);
-  bot.moveToPose(MIN_X - 15, 0, RED, 600);
+      0, 1600);
+  const lemlib::Pose allianceWallStake {MIN_X, 0};
+  const lemlib::Pose scoreOnWallStake =
+      allianceWallStake +
+      lemlib::Pose {float(sqrt(2) / 2), float(sqrt(2) / 2), STANDS + 45} * 12;
   bot.waitUntilDone();
+  pros::delay(500);
+  // Jostle ring into lift
+  tank(-127, -127, 100, 0);
+  tank(127, 127, 100, 0);
+  stop();
+  pros::delay(300);
 
-  // Stop intake from goofying things up
-  bot.intake.stop();
+  // Go to wall stake scoring pose
+  bot.moveToPose(scoreOnWallStake.x, scoreOnWallStake.y, STANDS + 45, 2000,
+                 {.maxSpeed = 48});
+  // Give ring a moment to settle in intake
+  pros::delay(500);
 
-  // Put the rings on stake
+  // Position lift above wall stake.
+  bot.lift.goToMiddle();
+  bot.waitUntilDone();
+  pros::delay(500);
+
+  // Score on wall stake
   bot.lift.goToBottom();
-  pros::delay(400);
-
-  // Back away from stake
-  tank(-48, -48, 200, 0);
+  pros::delay(500);
 
   // Touch ladder
-  bot.moveToPose(-TILE / 2, TILE / 2, REF, 2000,
-                 {.forwards = false, .lead = .8});
+  bot.moveToPose(-TILE * .75, TILE * .75, REF, 2000, {.forwards = false});
+
+  // const lemlib::Pose fourthStack {
+  //     -TILE * 2, 0 + 9 /* distance from center of robot to intake */};
+  // // Get near fourth ring stack
+  // bot.moveToPose(fourthStack.x, fourthStack.y + 12, STANDS, 1000,
+  //                {.maxSpeed = 48});
+  // // Let ring fully intake
+  // pros::delay(300);
+  // // Intake red ring that is on top of stack
+  // bot.lift.goToMiddle();
+  // pros::delay(300);
+  // // intake ring
+  // bot.moveToPose(fourthStack.x, fourthStack.y, STANDS, 1000, {.maxSpeed =
+  // 64});
+
+  // // put rings into lift
+  // pros::delay(300);
+  // bot.intake.intakeTo(Intake::RED, Intake::LIFT);
+  // bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
+
+  // return;
+  // // Wait until ring is sensed by current
+  // waitUntil(
+  //     [startingLiftRings, &hasSensedFirstRing] {
+  //       hasSensedFirstRing |=
+  //           bot.intake.getSensedRing() == Intake::RED ||
+  //           (bot.m_config.motors.intake.get_current_draw() / 1000) /*amps*/ *
+  //                   12 /*volts*/
+  //               < 9 /*watts*/;
+  //       return hasSensedFirstRing;
+  //     },
+  //     50, 500, true);
+  // pros::delay(250);
+  // bot.moveToPose(MIN_X - TILE * 1.5, 0, RED, 1000, {.forwards = false});
+
+  // // wait until fully intaked
+  // waitUntil(
+  //     [startingLiftRings] {
+  //       return (startingLiftRings + 1) < bot.intake.numOfLiftRings;
+  //     },
+  //     0, 1300);
+  // pros::delay(500);
+  // bot.cancelMotion();
+  // tank(-64, -64, 200, 0);
+  // stop();
+  // // Lift up lift and align with alliance stake
+  // bot.lift.goToMiddle();
+  // pros::delay(800);
+  // bot.moveToPose(MIN_X - 15, 0, RED, 600);
+  // bot.waitUntilDone();
+
+  // // Stop intake from goofying things up
+  // bot.intake.stop();
+
+  // // Put the rings on stake
+  // bot.lift.goToBottom();
+  // pros::delay(400);
+
+  // // Back away from stake
+  // tank(-48, -48, 200, 0);
 }
