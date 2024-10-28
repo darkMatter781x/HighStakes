@@ -132,7 +132,7 @@ void Intake::IntakingToLift::update(Intake& intake) {
 }
 
 void Intake::OuttakingToLift::update(Intake& intake) {
-  // If we quickly change the direction of the intake, 
+  // If we quickly change the direction of the intake,
   // it will decrease consistency of the intaking to the lift.
   // So, we delay the change a bit.
   if (pros::millis() - startTime < 200) {
@@ -162,14 +162,30 @@ void Intake::IntakingToLift::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::IntakingToMogo::update(Intake& intake) {
+  /** Timestamp of when ring started to not be sensed. -1 means ring was
+  sensed
+   * previously. */
+  static int startedNotSensingRing = -1;
   intake.m_motors.move(127);
   // Wait until no longer sensing ring to increment mogo rings.
   // Might need a filter to ensure rings aren't counted twice.
-  if (intake.getSensedRing() != color) {
+  bool sensedRing = intake.getSensedRing() == color;
+  if (!sensedRing && startedNotSensingRing == -1)
+    startedNotSensingRing = pros::millis();
+  else if (!sensedRing && pros::millis() - startedNotSensingRing > 100) {
     intake.setState(afterState);
     intake.numOfMogoRings++;
     intake.numOfRings++;
-  }
+  } else if (sensedRing) startedNotSensingRing = -1;
+
+  // intake.m_motors.move(127);
+  // // Wait until no longer sensing ring to increment mogo rings.
+  // // Might need a filter to ensure rings aren't counted twice.
+  // if (intake.getSensedRing() != color) {
+  //   intake.setState(afterState);
+  //   intake.numOfMogoRings++;
+  //   intake.numOfRings++;
+  // }
 }
 
 void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
