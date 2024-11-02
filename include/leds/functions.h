@@ -27,4 +27,8 @@ void ringFilterDisplay();
 
 void ledHandler();
 
+std::shared_ptr<LedStrip> leftDrive; 
+std::shared_ptr<LedStrip> rightDrive; 
+std::shared_ptr<LedStrip> leftLift; 
+std::shared_ptr<LedStrip> rightLift; 
 };
