@@ -103,6 +103,8 @@ float trigAngleToHeading(float angle) { return -(angle * 180 / M_PI) + 90; }
 
 // Autonomous for negative rush (side of the field with negative corners)
 void autonomous() {
+  bot.setAlliance(ALLIANCE::BLUE);
+
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
   const auto defaultAngLargeExit = bot.angularLargeExit;
@@ -125,7 +127,7 @@ void autonomous() {
   bot.intake.outtake();
 
   // Move past mogo, and first stack of rings
-  bot.moveToPoint(-TILE * .75, bot.getPose().y, 2000, {.minSpeed = 64});
+  bot.moveToPoint({-TILE * .75, bot.getPose().y}, 2000, {.minSpeed = 64});
   pros::delay(350);
 
   // Reset intake and lift
@@ -136,13 +138,13 @@ void autonomous() {
       [] { return bot.getPose().x > MIN_X + TILE * 2 || !bot.isInMotion(); });
   bot.cancelMotion();
 
-  bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
-  bot.intake.intakeTo(Intake::RED, Intake::LIFT);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
 
   const lemlib::Pose firstMidRing = {-3.5, TILE * 2 - 3.5};
   // turn towards first stack of rings
-  bot.swingToPoint(firstMidRing.x, firstMidRing.y, lemlib::DriveSide::LEFT, 500,
-                   {.minSpeed = 64, .earlyExitRange = 20});
+  bot.swingToPoint({firstMidRing.x, firstMidRing.y}, lemlib::DriveSide::LEFT,
+                   500, {.minSpeed = 64, .earlyExitRange = 20});
   bot.waitUntilDone();
 
   // Prevent stopping motion immediately after getting to point, preventing
@@ -151,7 +153,7 @@ void autonomous() {
   bot.lateralSmallExit = lemlib::ExitCondition {0, INT_MAX};
 
   // move to first stack of rings
-  bot.moveToPoint(-8, TILE * 2 - 10, 1000, {.maxSpeed = 64});
+  bot.moveToPoint({-8, TILE * 2 - 10}, 1000, {.maxSpeed = 64});
   /** the number of rings robot starts with */
   bool hasSensedFirstRing = false;
   // let motion start, before waiting for it to finish
@@ -161,7 +163,7 @@ void autonomous() {
   waitUntil(
       [startingLiftRings, &hasSensedFirstRing] {
         hasSensedFirstRing |=
-            bot.intake.getSensedRing() == Intake::RED ||
+            bot.intake.getSensedRing() == bot.getColor() ||
             (bot.m_config.motors.intake.get_current_draw() / 1000) /*amps*/ *
                     12 /*volts*/
                 < 9 /*watts*/;
@@ -179,12 +181,12 @@ void autonomous() {
   const lemlib::Pose mogoPose = {-TILE, TILE, REF + 45};
   // Back up away from mid to prevent intaking more rings, and get mogo.
   // Go quickly till away from mid.
-  bot.moveToPoint(mogoPose.x, mogoPose.y /* , mogoPose.theta */, 400,
+  bot.moveToPoint(mogoPose, 400,
                   {.forwards = false, /* .lead = .7 , */ .earlyExitRange = 12});
 
   // Then slow down
   bot.moveToPoint(
-      mogoPose.x, mogoPose.y /* , mogoPose.theta */, 750,
+      mogoPose, 750,
       {.forwards = false, /* .lead = .7 , */ .maxSpeed = 48, .minSpeed = 32});
   // Wait until hit mogo, then clamp
   waitUntilDistToPose(mogoPose, 5, 500, true);
@@ -206,7 +208,7 @@ void autonomous() {
   bot.lateralPID.kD = defaultLatPID.kD / 4;
 
   // Move to second red ring
-  bot.moveToPose(-8, TILE * 2 - 1, 60, 1500,
+  bot.moveToPose({-8, TILE * 2 - 1, 60}, 1500,
                  {
                      .lead = .45,
                      .earlyExitRange = 6,
@@ -221,8 +223,8 @@ void autonomous() {
         0, 500);
 
   // Intake second ring into mogo
-  bot.intake.intakeTo(Intake::RED, Intake::MOGO);
-  bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   bot.waitUntilDone();
 
@@ -242,8 +244,7 @@ void autonomous() {
       trigAngleToHeading(backAwayFromMidTarget.angle(thirdRingStack));
 
   // Back away from mid and point towards third ring stack
-  bot.moveToPose(backAwayFromMidTarget.x, backAwayFromMidTarget.y,
-                 backAwayFromMidTarget.theta, 1000,
+  bot.moveToPose(backAwayFromMidTarget, 1000,
                  {
                      .forwards = false,
                      .lead = 0.4,
@@ -261,13 +262,13 @@ void autonomous() {
   // bot.lateralSmallExit = lemlib::ExitCondition {0, INT_MAX};
 
   // Move to third ring stack
-  bot.moveToPoint(thirdRingStack.x, thirdRingStack.y, 1300);
+  bot.moveToPoint(thirdRingStack, 1300);
   // Intake third ring into mogo
-  bot.intake.intakeTo(Intake::RED, Intake::MOGO);
-  bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Face towards preload, scooping up third ring if its still not there
-  bot.swingToPoint(preloadRing.x, preloadRing.y, lemlib::DriveSide::LEFT, 750,
+  bot.swingToPoint(preloadRing, lemlib::DriveSide::LEFT, 750,
                    {.direction = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE,
                     .maxSpeed = 64});
   // Wait until third ring fully intaked
@@ -279,12 +280,12 @@ void autonomous() {
   bot.cancelMotion();
 
   // Once third ring is intaked, intake preload/4th ring
-  bot.moveToPose(preloadRing.x, preloadRing.y - 5, STANDS, 1000);
+  bot.moveToPose({preloadRing.x, preloadRing.y - 5, STANDS}, 1000);
   // Wait for third ring to be fully intaked into mogo
   pros::delay(500);
   // Intake preload to lift
-  bot.intake.intakeTo(Intake::RED, Intake::LIFT);
-  bot.intake.intakeTo(Intake::BLUE, Intake::KICK);
+  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Wait until ring is intaked
   waitUntil(
@@ -294,8 +295,9 @@ void autonomous() {
       0, 1600);
   const lemlib::Pose allianceWallStake {MIN_X, 0};
   const lemlib::Pose scoreOnWallStake =
-      allianceWallStake +
-      lemlib::Pose {float(sqrt(2) / 2), float(sqrt(2) / 2), STANDS + 45} * 12;
+      (allianceWallStake +
+       lemlib::Pose {float(sqrt(2) / 2), float(sqrt(2) / 2)} * 12)
+          .withTheta(STANDS + 45);
   bot.waitUntilDone();
   pros::delay(500);
   // Jostle ring into lift
@@ -305,8 +307,7 @@ void autonomous() {
   pros::delay(300);
 
   // Go to wall stake scoring pose
-  bot.moveToPose(scoreOnWallStake.x, scoreOnWallStake.y, STANDS + 45, 2000,
-                 {.maxSpeed = 48});
+  bot.moveToPose(scoreOnWallStake, 2000, {.maxSpeed = 48});
   // Give ring a moment to settle in intake
   pros::delay(500);
 
@@ -320,7 +321,7 @@ void autonomous() {
   pros::delay(500);
 
   // Touch ladder
-  bot.moveToPose(-TILE * .75, TILE * .75, REF, 2000, {.forwards = false});
+  bot.moveToPose({-TILE * .75, TILE * .75, REF}, 2000, {.forwards = false});
 
   // const lemlib::Pose fourthStack {
   //     -TILE * 2, 0 + 9 /* distance from center of robot to intake */};

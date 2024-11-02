@@ -4,12 +4,10 @@
 #include "pros/optical.hpp"
 #include "subsystems.h"
 #include <variant>
+#include "color.h"
 
 class Intake : public Subsystem {
   public:
-    /** @brief Ring color. */
-    enum COLOR { RED, BLUE };
-
     /** @brief The destination of the ring. */
     enum DESTINATION { MOGO, KICK, LIFT };
 

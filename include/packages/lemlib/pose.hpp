@@ -206,6 +206,12 @@ class Pose {
          * @endcode
          */
         Pose rotate(float angle) const;
+
+        Pose withTheta(float newTheta) const { return Pose(x, y, newTheta); }
+
+        Pose withX(float newX) const { return Pose(newX, y, theta); }
+
+        Pose withY(float newY) const { return Pose(x, newY, theta); }
 };
 
 /**

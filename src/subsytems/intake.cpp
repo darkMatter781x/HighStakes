@@ -212,8 +212,8 @@ void Intake::Filtering::update(Intake& intake) {
   COLOR color = maybeColor.value();
   DESTINATION destination;
   switch (color) {
-    case RED: destination = red; break;
-    case BLUE: destination = blue; break;
+    case COLOR::RED: destination = red; break;
+    case COLOR::BLUE: destination = blue; break;
   }
 
   switch (destination) {
@@ -225,8 +225,8 @@ void Intake::Filtering::update(Intake& intake) {
 
 void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
   switch (color) {
-    case RED: red = dest; break;
-    case BLUE: blue = dest; break;
+    case COLOR::RED: red = dest; break;
+    case COLOR::BLUE: blue = dest; break;
   }
 }
 
@@ -289,11 +289,11 @@ void Intake::intakeTo(COLOR color, DESTINATION dest) {
 }
 
 void Intake::intakeBothTo(DESTINATION dest) {
-  intakeTo(RED, dest);
-  intakeTo(BLUE, dest);
+  intakeTo(COLOR::RED, dest);
+  intakeTo(COLOR::BLUE, dest);
 }
 
-std::optional<Intake::COLOR> Intake::getSensedRing() {
+std::optional<COLOR> Intake::getSensedRing() {
   if (pros::millis() % 200 < 10)
     printf("proximity:\t%d\n", m_optical.get_proximity());
   if (m_optical.get_proximity() < 200) return std::nullopt;
@@ -301,6 +301,6 @@ std::optional<Intake::COLOR> Intake::getSensedRing() {
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
   printf("hue:\t\t%f\n", hueRem);
   // todo: check
-  if (std::abs(hueRem) < 60) return RED;
-  return BLUE;
+  if (std::abs(hueRem) < 60) return COLOR::RED;
+  return COLOR::BLUE;
 }
