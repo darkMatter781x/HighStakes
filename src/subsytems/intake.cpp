@@ -173,7 +173,7 @@ void Intake::IntakingToMogo::update(Intake& intake) {
   bool sensedRing = intake.getSensedRing() == color;
   if (!sensedRing && startedNotSensingRing == -1)
     startedNotSensingRing = pros::millis();
-  else if (!sensedRing && pros::millis() - startedNotSensingRing > 100) {
+  else if (!sensedRing && pros::millis() - startedNotSensingRing > 50) {
     intake.setState(afterState);
     intake.numOfMogoRings++;
     intake.numOfRings++;
