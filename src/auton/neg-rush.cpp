@@ -7,102 +7,15 @@
 #include "dimensions.h"
 #include "subsystems/intake.h"
 #include "lemlib/util.hpp"
+#include "auton.h"
 
 using namespace dimensions::all;
 using namespace DIR;
 
-const float DEFAULT_SLEW = 15;
-
-void tankUpdate(float left, float right, float slew) {
-  static float prevLeft = 0;
-  static float prevRight = 0;
-  const float leftLimited = lemlib::slew(left, prevLeft, slew);
-  const float rightLimited = lemlib::slew(right, prevRight, slew);
-  bot.tank(leftLimited, rightLimited, 0);
-  prevLeft = leftLimited;
-  prevRight = rightLimited;
-}
-
-/**
- * @brief Tank drive with slew rate control
- * Slew rate control is a method of limiting the rate of change of the voltage
- * sent to the motors. This is useful for ensuring that the tracking wheels
- * always contact the ground.
- *
- * @param left left side power
- * @param right right side power
- * @param ms time to run for
- * @param slew slew rate
- */
-void tank(float left, float right, int ms, float slew = DEFAULT_SLEW) {
-  const int startTime = pros::millis();
-  do {
-    tankUpdate(left, right, slew);
-    pros::delay(10);
-  } while (pros::millis() - startTime < ms);
-}
-
-void stop() { tank(0, 0, 0, 0); }
-
-/**
- * @brief Wait until the robot is within a circle with a radius of error and
- * centered at pose for time milliseconds.
- *
- * @param pose pose to find distance from robot to
- * @param error
- * @param time
- */
-void waitUntilDistToPose(lemlib::Pose pose, float error, int time,
-                         bool checkMotionRunning) {
-  printf("start wait\n");
-  const int start = pros::millis();
-  int inRangeStartTime = 0;
-  do {
-    if (inRangeStartTime == 0) {
-      if (bot.getPose().distance(pose) < error)
-        inRangeStartTime = pros::millis();
-    } else if (pros::millis() - inRangeStartTime > time) {
-      break;
-    }
-    pros::delay(10);
-  } while (!checkMotionRunning || bot.isInMotion());
-  printf("time in wait: %i\n", pros::millis() - start);
-}
-
-float robotAngDist(float target) {
-  return std::fabs(std::remainder(bot.getPose().theta - target, 360));
-}
-
-void waitUntil(std::function<bool(void)> condition, int timeConditionIsTrue = 0,
-               int timeout = INT_MAX, bool resetTrueStartTime = false) {
-  const int start = pros::millis();
-  int conditionTrueStartTime = 0;
-  while ((pros::millis() - start < timeout)) {
-    const bool condVal = condition();
-    if (!condVal && resetTrueStartTime) conditionTrueStartTime = 0;
-    if (conditionTrueStartTime == 0 && condVal)
-      conditionTrueStartTime = pros::millis();
-    if (conditionTrueStartTime != 0 &&
-        (pros::millis() - conditionTrueStartTime) > timeConditionIsTrue)
-      break;
-
-    pros::delay(10);
-  }
-}
-
-/**
- * @brief
- * Lemlib uses heading, which is like a compass, whereas trig functions like
- * sine and cosine use trig angles. Therefore we must convert the trig angle to
- * a heading.
- *
- * @param angle trig angle
- * @return heading angle
- */
-float trigAngleToHeading(float angle) { return -(angle * 180 / M_PI) + 90; }
+using namespace auton::util;
 
 // Autonomous for negative rush (side of the field with negative corners)
-void autonomous() {
+void negativeRush() {
   bot.setAlliance(ALLIANCE::BLUE);
 
   const auto defaultAngPID = bot.angularPID;
@@ -383,3 +296,5 @@ void autonomous() {
   // // Back away from stake
   // tank(-48, -48, 200, 0);
 }
+
+// void autonomous() { negativeRush(); }
