@@ -31,6 +31,7 @@ void positiveRush() {
 
   bot.setPose({-TILE * 2 - 2.75, -TILE * 2 - 13.25, RED_STATION});
 
+  // Deploy basket
   bot.lift.goToMiddle();
   bot.intake.outtake();
 
@@ -45,12 +46,12 @@ void positiveRush() {
                      .lead = 0.5,
                      .minSpeed = 127,
                  });
-  // bot.moveToPoint({MAX_X, bot.getPose().y}, 1500,
-  //                 {.forwards = false, .minSpeed = 127});
-  // Deploy basket
-  pros::delay(400);
+  // Keep preload close to top
+  pros::delay(200);
+  bot.intake.intakeBothTo(Intake::MOGO);
 
-  // Reset intake and lift
+  // Reset lift and intake
+  pros::delay(200);
   bot.lift.goToBottom();
   bot.intake.stop();
 
@@ -75,41 +76,43 @@ void positiveRush() {
 
   // Clamp mogo
   bot.mogo.close();
-  // Give clamp time to clamp
-  pros::delay(100);
-
   // Intake preload into mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  // Give clamp time to clamp
+  pros::delay(100);
 
   // Get second ring and get out of mid
-  bot.moveToPose({-TILE, -TILE * 2, RED_STATION + 30}, 300);
-  bot.moveToPose({-TILE, -TILE * 2, RED_STATION + 30}, 1000, {.maxSpeed = 48});
+  const Pose secondRingTarget {-TILE + 3, -TILE * 2, RED_STATION + 15};
+  bot.moveToPose(secondRingTarget, 300);
+  bot.moveToPose(secondRingTarget, 1000, {.maxSpeed = 48});
 
   // Wait until first ring is intaked
   const size_t startWaitingForSecondRing = pros::millis();
   waitUntil(
       [startingMogoRings] {
-        return bot.intake.numOfMogoRings > (startingMogoRings);
+        return bot.intake.numOfMogoRings >= (startingMogoRings + 1);
       },
-      0, 1000);
-  printf("first ring sensed\n");
+      0, 1500);
+  printf("%3.3f: first ring sensed\n", float(pros::millis()) / 1000.);
+
+  // Intake second ring to lift
+  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  // Wait until second ring is sensed
   waitUntil(
       [startWaitingForSecondRing] {
         return bot.intake.getSensedRing() == bot.getColor() ||
                (pros::millis() - startWaitingForSecondRing) > 2000;
       },
       0, 2000);
-  printf("second ring sensed\n");
-
-  // Keep second ring in instascore
-  bot.intake.outtake();
+  printf("%3.3f: second ring sensed\n", float(pros::millis()) / 1000.);
 
   // Stop going towards second ring
   bot.cancelMotion();
 
   // Go towards second mogo, throwing the mogo
-  Pose secondMogo {-TILE, -TILE - DRIVE_LENGTH / 2 + 2, STANDS};
+  Pose secondMogo {-TILE - 1, -TILE - DRIVE_LENGTH / 2 + 1, STANDS};
   bot.turnToPoint(secondMogo, 500,
                   {
                       .forwards = false,
@@ -121,11 +124,8 @@ void positiveRush() {
   // Throw the first mogo, once it has the momentum to do so
   pros::delay(100);
   bot.mogo.open();
-  // Stop outtaking
-  pros::delay(100);
-  bot.intake.stop();
 
-  bot.moveToPose(secondMogo, 1500, {.forwards = false});
+  bot.moveToPose(secondMogo, 1500, {.forwards = false, .lead = .7});
   bot.waitUntilDone();
 
   // Clamp second mogo
@@ -133,70 +133,75 @@ void positiveRush() {
   // Give time to clamp
   pros::delay(100);
 
-  // Intake second ring into mogo
-  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  // Intake second ring into luft
+  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
-  // Lift up intake in order to intake top ring of third ring stack
-  bot.lift.goToMiddle();
-
-  const Pose thirdRingStack {-TILE * 2, 0 - DRIVE_LENGTH / 2 - 4, REF};
+  const Pose thirdRingStack {-TILE * 2, 0 - DRIVE_LENGTH / 2 - 3, REF};
 
   // Turn in preparation for third ring stack
-  bot.turnToHeading(RED_STATION, 500, {.minSpeed = 127, .earlyExitRange = 20});
+  bot.turnToHeading(RED_STATION, 500,
+                    {.maxSpeed = 64, .minSpeed = 64, .earlyExitRange = 20});
 
   // Go towards third ring stack
   bot.moveToPose(thirdRingStack, 2000);
 
   // Wait until second ring is intaked to mogo
-  waitUntil([startingMogoRings] {
-    return bot.intake.numOfMogoRings >= (startingMogoRings + 2);
-  }, 0, 500);
+  waitUntil(
+      [startingLiftRings] {
+        return bot.intake.numOfLiftRings >= (startingLiftRings + 1);
+      },
+      0, 500);
+  // Lift up intake in order to intake top ring of third ring stack
+  bot.lift.goToTop();
 
-  // Intake third ring to lift
-  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
+  // Intake third ring to mogo
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
   bot.waitUntilDone();
 
+  bot.lift.goToBottom();
   // Give intake time to get grip on third ring
-  pros::delay(300);
+  pros::delay(400);
 
   // Drop intake onto top ring
-  bot.lift.goToBottom();
   // Back away from third ring stack
   bot.moveToPoint(bot.getPose() - Pose {0, 4}, 500, {.forwards = false});
 
-  // Wait until third ring is in lift
+  // Wait until third ring is in mogo
   waitUntil(
-      [startingLiftRings] {
-        return bot.intake.numOfLiftRings >= startingLiftRings + 1;
+      [startingMogoRings] {
+        return bot.intake.numOfMogoRings >= startingMogoRings + 2;
       },
-      0, 2000);
-  // Give time for ring to fully go into lift
-  pros::delay(400);
+      0, 1500);
 
-  // Raise lift to score on alliance stake
-  bot.lift.goToMiddle();
-  // Stop intake from goofying things up
-  bot.intake.stop();
+  // If the ring is in basket, score it on alliance stake
+  if (/* bot.intake.numOfLiftRings >= startingLiftRings + 1 */ true) {
+    printf("third ring sensed\n");
 
-  const Pose allianceWallStake {MIN_X, 0};
-  const Pose scoreOnWallStake =
-      (allianceWallStake + Pose {float(sqrt(2) / 2), float(-sqrt(2) / 2)} * 11)
-          .withTheta(REF - 45);
+    // Raise lift to score on alliance stake
+    bot.lift.goToMiddle();
 
-  // Go to wall stake
-  bot.moveToPose(scoreOnWallStake, 1300);
-  bot.waitUntilDone();
-  // Score on wall stake
-  bot.lift.goToBottom();
-  // Give time for ring to score
-  pros::delay(250);
-  // Back away from wall stake
-  tank(-127, -127, 200, 0);
+    const Pose allianceWallStake {MIN_X, 0};
+    const Pose scoreOnWallStake =
+        (allianceWallStake +
+         Pose {float(sqrt(2) / 2), float(-sqrt(2) / 2)} * 11)
+            .withTheta(REF - 45);
+
+    // Go to wall stake
+    bot.moveToPose(scoreOnWallStake, 1300);
+    bot.waitUntilDone();
+    // Score on wall stake
+    bot.lift.goToBottom();
+    // Give time for ring to score
+    pros::delay(250);
+    // Back away from wall stake
+    tank(-127, -127, 200, 0);
+  }
 
   // Touch ladder
-  bot.moveToPose({-TILE * .75, -TILE * .75 - .5, STANDS}, 2000, {.forwards = false});
+  bot.moveToPose({-TILE * .75, -TILE * .75 + .5, RED_STATION}, 2000,
+                 {.forwards = false});
 }
 
 void autonomous() { positiveRush(); }
