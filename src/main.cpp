@@ -20,7 +20,7 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  // pros::lcd::initialize();
+  pros::lcd::initialize();
 
   // ensure robot is initialized
   Robot::get();
@@ -79,4 +79,6 @@ void competition_initialize() {}
  * will be stopped. Re-enabling the robot will restart the task, not re-start it
  * from where it left off.
  */
-void autonomous() {}
+void autonomous() {
+  bot.selector.runAuton();
+}

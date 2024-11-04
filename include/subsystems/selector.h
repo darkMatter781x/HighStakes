@@ -11,6 +11,8 @@ struct Auton {
     char* label;
     std::function<void(ALLIANCE)> run;
     std::optional<char*> labelForController;
+    /** Displayed less prominently than label on brain */
+    char* description;
 };
 
 class AutonSelector : Subsystem {
@@ -68,18 +70,21 @@ class AutonSelector : Subsystem {
     /** @brief Updates the display. */
     void display() const;
 
-    static std::vector<Auton> autons;
-
     AutonSelector(pros::adi::Potentiometer& pot, Intake::Sensor& intakeSensor);
     static AutonSelector* instance;
   public:
+    /** @returns index of selected auton */
     size_t getIndex() const;
+    /** @returns selected auton */
     const Auton& getAuton() const;
 
+    /** Runs selected auton */
     void runAuton();
 
+    /** @returns Selected alliance */
     const ALLIANCE& getAlliance() const;
 
+    /** Locks auton in for duration of program. */
     void lock();
 
     void update() override;
@@ -90,6 +95,7 @@ class AutonSelector : Subsystem {
       return *instance;
     }
 
+    /** Gets a potentially null pointer to the selector */
     inline static AutonSelector* getPtr() { return instance; }
 };
 

@@ -55,7 +55,7 @@ Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
 }
 
 std::optional<COLOR> Intake::Sensor::getRing() const {
-  if (pros::millis() % 200 < 10)
+  if (pros::millis() % 500 < 10)
     printf("proximity: %d\n", m_optical.get_proximity());
 
   if (m_optical.get_proximity() < 200) return std::nullopt;

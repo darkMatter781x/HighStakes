@@ -1,28 +1,35 @@
 #include "subsystems/selector.h"
-#include "liblvgl/llemu.hpp"
-#include "pros/error.h"
 #include "pros/llemu.hpp"
-#include "pros/misc.hpp"
 #include "robot.h"
-#include "subsystems.h"
-#include "subsystems/intake.h"
-#include <algorithm>
-#include <cmath>
-#include <cstddef>
-#include <optional>
 
-void func(ALLIANCE) {}
+void auton1(ALLIANCE) {
+  printf("auton1\n");
+  pros::delay(1000);
+}
+void auton2(ALLIANCE) {
+  printf("auton2\n");
+  pros::delay(1000);
+}
+void auton3(ALLIANCE) {
+  printf("auton3\n");
+  pros::delay(1000);
+}
 
-std::vector<Auton> AutonSelector::autons {
-    Auton {.label = (char*)"adfs",
-           .run = func,
-           .labelForController = std::nullopt},
-    Auton {.label = (char*)"adfs2",
-           .run = func,
-           .labelForController = std::nullopt},
-    Auton {.label = (char*)"adfs3",
-           .run = func,
-           .labelForController = std::nullopt}};
+
+std::vector<Auton> getAutons() {
+  return {Auton {.label = (char*)"adfs",
+                 .run = auton1,
+                 .labelForController = std::nullopt,
+                 .description = (char*)"do one thing"},
+          Auton {.label = (char*)"adfs2",
+                 .run = auton2,
+                 .labelForController = std::nullopt,
+                 .description = (char*)"do two things"},
+          Auton {.label = (char*)"adfs3",
+                 .run = auton3,
+                 .labelForController = std::nullopt,
+                 .description = (char*)"DO THREE THINGS!"}};
+}
 
 AutonSelector* AutonSelector::instance = nullptr;
 
@@ -31,30 +38,19 @@ bool didConstructorRun = false;
 AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
                              Intake::Sensor& intakeSensor)
   : m_pot(pot), m_intakeSensor(intakeSensor), m_alliance(ALLIANCE::RED),
-    m_autons {Auton {.label = (char*)"adfs",
-                     .run = func,
-                     .labelForController = std::nullopt},
-              Auton {.label = (char*)"adfs2",
-                     .run = func,
-                     .labelForController = std::nullopt},
-              Auton {.label = (char*)"adfs3",
-                     .run = func,
-                     .labelForController = std::nullopt}},
-    m_indexOffset(0), m_locked(std::nullopt) {
+    m_autons(getAutons()), m_indexOffset(0), m_locked(std::nullopt),
+    m_ignoreSensor(false) {
   pros::lcd::initialize();
 
   printf("print m_autons\n");
   for (auto a : m_autons) { printf("\t%s,\n", a.label); }
   printf("end m_autons\n");
-  printf("print AutonSelector::autons\n");
-  for (auto a : AutonSelector::autons) { printf("\t%s,\n", a.label); }
-  printf("end AutonSelector::autons\n");
 
   // Register the brain screen button callbacks.
-  pros::lcd::register_btn0_cb([] { AutonSelector::getPtr()->increment(); });
+  pros::lcd::register_btn0_cb([] { AutonSelector::getPtr()->decrement(); });
   pros::lcd::register_btn1_cb(
-      [] { AutonSelector::getPtr()->toggleAlliance(); });
-  pros::lcd::register_btn2_cb([] { AutonSelector::getPtr()->decrement(); });
+      [] { AutonSelector::getPtr()->toggleAlliance(true); });
+  pros::lcd::register_btn2_cb([] { AutonSelector::getPtr()->increment(); });
 }
 
 void AutonSelector::increment() {
@@ -77,13 +73,16 @@ void AutonSelector::toggleAlliance(bool manual) {
 }
 
 void AutonSelector::setAlliance(ALLIANCE alliance, bool manual) {
-  if (manual) m_ignoreSensor = true;
+  if (manual) {
+    printf("setAlliance() called with manual = true -> ignoring sensor now\n");
+    m_ignoreSensor = true;
+  }
   m_alliance = alliance;
 }
 
 size_t AutonSelector::getIndex() const {
   if (m_locked.has_value()) return m_locked->index;
-  else return getSensedIndex() + m_indexOffset;
+  else return (getSensedIndex() + m_indexOffset) % m_autons.size();
 }
 
 size_t AutonSelector::getSensedIndex() const {
@@ -103,7 +102,10 @@ const ALLIANCE& AutonSelector::getAlliance() const {
 }
 
 void AutonSelector::setIndex(size_t newIndex) {
+  newIndex = newIndex % m_autons.size();
+
   m_indexOffset = newIndex - getSensedIndex();
+
   if (newIndex != getIndex()) {
     printf("AutonSelector::setIndex() failed to set index!\n");
     printf("\tnewIndex: %i\n", newIndex);
@@ -117,37 +119,39 @@ void AutonSelector::lock() {
 }
 
 void AutonSelector::update() {
-  // pros::delay(1000);
-  // printf("did construct?: %i\n", didConstructorRun);
-  // printf("did ignore sensor?: %i\n", m_ignoreSensor);
-  // printf("print m_autons\n");
-  // for (auto a : m_autons) { printf("\t%s,\n", a.label); }
-  // printf("end m_autons\n");
-  // printf("print AutonSelector::autons\n");
-  // for (auto a : AutonSelector::autons) { printf("\t%s,\n", a.label); }
-  // printf("end AutonSelector::autons\n");
-  // pros::delay(1000);
-
-  // if (!pros::competition::is_disabled()) {
-  //   // SubsystemHandler::get()->removeSubsystem(m_id);
-  //   lock();
-  // }
-
+  // Prevent changing auton if enabled (match has started).
+  if (!pros::competition::is_disabled()) { lock(); }
+  // Change alliance based on sensor if it hasn't been overriden by brain
+  // screen.
   if (!m_ignoreSensor)
     setAlliance(m_intakeSensor.getRing().value_or(getAlliance()), false);
+  // Display changes due to sensor or brain screen.
   display();
 }
 
 void AutonSelector::display() const {
+  // If the robot is enabled, don't display anything.
+  if (!pros::competition::is_disabled()) return;
+
   const Auton& auton = getAuton();
   const ALLIANCE& alliance = getAlliance();
 
-  // Display the auton name on the controller.
-  bot.gamepad.print(0, 0, "%s", auton.labelForController.value_or(auton.label));
+  const char* allianceStr = alliance == ALLIANCE::RED ? "RED" : "BLUE";
+
+  // Display the auton name on the controller. Do this every 100ms.
+  if (pros::millis() % 100 < 10)
+    bot.gamepad.print(0, 0, "%s",
+                      auton.labelForController.value_or(auton.label));
+
+  // Display the alliance on the controller. Do this every 100ms, offset 50ms
+  // from the auton name.
+  if ((pros::millis() + 50) % 100 < 10)
+    bot.gamepad.print(1, 0, "%s", allianceStr);
 
   // Display the alliance and auton name on the lcd.
   pros::lcd::print(0, "%s", auton.label);
-  pros::lcd::print(1, "%s", alliance == ALLIANCE::RED ? "RED" : "BLUE");
+  pros::lcd::print(1, "%s", allianceStr);
+  pros::lcd::print(2, "%s", auton.description);
 
   // Display the alliance color on the LEDs
   // TODO

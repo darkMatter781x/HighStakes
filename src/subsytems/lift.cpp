@@ -25,7 +25,7 @@ void Lift::update() {
       return;
     }
   }
-  pros::lcd::print(2, "output: %4.2f", output);
+  // pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 }
 

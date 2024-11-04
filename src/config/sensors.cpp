@@ -6,5 +6,5 @@ RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .hori {19},
     .lift {5},
     .imu {4},
-    .intake {6},
+    .intake {8},
     .autonSelector = pros::adi::Potentiometer {'D'}};
