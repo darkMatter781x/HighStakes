@@ -15,8 +15,18 @@ using lemlib::Pose;
 
 using namespace auton::util;
 
-// Autonomous for skills rush (as red)
-void skills() {
+void skillsFunc(ALLIANCE alliance);
+
+auton::Auton auton::autons::skills = {
+    .label = (char*)"Skills",
+    .run = skillsFunc,
+    .labelForController = (char*)"skills",
+    .description =
+        (char*)"Bouta go crazy fr fr",
+};
+
+// Autonomous for skills rush (always will be red)
+void skillsFunc(ALLIANCE _alliance) {
   bot.setAlliance(ALLIANCE::RED);
 
   const auto defaultAngPID = bot.angularPID;
@@ -57,5 +67,3 @@ void skills() {
 
   bot.mogo.close();
 }
-
-void autonomous() { skills(); }

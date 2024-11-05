@@ -1,6 +1,7 @@
 #include "subsystems/lift.h"
 #include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
+#include "robot.h"
 
 void Lift::update() {
   if (m_state == State::EMERGENCY_STOP) {
@@ -25,11 +26,11 @@ void Lift::update() {
         default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
       };
       m_motors.brake();
-      pros::lcd::print(2, "braking");
+      if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
       return;
     }
   }
-  pros::lcd::print(2, "output: %4.2f", output);
+  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 }
 

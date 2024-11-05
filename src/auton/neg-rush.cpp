@@ -8,15 +8,26 @@
 #include "subsystems/intake.h"
 #include "lemlib/util.hpp"
 #include "auton.h"
+#include <optional>
 
 using namespace dimensions::all;
 using namespace DIR;
 
 using namespace auton::util;
 
+void negativeRushFunc(ALLIANCE alliance);
+
+auton::Auton auton::autons::negativeRush = {
+    .label = (char*)"Negative Rush",
+    .run = negativeRushFunc,
+    .labelForController = (char*)"neg rush",
+    .description =
+        (char*)"Rushes mid rings and scores 2 on mogo and 3 on alliance stake.",
+};
+
 // Autonomous for negative rush (side of the field with negative corners)
-void negativeRush() {
-  bot.setAlliance(ALLIANCE::BLUE);
+void negativeRushFunc(ALLIANCE alliance) {
+  bot.setAlliance(alliance);
 
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
@@ -296,5 +307,3 @@ void negativeRush() {
   // // Back away from stake
   // tank(-48, -48, 200, 0);
 }
-
-// void autonomous() { negativeRush(); }

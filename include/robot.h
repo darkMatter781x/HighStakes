@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "subsystems/selector.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
@@ -22,6 +23,8 @@ class Robot : private lemlib::Chassis {
     MogoClamp m_mogo;
     Intake m_intake;
     Lift m_lift;
+    pros::Controller m_gamepad;
+    Intake::Sensor m_intakeSensor;
 
     ALLIANCE m_alliance;
   public:
@@ -35,6 +38,8 @@ class Robot : private lemlib::Chassis {
     Lift& lift;
     Intake& intake;
     MogoClamp& mogo;
+    pros::Controller& gamepad;
+    AutonSelector& selector;
 
     void setAlliance(ALLIANCE alliance);
     ALLIANCE getAlliance() const;

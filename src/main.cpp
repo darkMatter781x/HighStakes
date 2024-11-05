@@ -1,17 +1,21 @@
 #include "main.h"
 #include "config.h"
 #include "led.h"
+#include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
 
 void screen() {
   while (1) {
-    pros::lcd::print(0, "target\tang\t=err");
-    pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
-                     bot.lift.calcLiftAngle(), bot.lift.calcError());
-    pros::lcd::print(3, "x:\t%fin", bot.getPose().x);
-    pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
-    pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
+    // Only print if auton selection is complete
+    if(bot.selector.isLocked()) {
+      pros::lcd::print(0, "target\tang\t=err");
+      pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
+                       bot.lift.calcLiftAngle(), bot.lift.calcError());
+      pros::lcd::print(3, "x:\t%fin", bot.getPose().x);
+      pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
+      pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
+    }
     pros::delay(50);
   }
 }
@@ -70,3 +74,16 @@ void disabled() {}
  * starts.
  */
 void competition_initialize() {}
+
+/**
+ * Runs the user autonomous code. This function will be started in its own task
+ * with the default priority and stack size whenever the robot is enabled via
+ * the Field Management System or the VEX Competition Switch in the autonomous
+ * mode. Alternatively, this function may be called in initialize or opcontrol
+ * for non-competition testing purposes.
+ *
+ * If the robot is disabled or communications is lost, the autonomous task
+ * will be stopped. Re-enabling the robot will restart the task, not re-start it
+ * from where it left off.
+ */
+void autonomous() { bot.selector.runAuton(); }

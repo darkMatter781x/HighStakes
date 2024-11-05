@@ -4,10 +4,21 @@
 #include "pros/optical.hpp"
 #include "subsystems.h"
 #include <variant>
+#include <optional>
 #include "color.h"
 
 class Intake : public Subsystem {
   public:
+    /** @brief Wrapper for the intake's optical sensor. */
+    class Sensor {
+      private:
+        pros::Optical& m_optical;
+      public:
+        Sensor(pros::Optical& optical);
+        /** @brief Returns the color of the ring if it is present. */
+        std::optional<COLOR> getRing() const;
+    };
+
     /** @brief The destination of the ring. */
     enum DESTINATION { MOGO, KICK, LIFT };
 
@@ -136,7 +147,7 @@ class Intake : public Subsystem {
     const Config m_conf;
 
     pros::MotorGroup& m_motors;
-    pros::Optical& m_optical;
+    Sensor& m_sensor;
     pros::adi::Pneumatics& m_kicker;
   public:
     void setState(State state);
@@ -163,6 +174,6 @@ class Intake : public Subsystem {
     /** @brief Number of rings intaked to mogo. */
     size_t numOfMogoRings = 0;
 
-    Intake(pros::MotorGroup& motors, pros::Optical& optical,
+    Intake(pros::MotorGroup& motors, Sensor& sensor,
            pros::adi::Pneumatics& kicker, Config conf);
 };

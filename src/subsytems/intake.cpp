@@ -19,9 +19,9 @@ void printFiltering(Intake::Filtering& filter) {
   //        destToStr(filter.blue).c_str());
 }
 
-Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical,
+Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
                pros::adi::Pneumatics& kicker, Config conf)
-  : m_motors(motors), m_optical(optical), m_kicker(kicker),
+  : m_motors(motors), m_sensor(sensor), m_kicker(kicker),
     m_visitor([this](BaseState& state) { state.update(*this); }), m_conf(conf) {
   m_motors.set_encoder_units(pros::E_MOTOR_ENCODER_ROTATIONS);
 }
@@ -52,13 +52,13 @@ void Intake::FilteringState::start(Intake& intake) {
   // printf("starting filtering state\n");
   startTime = pros::millis();
   startPosition = intake.m_motors.get_position();
-  intake.m_optical.set_led_pwm(100);
+  // intake.m_optical.set_led_pwm(100);
 }
 
 void Intake::FilteringState::end(Intake& intake) {
   Intake::BaseState::end(intake);
   // printf("ending filtering state\n");
-  intake.m_optical.set_led_pwm(0);
+  // intake.m_optical.set_led_pwm(0);
 }
 
 Intake::IntakingToKick::IntakingToKick(Filtering afterState, COLOR color)
@@ -235,13 +235,13 @@ void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
 void Intake::Filtering::start(Intake& intake) {
   Intake::BaseState::start(intake);
   // printf("starting filtering\n");
-  intake.m_optical.set_led_pwm(100);
+  // intake.m_optical.set_led_pwm(100);
 }
 
 void Intake::Filtering::end(Intake& intake) {
   Intake::BaseState::end(intake);
   // printf("ending filtering state\n");
-  intake.m_optical.set_led_pwm(0);
+  // intake.m_optical.set_led_pwm(0);
 }
 
 void Intake::Idling::update(Intake& intake) { intake.m_motors.move(0); }
@@ -295,14 +295,19 @@ void Intake::intakeBothTo(DESTINATION dest) {
   intakeTo(COLOR::BLUE, dest);
 }
 
-std::optional<COLOR> Intake::getSensedRing() {
-  // if (pros::millis() % 200 < 10)
-  //   printf("proximity:\t%d\n", m_optical.get_proximity());
+Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
+  m_optical.set_led_pwm(100);
+}
+
+std::optional<COLOR> Intake::Sensor::getRing() const {
+  if (pros::millis() % 500 < 10)
+    printf("proximity: %d\n", m_optical.get_proximity());
+
   if (m_optical.get_proximity() < 200) return std::nullopt;
-  // printf("proximity:\t%d\n", m_optical.get_proximity());
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
-  // printf("hue:\t\t%f\n", hueRem);
-  // todo: check
+  printf("hueRem: %f\n", hueRem);
   if (std::abs(hueRem) < 60) return COLOR::RED;
   return COLOR::BLUE;
 }
+
+std::optional<COLOR> Intake::getSensedRing() { return m_sensor.getRing(); }

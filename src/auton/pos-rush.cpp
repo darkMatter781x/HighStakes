@@ -15,9 +15,20 @@ using lemlib::Pose;
 
 using namespace auton::util;
 
+void positiveRushFunc(ALLIANCE alliance);
+
+auton::Auton auton::autons::positiveRush = {
+    .label = (char*)"Positive Rush",
+    .run = positiveRushFunc,
+    .labelForController = (char*)"mogo rush",
+    .description =
+        (char*)"Rushes mogo and scores 1 ring on each of 2 mogos, and 1 ring on "
+                "alliance stake, for a total of 9pts.",
+};
+
 // Autonomous for positive rush (side of the field with positive corners)
-void positiveRush() {
-  bot.setAlliance(ALLIANCE::RED);
+void positiveRushFunc(ALLIANCE alliance) {
+  bot.setAlliance(alliance);
 
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
@@ -203,5 +214,3 @@ void positiveRush() {
   bot.moveToPose({-TILE * .75, -TILE * .75 + .5, RED_STATION}, 2000,
                  {.forwards = false});
 }
-
-// void autonomous() { positiveRush(); }
