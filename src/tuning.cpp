@@ -110,7 +110,7 @@ void tuningCLI() {
         }
       } else if (command == "run" || command == "x" || command == "rr") {
         bot.cancelMotion();
-        bot.setPose(0, 0, 0);
+        bot.setPose({0, 0, 0});
         float timeout = 2000;
         bool wait = true;
         if (params.size() > 1) {
@@ -130,7 +130,7 @@ void tuningCLI() {
         const int startTime = pros::millis();
         switch (mode) {
           case LATERAL:
-            bot.moveToPoint(0, multiplier * lateralDist, timeout,
+            bot.moveToPoint({0, multiplier * lateralDist}, timeout,
                             {.forwards = !reversed});
             break;
           case ANGULAR:
