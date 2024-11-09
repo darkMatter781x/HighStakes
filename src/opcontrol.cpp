@@ -64,24 +64,18 @@ void opcontrol() {
              master.get_analog(map::RIGHT_DRIVE));
 
     // Intake control
-    const bool intakeBtn = master.get_digital(map::INTAKE);
+    if (master.get_digital(map::INTAKE_FILTER_TO_LIFT)) {
+      // Selected color to lift
+      bot.intake.intakeTo(filterColor, Intake::LIFT);
+      bot.intake.intakeTo(!filterColor, Intake::KICK);
+    } else if (master.get_digital(map::INTAKE)) {
+      // Rising edge of Intake button
 
-    if (intakeBtn) {
-      if (!prevIntakeBtn) {
-        // Rising edge of Intake button
-
-        // Intake current color to mogo, other color to kicker
-        bot.intake.intakeTo(filterColor, Intake::MOGO);
-        bot.intake.intakeTo(!filterColor, Intake::KICK);
-      }
-      if (master.get_digital(map::INTAKE_FILTER_TO_LIFT)) {
-        // Selected color to lift
-        bot.intake.intakeTo(filterColor, Intake::LIFT);
-      }
+      // Intake current color to mogo, other color to kicker
+      bot.intake.intakeTo(filterColor, Intake::MOGO);
+      bot.intake.intakeTo(!filterColor, Intake::KICK);
     } else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
-
-    prevIntakeBtn = intakeBtn;
 
     // Mogo control
     if (master.get_digital_new_press(map::MOGO)) bot.mogo.toggle();
