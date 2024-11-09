@@ -1,6 +1,5 @@
 #include "main.h"
 #include "config.h"
-#include "led.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
@@ -8,7 +7,7 @@
 void screen() {
   while (1) {
     // Only print if auton selection is complete
-    if(bot.selector.isLocked()) {
+    if (bot.selector.isLocked()) {
       pros::lcd::print(0, "target\tang\t=err");
       pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
                        bot.lift.calcLiftAngle(), bot.lift.calcError());
@@ -33,6 +32,45 @@ void initialize() {
   Robot::get();
   bot.calibrate();
   // // LED Testing
+  // LED Testing
+  // pros::delay(1000);
+  // std::vector<std::shared_ptr<LedStrip>> strips;
+  // for (char adiPort = 'A'; adiPort <= 'H'; adiPort++) {
+  //   strips.push_back(
+  //       LedStrip::create({8, adiPort}, size_t(adiPort - 'A' + 1), 0.1));
+  // }
+  int i;    
+  while (i++ < 5) {
+    // for (auto strip : strips) {
+    //   strip->buf().setAll(0x550000);
+    //   pros::delay(1000);
+    // }
+    // for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
+    //   // pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
+    //   // strip.set_all(0xFFFFFF);
+    //   // pros::delay(250);
+    // }
+    RobotConfig::LEDs::leds.rightUnderGlow->buf().setAll(0xFF0000);
+    pros::delay(250);
+    RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x0000FF);
+    pros::delay(250);
+    // RobotConfig::LEDs::leds.leftLift->buf().setAll(0xFF0000);
+    // // pros::delay(250);
+    // RobotConfig::LEDs::leds.rightLift->buf().setAll(0xFF0000);
+    // // pros::delay(250);
+  }
+
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550000);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x005500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x000055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x550055);
+  // RobotConfig::LEDs::leds.lift.set_all(0x550055);
+  // pros::delay(1000);
+  // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x555500);
+  // RobotConfig::LEDs::leds.lift.set_all(0x555500);
   // LedStrip leftStrip {RobotConfig::LEDs::leds.leftUnderGlow};
   // LedStrip rightStrip {RobotConfig::LEDs::leds.rightUnderGlow};
   // pros::delay(500);
