@@ -4,6 +4,6 @@
 RobotConfig::LEDs RobotConfig::LEDs::leds = {
     .leftLift = LedStrip::create({8, 'C'}, 33, 0.1) /* nullptr */,
     .rightLift = LedStrip::create({8, 'H'}, 33, 0.1) /* nullptr */,
-    .leftUnderGlow = LedStrip::create({18, 'A'}, 45, 0.1) /* nullptr */,
-    .rightUnderGlow = LedStrip::create({18, 'C'}, 45, 0.1) /* nullptr */,
+    .leftUnderGlow = LedStrip::create({18, 'C'}, 45, 0.1) /* nullptr */,
+    .rightUnderGlow = LedStrip::create({18, 'A'}, 45, 0.1) /* nullptr */,
 };
