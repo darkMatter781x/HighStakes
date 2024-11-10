@@ -59,9 +59,9 @@ class ExitCondition {
          * @endcode
          */
         void reset();
-    protected:
-        const float range;
-        const int time;
+    public:
+        float range;
+        int time;
         int startTime = -1;
         bool done = false;
 };

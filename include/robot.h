@@ -1,25 +1,29 @@
 #pragma once
 #include "config.h"
+#include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
 #include "subsystems/mogo.h"
+#include "color.h"
 
 /**
  * @brief Provides an abstracted interface for controlling the robot and reading
  * from sensors. Follows the singleton pattern.
  */
-class Robot : public lemlib::Chassis {
-  public:
+class Robot : private lemlib::Chassis {
+  private:
     Robot(const RobotConfig& config);
 
     /** @brief Should ever be one instance of Robot, and that's this one. */
     static Robot instance;
-
+  public:
     const RobotConfig& m_config;
-
+  private:
     MogoClamp m_mogo;
     Intake m_intake;
     Lift m_lift;
+
+    ALLIANCE m_alliance;
   public:
     /**
      * @brief Gets the robot instance.
@@ -31,6 +35,48 @@ class Robot : public lemlib::Chassis {
     Lift& lift;
     Intake& intake;
     MogoClamp& mogo;
+
+    void setAlliance(ALLIANCE alliance);
+    ALLIANCE getAlliance() const;
+    COLOR getColor() const;
+
+    using lemlib::Chassis::angularLargeExit;
+    using lemlib::Chassis::angularPID;
+    using lemlib::Chassis::angularSettings;
+    using lemlib::Chassis::angularSmallExit;
+    using lemlib::Chassis::arcade;
+    using lemlib::Chassis::calibrate;
+    using lemlib::Chassis::cancelAllMotions;
+    using lemlib::Chassis::cancelMotion;
+    using lemlib::Chassis::curvature;
+    using lemlib::Chassis::isInMotion;
+    using lemlib::Chassis::lateralLargeExit;
+    using lemlib::Chassis::lateralPID;
+    using lemlib::Chassis::lateralSettings;
+    using lemlib::Chassis::lateralSmallExit;
+    using lemlib::Chassis::setBrakeMode;
+    using lemlib::Chassis::tank;
+    using lemlib::Chassis::waitUntil;
+    using lemlib::Chassis::waitUntilDone;
+
+    void setPose(lemlib::Pose pose, bool radians = false);
+    lemlib::Pose getPose(bool radians = false);
+
+    void turnToPoint(lemlib::Pose target, int timeout,
+                     lemlib::TurnToPointParams params = {}, bool async = true);
+    void turnToHeading(float theta, int timeout,
+                       lemlib::TurnToHeadingParams params = {},
+                       bool async = true);
+    void swingToPoint(lemlib::Pose target, lemlib::DriveSide lockedSide,
+                      int timeout, lemlib::SwingToPointParams params = {},
+                      bool async = true);
+    void swingToHeading(float theta, lemlib::DriveSide lockedSide, int timeout,
+                        lemlib::SwingToHeadingParams params = {},
+                        bool async = true);
+    void moveToPose(lemlib::Pose target, int timeout,
+                    lemlib::MoveToPoseParams params = {}, bool async = true);
+    void moveToPoint(lemlib::Pose target, int timeout,
+                     lemlib::MoveToPointParams params = {}, bool async = true);
 };
 
 inline Robot& bot = Robot::get();

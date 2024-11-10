@@ -1,5 +1,6 @@
 #include "subsystems/intake.h"
 #include "pros/motors.h"
+#include "pros/rtos.hpp"
 #include <cmath>
 #include <cstdio>
 
@@ -14,8 +15,8 @@ std::string destToStr(Intake::DESTINATION dest) {
 }
 
 void printFiltering(Intake::Filtering& filter) {
-  printf("filtering:\tr:\t%s\tb:\t%s\n", destToStr(filter.red).c_str(),
-         destToStr(filter.blue).c_str());
+  // printf("filtering:\tr:\t%s\tb:\t%s\n", destToStr(filter.red).c_str(),
+  //        destToStr(filter.blue).c_str());
 }
 
 Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical,
@@ -27,9 +28,10 @@ Intake::Intake(pros::MotorGroup& motors, pros::Optical& optical,
 
 const Intake::State& Intake::getState() const { return m_state; }
 
-void Intake::BaseState::start(Intake& intake) { printf("starting state\n"); }
+void Intake::BaseState::start(
+    Intake& intake) { /* printf("starting state\n"); */ }
 
-void Intake::BaseState::end(Intake& intake) { printf("ending state\n"); }
+void Intake::BaseState::end(Intake& intake) { /* printf("ending state\n"); */ }
 
 Intake::FilteringState::FilteringState(Filtering afterState, COLOR color)
   : color(color), afterState(afterState) {}
@@ -39,14 +41,15 @@ void Intake::FilteringState::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 float Intake::FilteringState::getInchesTraveled(const Intake& intake) const {
-  printf("getting inches traveled, pos: %4.2f\n", intake.m_motors.get_position() - startPosition);
+  // printf("getting inches traveled, pos: %4.2f\n",
+  //        intake.m_motors.get_position() - startPosition);
   return (intake.m_motors.get_position() - startPosition) /* rots */ /
          (intake.m_conf.chainRatio /* rots per inch */);
 }
 
 void Intake::FilteringState::start(Intake& intake) {
   Intake::BaseState::start(intake);
-  printf("starting filtering state\n");
+  // printf("starting filtering state\n");
   startTime = pros::millis();
   startPosition = intake.m_motors.get_position();
   intake.m_optical.set_led_pwm(100);
@@ -54,7 +57,7 @@ void Intake::FilteringState::start(Intake& intake) {
 
 void Intake::FilteringState::end(Intake& intake) {
   Intake::BaseState::end(intake);
-  printf("ending filtering state\n");
+  // printf("ending filtering state\n");
   intake.m_optical.set_led_pwm(0);
 }
 
@@ -70,37 +73,44 @@ Intake::IntakingToLift::IntakingToLift(Filtering afterState, COLOR color)
 Intake::OuttakingToLift::OuttakingToLift(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
+Intake::IntakingToMogo::IntakingToMogo(Filtering afterState, COLOR color)
+  : FilteringState(afterState, color) {}
+
 void Intake::IntakingToKick::update(Intake& intake) {
   intake.m_motors.move(127);
-  if (pros::millis() % 200 < 10) printf("intaking to kick\n");
+  // if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
   if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
-    printf("naturally switching to idle\n");
+    // printf("naturally switching to idle\n");
     intake.setState(IdlingToKick {afterState, color});
   }
 }
 
 void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   FilteringState::switchDest(intake, dest);
-  printf("switch from intaking to kick to %s\n", destToStr(dest).c_str());
+  // printf("switch from intaking to kick to %s\n", destToStr(dest).c_str());
   printFiltering(afterState);
   if (dest == LIFT) {
     IntakingToLift newState(afterState, color);
     newState.startTime = this->startTime;
     intake.setState(newState);
   } else if (dest == MOGO) {
-    intake.setState(Filtering {afterState});
+    IntakingToMogo newState(afterState, color);
+    newState.startTime = this->startTime;
+    intake.setState(newState);
   }
 }
 
 void Intake::IdlingToKick::update(Intake& intake) {
   intake.m_motors.move(127);
-  printf("idling to kick\n");
+  // printf("idling to kick\n");
   printFiltering(afterState);
-  if (pros::millis() % 200 < 10) printf("idling to kick\n");
+  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
   if (pros::millis() - startTime > intake.m_conf.idlingToKickDuration) {
-    printf("naturally switching to filtering\n");
+    // printf("naturally switching to filtering\n");
     intake.setState(afterState);
+    intake.numOfKickRings++;
+    intake.numOfRings++;
   }
 }
 
@@ -116,17 +126,27 @@ void Intake::IdlingToKick::end(Intake& intake) {
 
 void Intake::IntakingToLift::update(Intake& intake) {
   intake.m_motors.move(127);
-  if (pros::millis() % 200 < 10) printf("intaking to lift\n");
-  printf("intaking to lift, %4.2f\n", getInchesTraveled(intake));
+  // if (pros::millis() % 200 < 10) printf("intaking to lift\n");
+  // printf("intaking to lift, %4.2f\n", getInchesTraveled(intake));
   if (getInchesTraveled(intake) > intake.m_conf.intakingToLiftInches)
     intake.setState(OuttakingToLift {afterState, color});
 }
 
 void Intake::OuttakingToLift::update(Intake& intake) {
-  intake.m_motors.move(-127);
-  if (pros::millis() % 200 < 10) printf("outtaking to lift\n");
-  if (pros::millis() - startTime > intake.m_conf.outtakingToLiftDuration)
+  // If we quickly change the direction of the intake,
+  // it will decrease consistency of the intaking to the lift.
+  // So, we delay the change a bit.
+  if (pros::millis() - startTime < 200) {
+    intake.m_motors.move(0);
+  } else intake.m_motors.move(-127);
+
+  // if (pros::millis() % 200 < 10) printf("outtaking to lift\n");
+  if (pros::millis() - startTime >
+      intake.m_conf.outtakingToLiftDuration + 200) {
     intake.setState(afterState);
+    intake.numOfLiftRings++;
+    intake.numOfRings++;
+  }
 }
 
 void Intake::IntakingToLift::switchDest(Intake& intake, DESTINATION dest) {
@@ -136,7 +156,50 @@ void Intake::IntakingToLift::switchDest(Intake& intake, DESTINATION dest) {
     newState.startTime = this->startTime;
     intake.setState(newState);
   } else if (dest == MOGO) {
-    intake.setState(Filtering {afterState});
+    IntakingToMogo newState(afterState, color);
+    newState.startTime = this->startTime;
+    intake.setState(newState);
+  }
+}
+
+void Intake::IntakingToMogo::update(Intake& intake) {
+  /** Timestamp of when ring started to not be sensed. -1 means ring was
+  sensed
+   * previously. */
+  static int startedNotSensingRing = -1;
+  intake.m_motors.move(127);
+  // Wait until no longer sensing ring to increment mogo rings.
+  // Might need a filter to ensure rings aren't counted twice.
+  bool sensedRing = intake.getSensedRing() == color;
+  if (!sensedRing && startedNotSensingRing == -1)
+    startedNotSensingRing = pros::millis();
+  else if (!sensedRing && pros::millis() - startedNotSensingRing > 50) {
+    intake.setState(afterState);
+    intake.numOfMogoRings++;
+    intake.numOfRings++;
+    printf("%ith ring scored on mogo!\n", intake.numOfMogoRings);
+  } else if (sensedRing) startedNotSensingRing = -1;
+
+  // intake.m_motors.move(127);
+  // // Wait until no longer sensing ring to increment mogo rings.
+  // // Might need a filter to ensure rings aren't counted twice.
+  // if (intake.getSensedRing() != color) {
+  //   intake.setState(afterState);
+  //   intake.numOfMogoRings++;
+  //   intake.numOfRings++;
+  // }
+}
+
+void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
+  FilteringState::switchDest(intake, dest);
+  if (dest == KICK) {
+    IntakingToKick newState(afterState, color);
+    newState.startTime = this->startTime;
+    intake.setState(newState);
+  } else if (dest == LIFT) {
+    IntakingToLift newState(afterState, color);
+    newState.startTime = this->startTime;
+    intake.setState(newState);
   }
 }
 
@@ -151,12 +214,12 @@ void Intake::Filtering::update(Intake& intake) {
   COLOR color = maybeColor.value();
   DESTINATION destination;
   switch (color) {
-    case RED: destination = red; break;
-    case BLUE: destination = blue; break;
+    case COLOR::RED: destination = red; break;
+    case COLOR::BLUE: destination = blue; break;
   }
 
   switch (destination) {
-    case MOGO: break;
+    case MOGO: intake.setState(IntakingToMogo {*this, color}); break;
     case KICK: intake.setState(IntakingToKick {*this, color}); break;
     case LIFT: intake.setState(IntakingToLift {*this, color}); break;
   }
@@ -164,20 +227,20 @@ void Intake::Filtering::update(Intake& intake) {
 
 void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
   switch (color) {
-    case RED: red = dest; break;
-    case BLUE: blue = dest; break;
+    case COLOR::RED: red = dest; break;
+    case COLOR::BLUE: blue = dest; break;
   }
 }
 
 void Intake::Filtering::start(Intake& intake) {
   Intake::BaseState::start(intake);
-  printf("starting filtering\n");
+  // printf("starting filtering\n");
   intake.m_optical.set_led_pwm(100);
-} 
+}
 
 void Intake::Filtering::end(Intake& intake) {
   Intake::BaseState::end(intake);
-  printf("ending filtering state\n");
+  // printf("ending filtering state\n");
   intake.m_optical.set_led_pwm(0);
 }
 
@@ -228,18 +291,18 @@ void Intake::intakeTo(COLOR color, DESTINATION dest) {
 }
 
 void Intake::intakeBothTo(DESTINATION dest) {
-  intakeTo(RED, dest);
-  intakeTo(BLUE, dest);
+  intakeTo(COLOR::RED, dest);
+  intakeTo(COLOR::BLUE, dest);
 }
 
-std::optional<Intake::COLOR> Intake::getSensedRing() {
-  if (pros::millis() % 200 < 10)
-    printf("proximity:\t%d\n", m_optical.get_proximity());
+std::optional<COLOR> Intake::getSensedRing() {
+  // if (pros::millis() % 200 < 10)
+  //   printf("proximity:\t%d\n", m_optical.get_proximity());
   if (m_optical.get_proximity() < 200) return std::nullopt;
-  printf("proximity:\t%d\n", m_optical.get_proximity());
+  // printf("proximity:\t%d\n", m_optical.get_proximity());
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
-  printf("hue:\t\t%f\n", hueRem);
+  // printf("hue:\t\t%f\n", hueRem);
   // todo: check
-  if (std::abs(hueRem) < 60) return RED;
-  return BLUE;
+  if (std::abs(hueRem) < 60) return COLOR::RED;
+  return COLOR::BLUE;
 }

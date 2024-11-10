@@ -20,14 +20,6 @@ const pros::controller_digital_e_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
 }; // namespace controller_mapping
 namespace map = controller_mapping;
 
-/** @brief Returns the opposite color. */
-inline Intake::COLOR operator!(Intake::COLOR color) {
-  switch (color) {
-    case Intake::COLOR::RED: return Intake::COLOR::BLUE;
-    case Intake::COLOR::BLUE: return Intake::COLOR::RED;
-  }
-}
-
 // TODO: deduplicate this with the one in intake.cpp
 template <class... Ts> struct overloads : Ts... {
     using Ts::operator()...;
@@ -58,11 +50,11 @@ std::string destToStrOp(Intake::DESTINATION dest) {
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   /** The color of ring we are directing to the destination with the filter. */
-  Intake::COLOR filterColor = Intake::COLOR::RED;
+  COLOR filterColor = COLOR::RED;
   auto intakeStateToStr = overloads(
       [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
       [filterColor](Intake::Filtering& state) {
-        return destToStrOp(filterColor == Intake::BLUE ? state.blue : state.red);
+        return destToStrOp(filterColor == COLOR::BLUE ? state.blue : state.red);
       },
       [](Intake::BaseState& state) { return std::string("none"); });
   bool prevIntakeBtn = false;
@@ -102,7 +94,7 @@ void opcontrol() {
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
     auto intakeState = bot.intake.getState();
-    master.print(1, 0, "%s->%s", filterColor == Intake::COLOR::RED ? "R" : "B",
+    master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
 #ifdef TUNING
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&

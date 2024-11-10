@@ -3,26 +3,26 @@
 namespace dimensions {
 namespace field {
 namespace long_headings {
-/** heading to referee */
+/** Heading to face referee. This side of the field is furthest from the climb stake. */
 constexpr float REFEREE = 0;
-/** heading to face audience */
+/** Heading to face audience. This side of the field is closest to the climb stake. */
 constexpr float AUDIENCE = 180;
-/** heading to face red station */
+/** Heading to face red station */
 constexpr float RED_STATION = 270;
-/** heading to face blue station */
+/** Heading to face blue station */
 constexpr float BLUE_STATION = 90;
 }; // namespace long_headings
 
 using namespace long_headings;
 
 namespace short_headings {
-/** heading to face referee */
+/** Heading to face referee. This side of the field is furthest from the climb stake. */
 constexpr float REF = long_headings::REFEREE;
-/** heading to face audience (stands) */
+/** Heading to face referee (stands). This side of the field is furthest from the climb stake. */
 constexpr float STANDS = long_headings::AUDIENCE;
-/** heading to face red driver station */
+/** Heading to face red driver station */
 constexpr float RED = long_headings::RED_STATION;
-/** heading to face blue driver station */
+/** Heading to face blue driver station */
 constexpr float BLUE = long_headings::BLUE_STATION;
 } // namespace short_headings
 namespace DIR = short_headings;
@@ -36,6 +36,8 @@ constexpr float MIN_X = -MAX_X;
 constexpr float MAX_Y = TILE * 3;
 constexpr float MIN_Y = -MAX_Y;
 
+/** Diameter of the rings */
+constexpr float RING_DIAM = 7;
 } // namespace field
 
 namespace robot {
