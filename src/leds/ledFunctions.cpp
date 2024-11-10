@@ -17,7 +17,7 @@ int LED::getMotorDisconect(){
 }
 
 std::optional<Intake::DESTINATION> LED::getRingColorDestination(Intake::COLOR color){
-  if (Intake::COLOR color == Intake::BLUE){
+  if (color == Intake::BLUE){
 
   }
 }
@@ -41,10 +41,6 @@ void LED::allianceColorDisplay(){
   leftDrive->buf().setAll(0x0000FF);
   leftDrive->buf().getBuffer().at(10) = 0x00FF00;
   leftDrive->buf().update();
-
-}
-
-void LED::ringFilterDisplay(){
 
 }
 

@@ -13,7 +13,7 @@ public:
 enum  matchState{ preAuton, Auton, Driver };
 matchState m_state;
 
-enum ledState{ motorDisconnect, allianceColor, ringFiltering };
+enum ledState{ mojtorDisconnect, allianceColor, ringFiltering };
 ledState s_state;
 
 //get information functions
