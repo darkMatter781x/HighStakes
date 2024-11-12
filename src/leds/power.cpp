@@ -27,7 +27,7 @@ void LedPowerHandler::update() {
       // If wouldn't over-current, then don't reduce the brightness
       strip->applyReduction(reduction);
     }
-    if (pros::millis() % 100 < 10) printf("reduction: %f\n", reduction);
+    // if (pros::millis() % 100 < 10) printf("reduction: %f\n", reduction);
     // Move to the next key
     i = range.second;
   }
