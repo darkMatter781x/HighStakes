@@ -3,8 +3,7 @@
 
 Lift::Config Lift::Config::config {
     .bottom = 290,
-    /** parallel to ground ish */
-    .middle = 326,
+    .middle = 330,
     .top = 357.5,
     .gearRatio = 1.0,
     .controllerSettings =
