@@ -3,8 +3,8 @@
 constexpr double INCHES_PER_CM = 0.3937008;
 
 Intake::Config Intake::Config::config = {
-    .intakingToLiftInches = 5.8,
-    .outtakingToLiftDuration = 1200,
+    .intakingToLiftInches = 4,
+    .outtakingToLiftDuration = 1500,
     .intakingToKickDuration = 0,
     .idlingToKickDuration = 350,
     .chainRatio =

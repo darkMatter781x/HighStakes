@@ -138,7 +138,7 @@ void Intake::OuttakingToLift::update(Intake& intake) {
   // So, we delay the change a bit.
   if (pros::millis() - startTime < 200) {
     intake.m_motors.move(0);
-  } else intake.m_motors.move(-127);
+  } else intake.m_motors.move(-96);
 
   // if (pros::millis() % 200 < 10) printf("outtaking to lift\n");
   if (pros::millis() - startTime >
