@@ -21,9 +21,9 @@ auton::Auton auton::autons::positiveRush = {
     .label = (char*)"Positive Rush",
     .run = positiveRushFunc,
     .labelForController = (char*)"mogo rush",
-    .description =
-        (char*)"Rushes mogo and scores 1 ring on each of 2 mogos, and 1 ring on "
-                "alliance stake, for a total of 9pts.",
+    .description = (char*)"Rushes mogo and scores 1 ring on each of 2 mogos, "
+                          "and 1 ring on "
+                          "alliance stake, for a total of 9pts.",
 };
 
 // Autonomous for positive rush (side of the field with positive corners)
@@ -47,7 +47,7 @@ void positiveRushFunc(ALLIANCE alliance) {
   bot.intake.outtake();
 
   const Pose midMogoTarget =
-      Pose {0, -TILE * 2, RED_STATION - 30} +
+      Pose {0, -TILE * 2 + 2, RED_STATION - 30} +
       Pose {float(-sqrt(3) / 2), -1. / 2} * (DRIVE_LENGTH / 2 + 3);
 
   // Travel past first stack of rings
@@ -61,10 +61,10 @@ void positiveRushFunc(ALLIANCE alliance) {
   pros::delay(200);
   bot.intake.intakeBothTo(Intake::MOGO);
 
-  // Reset lift and intake
+  // Reset intake and lift
   pros::delay(200);
-  bot.lift.goToBottom();
   bot.intake.stop();
+  bot.lift.goToBottom();
 
   // Wait until past first stack of rings
   waitUntil([] { return bot.getPose().x > -TILE - 3 || !bot.isInMotion(); });
@@ -97,14 +97,18 @@ void positiveRushFunc(ALLIANCE alliance) {
   const Pose secondRingTarget {-TILE + 3, -TILE * 2, RED_STATION + 15};
   bot.moveToPose(secondRingTarget, 300);
   bot.moveToPose(secondRingTarget, 1000, {.maxSpeed = 48});
-
+  // Raise lift to prevent it hitting the blue ring
+  bot.lift.goToMiddle();
+  pros::delay(300);
+  // Drop lift to intake
+  bot.lift.goToBottom();
   // Wait until first ring is intaked
   const size_t startWaitingForSecondRing = pros::millis();
   waitUntil(
       [startingMogoRings] {
         return bot.intake.numOfMogoRings >= (startingMogoRings + 1);
       },
-      0, 1500);
+      0, 1200);
   printf("%3.3f: first ring sensed\n", float(pros::millis()) / 1000.);
 
   // Intake second ring to lift
@@ -114,9 +118,9 @@ void positiveRushFunc(ALLIANCE alliance) {
   waitUntil(
       [startWaitingForSecondRing] {
         return bot.intake.getSensedRing() == bot.getColor() ||
-               (pros::millis() - startWaitingForSecondRing) > 2000;
+               (pros::millis() - startWaitingForSecondRing) > 1700;
       },
-      0, 2000);
+      0, 1700);
   printf("%3.3f: second ring sensed\n", float(pros::millis()) / 1000.);
 
   // Stop going towards second ring
@@ -133,7 +137,7 @@ void positiveRushFunc(ALLIANCE alliance) {
                   });
 
   // Throw the first mogo, once it has the momentum to do so
-  pros::delay(100);
+  pros::delay(50);
   bot.mogo.open();
 
   bot.moveToPose(secondMogo, 1500, {.forwards = false, .lead = .7});
@@ -148,11 +152,15 @@ void positiveRushFunc(ALLIANCE alliance) {
   bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
-  const Pose thirdRingStack {-TILE * 2, 0 - DRIVE_LENGTH / 2 - 3, REF};
+  const Pose thirdRingStack {-TILE * 2 - 1.5, 0 - DRIVE_LENGTH / 2 - 4.5, REF};
 
   // Turn in preparation for third ring stack
-  bot.turnToHeading(RED_STATION, 500,
-                    {.maxSpeed = 64, .minSpeed = 64, .earlyExitRange = 20});
+  bot.swingToPoint(
+      thirdRingStack, lemlib::DriveSide::RIGHT, 1000,
+      {.direction = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE,
+       .maxSpeed = 127,
+       .minSpeed = 127,
+       .earlyExitRange = 20});
 
   // Go towards third ring stack
   bot.moveToPose(thirdRingStack, 2000);
@@ -164,7 +172,7 @@ void positiveRushFunc(ALLIANCE alliance) {
       },
       0, 500);
   // Lift up intake in order to intake top ring of third ring stack
-  bot.lift.goToTop();
+  bot.lift.goToMiddle();
 
   // Intake third ring to mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
@@ -193,11 +201,10 @@ void positiveRushFunc(ALLIANCE alliance) {
     // Raise lift to score on alliance stake
     bot.lift.goToMiddle();
 
-    const Pose allianceWallStake {MIN_X, 0};
+    const Pose allianceWallStake {MIN_X, -1.5};
     const Pose scoreOnWallStake =
-        (allianceWallStake +
-         Pose {float(sqrt(2) / 2), float(-sqrt(2) / 2)} * 11)
-            .withTheta(REF - 45);
+        (allianceWallStake + Pose {float(sqrt(3) / 2), float(-1. / 2)} * 11)
+            .withTheta(REF - 60);
 
     // Go to wall stake
     bot.moveToPose(scoreOnWallStake, 1300);
@@ -205,9 +212,14 @@ void positiveRushFunc(ALLIANCE alliance) {
     // Score on wall stake
     bot.lift.goToBottom();
     // Give time for ring to score
-    pros::delay(250);
+    pros::delay(600);
+
+    // Make sure trapdoor doesn't get stuck in intake
+    bot.lift.goToMiddle();
     // Back away from wall stake
-    tank(-127, -127, 200, 0);
+    tank(-127, -127, 300, 0);
+    // Reset lift
+    bot.lift.goToBottom();
   }
 
   // Touch ladder
