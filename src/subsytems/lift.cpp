@@ -53,6 +53,8 @@ float Lift::getTargetAngle() const {
 }
 
 float Lift::calcLiftAngle() const {
+  // Prevent lift from moving if rotation sensor is not installed
+  if (!m_rotation.is_installed()) return getTargetAngle();
   return m_rotation.get_angle() / 100.0 * m_config.gearRatio;
 }
 
