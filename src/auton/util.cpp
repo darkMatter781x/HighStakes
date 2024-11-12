@@ -3,6 +3,7 @@
 #include "robot.h"
 #include "lemlib/util.hpp"
 #include <cmath>
+#include <math.h>
 
 namespace auton::util {
 
@@ -84,3 +85,11 @@ void waitUntil(std::function<bool()> condition, int timeConditionIsTrue,
 }
 
 } // namespace auton::util
+
+lemlib::Pose lemlib::Pose::fromPolar(float r, float theta, bool inRadians,
+                                     bool standardPos) {
+  const float originalTheta = theta;
+  if (!inRadians) theta = lemlib::degToRad(theta);
+  if (!standardPos) theta = M_PI / 2 - theta;
+  return {r * std::cos(theta), r * std::sin(theta), originalTheta};
+}
