@@ -30,7 +30,12 @@ void initialize() {
 
   // ensure robot is initialized
   Robot::get();
+  // indicate calibration
+  pros::delay(250);
+  RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFFFF00);
   bot.calibrate();
+  pros::delay(250);
+  RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
   // // LED Testing
   // LED Testing
   // pros::delay(1000);
@@ -39,26 +44,26 @@ void initialize() {
   //   strips.push_back(
   //       LedStrip::create({8, adiPort}, size_t(adiPort - 'A' + 1), 0.1));
   // }
-  int i;    
-  while (i++ < 5) {
-    // for (auto strip : strips) {
-    //   strip->buf().setAll(0x550000);
-    //   pros::delay(1000);
-    // }
-    // for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
-    //   // pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
-    //   // strip.set_all(0xFFFFFF);
-    //   // pros::delay(250);
-    // }
-    RobotConfig::LEDs::leds.rightUnderGlow->buf().setAll(0xFF0000);
-    pros::delay(250);
-    RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x0000FF);
-    pros::delay(250);
-    // RobotConfig::LEDs::leds.leftLift->buf().setAll(0xFF0000);
-    // // pros::delay(250);
-    // RobotConfig::LEDs::leds.rightLift->buf().setAll(0xFF0000);
-    // // pros::delay(250);
-  }
+  // int i;
+  // while (i++ < 1) {
+  //   // for (auto strip : strips) {
+  //   //   strip->buf().setAll(0x550000);
+  //   //   pros::delay(1000);
+  //   // }
+  //   // for (char adiPort = 'H'; adiPort >= 'A'; adiPort--) {
+  //   //   // pros::adi::LED strip {{8, adiPort}, size_t(adiPort - 'A' + 1)};
+  //   //   // strip.set_all(0xFFFFFF);
+  //   //   // pros::delay(250);
+  //   // }
+  //   // RobotConfig::LEDs::leds.rightUnderGlow->buf().setAll(0xFF0000);
+  //   // pros::delay(250);
+  //   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
+  //   // pros::delay(250);
+  //   // RobotConfig::LEDs::leds.leftLift->buf().setAll(0xFF0000);
+  //   // // pros::delay(250);
+  //   // RobotConfig::LEDs::leds.rightLift->buf().setAll(0xFF0000);
+  //   // // pros::delay(250);
+  // }
 
   // RobotConfig::LEDs::leds.leftUnderGlow.set_all(0x550000);
   // RobotConfig::LEDs::leds.rightUnderGlow.set_all(0x005500);
