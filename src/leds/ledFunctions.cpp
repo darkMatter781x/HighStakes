@@ -27,9 +27,7 @@ int LED::getMotorDisconect(){
 }
 
 std::optional<Intake::DESTINATION> LED::getRingColorDestination(Intake::COLOR color){
-  if (color == Intake::BLUE){
-    //return Intake::BLUE;
-  }
+
 }
 
 void LED::motorDisconnectDisplay(){
@@ -85,6 +83,26 @@ void LED::allianceColorDisplay(){
 
 void LED::autonWarningDisplay(){
   
+}
+
+void LED::ringFilterDisplay(){
+  if (filterColor == RED && destination == Goal){
+
+  } else if (filterColor == BLUE && destination == Goal){
+
+  } else if (filterColor == RED && destination == Idle){
+
+  } else if (filterColor == BLUE && destination == Idle){
+
+  } else if (filterColor == RED && destination == Lift){
+
+  } else if (filterColor == BLUE && destination == Lift){
+
+  } else if (filterColor == RED && destination == Filter){
+
+  } else if (filterColor == BLUE && destination == Filter){
+
+  }
 }
 
 void LED::ledHandler(){

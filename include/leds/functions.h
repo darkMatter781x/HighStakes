@@ -36,6 +36,17 @@ std::shared_ptr<LedStrip> leftLift;
 std::shared_ptr<LedStrip> rightLift; 
 
 int Motors[8] = {16, 15, 14, 13, 12, 11, 17, 9};
-
+enum Destination{
+    Idle,
+    Filter,
+    Goal,
+    Lift
+};
+Destination destination;
+enum FilterColor{
+    RED,
+    BLUE
+};
+FilterColor filterColor;
 
 };
