@@ -80,7 +80,7 @@ void Intake::IntakingToKick::update(Intake& intake) {
   intake.m_motors.move(127);
   // if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
-  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
+  if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
     // printf("naturally switching to idle\n");
     intake.setState(IdlingToKick {afterState, color});
   }
@@ -102,7 +102,7 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::IdlingToKick::update(Intake& intake) {
-  intake.m_motors.move(127);
+  intake.m_motors.move(-127);
   // printf("idling to kick\n");
   printFiltering(afterState);
   // if (pros::millis() % 200 < 10) printf("idling to kick\n");
@@ -116,12 +116,12 @@ void Intake::IdlingToKick::update(Intake& intake) {
 
 void Intake::IdlingToKick::start(Intake& intake) {
   Intake::FilteringState::start(intake);
-  intake.m_kicker.set_value(true);
+  // intake.m_kicker.set_value(true);
 }
 
 void Intake::IdlingToKick::end(Intake& intake) {
   Intake::FilteringState::start(intake);
-  intake.m_kicker.set_value(false);
+  // intake.m_kicker.set_value(false);
 }
 
 void Intake::IntakingToLift::update(Intake& intake) {
