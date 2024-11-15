@@ -36,6 +36,9 @@ void negativeRushFunc(ALLIANCE alliance) {
   const auto defaultLatLargeExit = bot.lateralLargeExit;
   const auto defaultLatSmallExit = bot.lateralSmallExit;
 
+  bot.intake.numOfMogoRings = 0;
+  bot.intake.numOfLiftRings = 0;
+
   const size_t startingLiftRings = bot.intake.numOfLiftRings;
   const size_t startingMogoRings = bot.intake.numOfMogoRings;
 
@@ -62,8 +65,8 @@ void negativeRushFunc(ALLIANCE alliance) {
       [] { return bot.getPose().x > MIN_X + TILE * 2 || !bot.isInMotion(); });
   bot.cancelMotion();
 
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
   bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   const lemlib::Pose firstMidRing = {-3.5, TILE * 2 - 3.5};
   // turn towards first stack of rings
@@ -131,12 +134,12 @@ void negativeRushFunc(ALLIANCE alliance) {
   // intake ramp.
   bot.lateralPID.kD = defaultLatPID.kD / 4;
 
-  // Move to second red ring
-  bot.moveToPose({-8, TILE * 2 - 1, 60}, 1500,
-                 {
-                     .lead = .45,
-                     .earlyExitRange = 6,
-                 });
+  // // Move to second red ring
+  // bot.moveToPose({-8, TILE * 2 - 1, 60}, 1500,
+  //                {
+  //                    .lead = .45,
+  //                    .earlyExitRange = 6,
+  //                });
 
   // Wait until first ring is fully intaked to lift
   if (startingLiftRings == bot.intake.numOfLiftRings)
@@ -144,13 +147,13 @@ void negativeRushFunc(ALLIANCE alliance) {
         [startingLiftRings] {
           return bot.intake.numOfLiftRings > startingLiftRings;
         },
-        0, 500);
+        0, 2000);
 
   // Intake second ring into mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
-  bot.waitUntilDone();
+  // bot.waitUntilDone();
 
   // Reset exit conditions and PID
   bot.lateralLargeExit = defaultLatLargeExit;
@@ -163,22 +166,22 @@ void negativeRushFunc(ALLIANCE alliance) {
   const lemlib::Pose thirdRingStack = {-TILE + 4, TILE * 2 - 3};
   lemlib::Pose backAwayFromMidTarget = {-TILE * .75, TILE};
 
-  // Find angle to point towards third ring stack from backAwayFromMidTarget.
-  backAwayFromMidTarget.theta =
-      trigAngleToHeading(backAwayFromMidTarget.angle(thirdRingStack));
+  // // Find angle to point towards third ring stack from backAwayFromMidTarget.
+  // backAwayFromMidTarget.theta =
+  //     trigAngleToHeading(backAwayFromMidTarget.angle(thirdRingStack));
 
-  // Back away from mid and point towards third ring stack
-  bot.moveToPose(backAwayFromMidTarget, 1000,
-                 {
-                     .forwards = false,
-                     .lead = 0.4,
-                 });
-  // Wait until second ring fully intaked
-  waitUntil(
-      [startingMogoRings] {
-        return startingMogoRings < bot.intake.numOfMogoRings;
-      },
-      0, 500);
+  // // Back away from mid and point towards third ring stack
+  // bot.moveToPose(backAwayFromMidTarget, 1000,
+  //                {
+  //                    .forwards = false,
+  //                    .lead = 0.4,
+  //                });
+  // // Wait until second ring fully intaked
+  // waitUntil(
+  //     [startingMogoRings] {
+  //       return startingMogoRings < bot.intake.numOfMogoRings;
+  //     },
+  //     0, 500);
 
   // Move to third ring stack
   bot.moveToPoint(thirdRingStack, 1300);
@@ -191,32 +194,23 @@ void negativeRushFunc(ALLIANCE alliance) {
                    {.direction = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE,
                     .maxSpeed = 64});
   // Wait until third ring fully intaked
-  waitUntil(
-      [startingMogoRings] {
-        return (startingMogoRings + 1) < bot.intake.numOfMogoRings;
-      },
-      0, 1000);
+  waitUntil([] { return bot.intake.numOfMogoRings > 0; }, 0, 1000);
   bot.cancelMotion();
 
   // Once third ring is intaked, intake preload/4th ring
   bot.moveToPose({preloadRing.x, preloadRing.y - 5, STANDS}, 1000);
   // Wait for third ring to be fully intaked into mogo
   pros::delay(500);
-  // Intake preload to lift
-  bot.intake.intakeTo(bot.getColor(), Intake::LIFT);
+  // Intake preload to mogo
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Wait until ring is intaked
-  waitUntil(
-      [startingLiftRings] {
-        return (startingLiftRings + 1) < bot.intake.numOfMogoRings;
-      },
-      0, 1600);
+  waitUntil([] { return bot.intake.numOfMogoRings > 1; }, 0, 1600);
   const lemlib::Pose allianceWallStake {MIN_X, 0};
   const lemlib::Pose scoreOnWallStake =
-      (allianceWallStake +
-       lemlib::Pose {float(sqrt(2) / 2), float(sqrt(2) / 2)} * 12)
-          .withTheta(STANDS + 45);
+      lemlib::Pose::fromPolar(-11, RED - 60) + allianceWallStake;
+
   bot.waitUntilDone();
   pros::delay(500);
   // Jostle ring into lift
