@@ -55,7 +55,7 @@ void skillsFunc(ALLIANCE _alliance) {
   const Pose grabMogo1 = {-TILE * 2, -TILE + DRIVE_LENGTH / 2, REF};
   // Get out of alliance stake, and face mogo
   bot.moveToPose(grabMogo1 + Pose {0, 40}, 500,
-                 {.minSpeed = 96, .earlyExitRange = 5});
+                 {.minSpeed = 64, .earlyExitRange = 5});
   // Deploy basket
   bot.intake.outtake();
   bot.lift.goToMiddle();
@@ -97,15 +97,15 @@ void skillsFunc(ALLIANCE _alliance) {
 
   // Move to second ring, next to wall stake
   const Pose ring2 {-0, -TILE * 2.5 /*  + DRIVE_LENGTH / 2 - 4 */, STANDS};
-  bot.moveToPoint(ring2, 2000);
+  bot.moveToPoint(ring2, 2000, {.maxSpeed = 48});
 
   // Wait until close, then go slowly to next ring
-  waitUntilDistToPose(ring2, 24);
+  waitUntilDistToPose(ring2, 24, 0, true);
   bot.cancelMotion();
   bot.moveToPoint(ring2, 2000, {.maxSpeed = 48});
 
   // Wait until close enough to intake, then move on
-  waitUntilDistToPose(ring2, DRIVE_LENGTH / 2 - 3);
+  waitUntilDistToPose(ring2, DRIVE_LENGTH / 2 - 3, 0, true);
   bot.cancelMotion();
 
   // Back away from wall stake
@@ -160,7 +160,7 @@ void skillsFunc(ALLIANCE _alliance) {
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x0000FF);
 
   const Pose depositMogo1 =
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 6, REF + 45) + Pose {
+      Pose::fromPolar(DRIVE_LENGTH / 2 + 4, REF + 45) + Pose {
                                                             MIN_X,
                                                             MIN_Y,
                                                         };
@@ -175,57 +175,16 @@ void skillsFunc(ALLIANCE _alliance) {
   bot.moveToPose(depositMogo1, 1200, {.forwards = false});
   waitUntil([] { return bot.intake.numOfMogoRings >= 6; }, 0, 2000);
 
+  // Release mogo and make sure intake doesn't hold onto it
   bot.mogo.open();
+  bot.intake.outtake();
+  pros::delay(100);
   bot.intake.stop();
-
-  pros::delay(500);
-
-  // Wait until close to corner
-  // waitUntilDistToPose(depositMogo1, 6, 0, true);
-  // Then, ensure intake doesn't hold onto mogo
-
-  // Release mogo
-  // waitUntilDistToPose(depositMogo1, 3, 0, true);
-  // bot.cancelMotion();
-
-  bot.waitUntilDone();
   // Reset number of mogo rings
   bot.intake.numOfMogoRings = 0;
 
-  // const Pose scoreOnTallStake1 {0, MIN_Y + DRIVE_LENGTH / 2 + 5, STANDS};
+  bot.waitUntilDone();
 
-  // // Go to second wall stake
-  // bot.moveToPose(scoreOnTallStake1 + Pose {0, 5}, 2500, {.lead = .6});
-  // pros::delay(200);
-  // bot.intake.intakeTo(COLOR::RED, Intake::LIFT);
-
-  // // Wait until ring has been intaked to lift
-  // waitUntil([] { return bot.intake.numOfLiftRings >= 1 || !bot.isInMotion();
-  // });
-  // // If ring was not intaked to lift
-  // if (bot.intake.numOfLiftRings < 1) {
-  //   // Wait 500ms longer
-  //   waitUntil([] { return bot.intake.numOfLiftRings >= 1; }, 0, 500);
-  // }
-  // // If ring was intaked to lift
-  // if (/* bot.intake.numOfLiftRings >= 1 */ true) {
-  //   // Wait until ring in lift
-  //   pros::delay(800);
-  //   bot.lift.goToTop();
-  //   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFF0000);
-  //   // Give lift to raise
-  //   pros::delay(2000);
-  //   bot.moveToPose(scoreOnTallStake1, 500);
-  // }
-
-  // bot.waitUntilDone();
-  // // Score ring on second wall stake
-  // bot.lift.goToBottom();
-  // // Give lift time to score
-  // pros::delay(400);
-  // // Reset number of lift rings
-  // bot.intake.numOfLiftRings = 0;
-  // tank(-127, -127, 200, 0);
   /*
      //-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-\\
     //                                                               \\
@@ -234,98 +193,209 @@ void skillsFunc(ALLIANCE _alliance) {
      \\-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-+-.-+-//
   */
 
-  // Position to score on blue stake
-  const Pose getNearBlueStake =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 - 12, BLUE_STATION - 30) + Pose {
-                                                                       MAX_X,
-                                                                       0,
-                                                                   };
-
-  // Ring for third stake
-  const Pose stakeRing3 = {TILE, -TILE * 2, BLUE_STATION - 30};
+  // First ring for second mogo
+  const Pose ring2_1 = {TILE - 3, -TILE * 2, BLUE_STATION - 30};
   // Turn towards third ring for stake
-  bot.turnToPoint(stakeRing3, /* lemlib::DriveSide::RIGHT, */ 500,
-                  {.minSpeed = 127, .earlyExitRange = 45});
+  bot.turnToPoint(ring2_1, 500, {.minSpeed = 32, .earlyExitRange = 45});
 
   // Intake second lift ring
-  bot.moveToPoint(stakeRing3, 1800, {.minSpeed = 127, .earlyExitRange = 4});
+  bot.moveToPoint(ring2_1, 1800, {.earlyExitRange = 3});
   bot.intake.intakeTo(COLOR::RED, Intake::LIFT);
   bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
 
-  // Go to blue alliance stake
-  bot.moveToPose(getNearBlueStake, 3500, {.lead = .4});
-  waitUntil([] { return bot.intake.numOfLiftRings >= 1 || !bot.isInMotion(); });
-  // Give ring time to get in lift
-  pros::delay(1200);
-  // Raise lift to score
-  bot.lift.goToMiddle();
-  pros::delay(500);
+  // // Against wall between alliance stake and mogo
+  // const Pose reset1 {MAX_X + 3, -TILE + DRIVE_WIDTH / 2 + 5, RED_STATION};
 
-  const Pose scoreOnBlueStake =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 - 6, BLUE_STATION - 30) + Pose {
-                                                                      MAX_X,
-                                                                      0,
-                                                                  };
-  bot.moveToPose(scoreOnBlueStake, 1000);
-  bot.waitUntilDone();
-  // Score ring on blue stake
-  bot.lift.goToBottom();
-  // Give lift time to score
-  pros::delay(500);
+  // // Turn to face reset position
+  // bot.turnToPoint(reset1, /* lemlib::DriveSide::RIGHT, */ 500,
+  //                 {.forwards = false, .minSpeed = 96, .earlyExitRange = 30});
+  // // Go to wall to reset position
+  // bot.moveToPose(reset1, 2000, {.forwards = false, .lead = .7});
 
-  // Location of mogo with blue ring to be put in corner
-  const Pose blueMogo = {TILE * 2.5, -TILE, REF};
+  // // Reset at wall
+  // bot.waitUntilDone();
+  // std::cout << format_as(bot.getPose()) << std::endl;
+  // bot.setPose(
+  //     {/* MAX_X - DRIVE_LENGTH / 2 + 1 */65.5, bot.getPose().y,
+  //     bot.getPose().theta});
+  // return;
 
-  // Get out of stake and go to mogo
-  bot.moveToPose(blueMogo, 2500,
-                 {.forwards = false, .minSpeed = 64, .earlyExitRange = 5});
-  waitUntilDistToPose(blueMogo, 3, 0, true);
-  bot.cancelMotion();
+  const Pose mogo2 {TILE * 2, -DRIVE_LENGTH / 2 + 3, STANDS};
 
-  const Pose pushBlueMogoToCorner =
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 4, REF - 30) + Pose {
-                                                            MAX_X,
-                                                            MIN_Y,
-                                                        };
-  // Push mogo into corner
-  bot.moveToPose(pushBlueMogoToCorner, 2500,
-                 {.forwards = false, .minSpeed = 64});
-  waitUntilDistToPose(pushBlueMogoToCorner, 5, 0, true);
-  bot.cancelMotion();
+  // Turn to face mogo
+  bot.turnToPoint(mogo2, /* lemlib::DriveSide::RIGHT, */ 500,
+                  {.forwards = false, .minSpeed = 127, .earlyExitRange = 30});
+  // Go to grab mogo
+  bot.moveToPose(mogo2, 2200, {.forwards = false, .lead = .4});
 
-  // intake rings
-  bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
-  bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
-
-  bot.moveToPose({TILE * 2, -TILE * 2, REF - 45}, 1000,
-                 {.minSpeed = 64, .earlyExitRange = 4});
-  const Pose mogo2 {TILE * 2, -DRIVE_LENGTH / 2, STANDS};
-
-  bot.swingToPoint(mogo2, lemlib::DriveSide::LEFT, 800,
-                   {.forwards = false, .minSpeed = 64, .earlyExitRange = 30});
-  bot.moveToPose(mogo2, 2000, {.forwards = false, .earlyExitRange = 4});
-
+  // Stop intake if a ring is sensed
   waitUntil([] {
     return bot.intake.getSensedRing() == COLOR::RED || !bot.isInMotion();
   });
   bot.intake.stop();
-
   bot.waitUntilDone();
+  // Clamp mogo
   bot.mogo.close();
 
-  pros::delay(500);
+  // Second ring for second mogo
+  const Pose ring2_2 = {TILE, TILE, RED + 30};
+
+  // Back up to face second ring
+  bot.moveToPose(ring2_2 + Pose::fromPolar(-30, ring2_2.theta), 2000,
+                 {.forwards = false, .lead = .4, .minSpeed = 64});
+  pros::delay(50);
+
+  // Score first ring onto mogo
   bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
   bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
-  pros::delay(500);
 
-  const Pose depositMogo2 {MAX_X, MAX_Y, STANDS + 45};
+  // Wait until facing ring
+  waitUntil([ring2_2] {
+    return robotAngDist(ring2_2.theta) < 20 || !bot.isInMotion();
+  });
+  bot.cancelMotion();
 
-  bot.swingToPoint(depositMogo2, lemlib::DriveSide::RIGHT, 600,
-                   {.forwards = false});
-  bot.moveToPose(depositMogo2, 2500, {.forwards = false});
+  // Move to and intake second ring
+  bot.moveToPoint(ring2_2, 1400, {.minSpeed = 32});
+
+  const Pose ring2_3 = {0, 0, STANDS};
+  // Move to and intake third ring
+  bot.moveToPose(ring2_3, 1300,
+                 {
+                     .lead = .4,
+                     .minSpeed = 32,
+                 });
+
+  const Pose ring2_4 = {TILE, -TILE, STANDS - 45};
+
+  // Move to and intake fourth ring
+  bot.moveToPose(ring2_4, 1300, {.minSpeed = 32});
+
+  // Move to intake last ring
+  const Pose ring2_5 =
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 8, STANDS - 45) + Pose {
+                                                                TILE * 2,
+                                                                -TILE * 2,
+                                                            };
+
+  // Move to and intake fifth ring
+  bot.moveToPose(ring2_5, 1300);
+
+  // Wait until all rings intaked
+  waitUntil([] { return bot.intake.numOfMogoRings >= 5; }, 0, 2000);
+
+  const Pose depositMogo2 =
+      Pose::fromPolar(DRIVE_LENGTH / 2 - 2, RED_STATION + 45) +
+      Pose {MAX_X, MIN_Y};
+
+  // get rings away
+  bot.turnToHeading(BLUE_STATION, 500, {.minSpeed = 127, .earlyExitRange = 30});
+  bot.turnToHeading(STANDS, 500, {.minSpeed = 127, .earlyExitRange = 30});
+  bot.turnToHeading(BLUE_STATION, 500, {.minSpeed = 127, .earlyExitRange = 30});
+  // // Go into corner
+  // bot.moveToPose(depositMogo2.withTheta(depositMogo2.theta + 180), 800,
+  //                {.forwards = true});
+
+  // Turn to corner
+  bot.turnToPoint(depositMogo2, 800,
+                  {.forwards = false, .minSpeed = 64, .earlyExitRange = 30});
+
+  // Move to corner
+  bot.moveToPose(depositMogo2, 1300, {.forwards = false});
+
+  // Unclamp and dont clamp w/ intake
+  bot.mogo.open();
+  bot.intake.outtake();
+  pros::delay(100);
+  bot.intake.stop();
+
+  // Reset number of mogo rings
+  bot.intake.numOfMogoRings = 0;
+
+  bot.waitUntilDone();
+  tank(127, 127, 300, 0);
+  // Prepare for blue mogo
+  const Pose prepareForBlueMogo {TILE * 1.25, -TILE * 1.25, RED_STATION};
+  bot.moveToPose(prepareForBlueMogo, 2000,
+                 {.forwards = false, .minSpeed = 127, .earlyExitRange = 10});
+  waitUntilDistToPose(prepareForBlueMogo, 12);
+  bot.cancelMotion();
+
+  // Go to blue mogo
+  const Pose blueMogo {TILE * 2.5, TILE - DRIVE_LENGTH / 2, STANDS};
+  bot.moveToPose(blueMogo, 3000, {.forwards = false});
+
+  bot.waitUntilDone();
+  // Clamp mogo
+  bot.mogo.close();
+
+  // Line up for deposit mogo
+  bot.moveToPose({MAX_X - DRIVE_WIDTH / 2 - 3, TILE * 1.75, REF}, 2000,
+                 {.forwards = false, .minSpeed = 32});
+
+  // Deposit blue mogo
+  bot.moveToPose(
+      {MAX_X - DRIVE_WIDTH / 2 - 3, MAX_X - DRIVE_LENGTH / 2 - 3, REF}, 2000,
+      {.forwards = false});
+
+  // Unclamp and dont clamp w/ intake
+  bot.mogo.open();
+  bot.intake.outtake();
+  pros::delay(100);
+  bot.intake.stop();
+
+  // Reset number of mogo rings
+  bot.intake.numOfMogoRings = 0;
+
+  // Go around stacks of rings
+  bot.moveToPose({TILE * 2, TILE * 1.5, RED_STATION}, 2000,
+                 {.minSpeed = 64, .earlyExitRange = 6});
+
+  // Intake 1st ring for new mogo
+  bot.moveToPose({TILE, TILE * 2, REF - 30}, 1500,
+                 {.minSpeed = 64, .earlyExitRange = 4});
+  bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
+  bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
+
+  // Grab mogo
+  bot.moveToPose(Pose::fromPolar(DRIVE_LENGTH / 2, BLUE - 30) +
+                     Pose {-TILE * 2, TILE},
+                 2500, {.forwards = false, .lead = .4});
+  // Pause intake once sensed
+  waitUntil([] {
+    return bot.intake.getSensedRing() == COLOR::RED || !bot.isInMotion();
+  });
+  bot.intake.stop();
   bot.waitUntilDone();
 
+  // Clamp mogo
+  bot.mogo.close();
+  pros::delay(300);
+
+  const Pose depositMogo3 =
+      Pose::fromPolar(DRIVE_LENGTH / 2 - 4, STANDS - 45) + Pose {MIN_X, MAX_Y};
+  bot.turnToPoint(depositMogo3, 800, {.forwards = false});
+  bot.moveToPose(depositMogo3, 2000, {.forwards = false, .lead = .8});
+
+  bot.waitUntilDone();
+  // Unclamp and dont clamp w/ intake
   bot.mogo.open();
+  bot.intake.outtake();
+  pros::delay(100);
   bot.intake.stop();
+
+  bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
+  bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
+
+  bot.moveToPose({-TILE * .75, TILE * .75, BLUE + 45}, 3000, {.minSpeed = 96});
+  bot.lift.goToTop();
+  bot.intake.stop();
+
+  bot.waitUntilDone();
+  tank(127, 127, 400, 0);
+  bot.lift.goToMiddle();
   pros::delay(500);
+  bot.lift.goToTop();
+  pros::delay(1000);
+  stop();
 }
