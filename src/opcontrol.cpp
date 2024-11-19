@@ -2,6 +2,8 @@
 #include "pros/misc.h"
 #include "robot.h"
 #include "tuning.h"
+#include "dimensions.h"
+#include "auton.h"
 
 namespace controller_mapping {
 const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
@@ -34,6 +36,53 @@ std::string destToStrOp(Intake::DESTINATION dest) {
   }
 }
 
+void skillsMacro() {
+  using namespace dimensions::all;
+  using namespace DIR;
+  using lemlib::Pose;
+  using namespace auton::util;
+
+  bot.setPose({-TILE * 2 - 13.25, 0, BLUE_STATION});
+
+  // Score preload on alliance stake
+  bot.intake.intakeBothTo(Intake::MOGO);
+  pros::delay(220);
+  bot.intake.stop();
+
+  // Reset count of rings in mogo (dont include preload)
+  bot.intake.numOfMogoRings = 0;
+
+  // Wait until ring is scored
+  pros::delay(200);
+
+  const Pose grabMogo1 = {-TILE * 2, -TILE + DRIVE_LENGTH / 2, REF};
+  // Get out of alliance stake, and face mogo
+  bot.moveToPose(grabMogo1 + Pose {0, 40}, 500,
+                 {.minSpeed = 64, .earlyExitRange = 5});
+  // Deploy basket
+  bot.intake.outtake();
+  bot.lift.goToMiddle();
+  pros::delay(400);
+
+  // Reset lift and intake
+  bot.lift.goToBottom();
+  bot.intake.stop();
+
+  // Go to mogo
+  bot.moveToPose(grabMogo1, 1500, {.forwards = false, .lead = .7});
+  // Once near mogo, use more consistent moveToPoint
+  waitUntilDistToPose(grabMogo1, 12, 0, true);
+  bot.cancelMotion();
+  bot.moveToPoint(grabMogo1, 1000, {.forwards = false});
+
+  // Once next to mogo, grab it
+  waitUntil([grabMogo1] {
+    return bot.getPose().y < grabMogo1.y + 3 || !bot.isInMotion();
+  });
+  bot.mogo.close();
+  bot.waitUntilDone();
+}
+
 /**
  * Runs the operator control code. This function will be started in its own task
  * with the default priority and stack size whenever the robot is enabled via
@@ -50,7 +99,7 @@ std::string destToStrOp(Intake::DESTINATION dest) {
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   /** The color of ring we are directing to the destination with the filter. */
-  COLOR filterColor = COLOR::RED;
+  COLOR filterColor = bot.selector.getAlliance();
   auto intakeStateToStr = overloads(
       [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
       [filterColor](Intake::Filtering& state) {
@@ -58,6 +107,12 @@ void opcontrol() {
       },
       [](Intake::BaseState& state) { return std::string("none"); });
   bool prevIntakeBtn = false;
+
+  if (strcmp(bot.selector.getAuton().label, "Skills") == 0) {
+    auton::util::waitUntil(
+        [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
+    skillsMacro();
+  }
 
   while (true) {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
