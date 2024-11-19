@@ -7,8 +7,12 @@
 using auton::Auton;
 
 std::vector<Auton> getAutons() {
-  return {auton::autons::skills, auton::autons::positiveRush,
-          auton::autons::negativeRush, auton::autons::doNothing};
+  return {
+      auton::autons::positiveRush,
+      auton::autons::negativeRush,
+      auton::autons::skills,
+      auton::autons::doNothing,
+  };
 }
 
 AutonSelector* AutonSelector::instance = nullptr;
