@@ -51,7 +51,7 @@ void stop();
  * @param time
  */
 void waitUntilDistToPose(lemlib::Pose pose, float error, int time = 0,
-                         bool checkMotionRunning = false);
+                         bool checkMotionRunning = true);
 
 /**
  * @brief Gets the distance between the robot's heading and a target heading
