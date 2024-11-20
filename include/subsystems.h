@@ -10,10 +10,10 @@
  * every 10ms by the SubsystemHandler.
  */
 class Subsystem {
-  private:
+  protected:
     /** @brief id for this Subsystem, determined by the SubsystemHandler. */
     const int m_id;
-  protected:
+
     /** @brief Automatically adds this Subsystem to the SubsystemHandle. */
     Subsystem();
   public:

@@ -1,11 +1,10 @@
 #pragma once
+
+#include "leds/strip.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
-#include "pros/motor_group.hpp"
-#include "pros/optical.hpp"
-#include "pros/rotation.hpp"
-#include <cstdio>
+#include "subsystems/intake.h"
 
 /**
  * @brief Configuration for the robot. Provides all devices and dimensions of
@@ -24,7 +23,7 @@ struct RobotConfig {
 
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
-        pros::adi::Pneumatics ringClaw;
+        pros::adi::Pneumatics ringKicker;
       private:
         friend struct RobotConfig;
         static Pneumatics pneumatics;
@@ -36,6 +35,7 @@ struct RobotConfig {
         pros::Rotation lift;
         pros::IMU imu;
         pros::Optical intake;
+        pros::adi::Potentiometer autonSelector;
       private:
         friend struct RobotConfig;
         static Sensors sensors;
@@ -74,9 +74,10 @@ struct RobotConfig {
     };
 
     struct LEDs {
-        pros::adi::LED lift;
-        pros::adi::LED leftUnderGlow;
-        pros::adi::LED rightUnderGlow;
+        std::shared_ptr<LedStrip> leftLift;
+        std::shared_ptr<LedStrip> rightLift;
+        std::shared_ptr<LedStrip> leftUnderGlow;
+        std::shared_ptr<LedStrip> rightUnderGlow;
         // private:
         friend struct RobotConfig;
         static LEDs leds;

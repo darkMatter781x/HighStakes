@@ -6,7 +6,8 @@ SubsystemHandler::SubsystemHandler()
   : m_lastUsedId(0), m_subsystems {}, m_task {[this] {
       uint32_t now = pros::millis();
       while (true) {
-        for (auto sub : m_subsystems) sub.second->update();
+        for (auto sub : m_subsystems)
+          if (sub.second != nullptr) sub.second->update();
         pros::c::task_delay_until(&now, 10);
       }
     }} {}
@@ -25,5 +26,6 @@ int SubsystemHandler::addSubsystem(Subsystem* subsystem) {
 }
 
 void SubsystemHandler::removeSubsystem(int subsystemId) {
+  printf("subsystem remove\n");
   m_subsystems.erase(subsystemId);
 }

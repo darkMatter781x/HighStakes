@@ -1,8 +1,7 @@
 #include "subsystems/lift.h"
+#include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
-#include "pros/motors.h"
-#include "pros/rotation.hpp"
-#include <cmath>
+#include "robot.h"
 
 void Lift::update() {
   if (m_state == State::EMERGENCY_STOP) {
@@ -13,19 +12,25 @@ void Lift::update() {
   const float error = calcError();
   const float output = m_pid.update(error);
   bool shouldBrake = m_exitCondition.update(error);
-  if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error, output);
+  // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
+  // output);
   if (shouldBrake) {
     // if error > smallError, then don't brake and reset exit condition
     if (std::abs(error) > m_config.controllerSettings.smallError)
       m_exitCondition.reset();
     else {
-      m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD);
+      switch (m_state) {
+        case State::BOTTOM:
+          m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+          break;
+        default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
+      };
       m_motors.brake();
-      pros::lcd::print(2, "braking");
+      if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
       return;
     }
   }
-  pros::lcd::print(2, "output: %4.2f", output);
+  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 }
 
@@ -48,10 +53,14 @@ float Lift::getTargetAngle() const {
 }
 
 float Lift::calcLiftAngle() const {
+  // Prevent lift from moving if rotation sensor is not installed
+  if (!m_rotation.is_installed()) return getTargetAngle();
   return m_rotation.get_angle() / 100.0 * m_config.gearRatio;
 }
 
-float Lift::calcError() const { return getTargetAngle() - calcLiftAngle(); }
+float Lift::calcError() const {
+  return lemlib::angleError(getTargetAngle(), calcLiftAngle(), false);
+}
 
 const Lift::State& Lift::getState() { return m_state; }
 
