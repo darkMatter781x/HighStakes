@@ -8,7 +8,7 @@
 
 # PROS
 bin/
-.vscode/
+.vscode/c_cpp_properties.json
 .cache/
 compile_commands.json
 temp.log
