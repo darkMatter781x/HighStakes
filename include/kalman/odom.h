@@ -4,6 +4,7 @@
 #pragma once
 
 #include "kalman/ukf.h"
+#include "pros/rtos.hpp"
 #include "units/Pose.hpp"
 #include "units/Vector2D.hpp"
 #include "units/units.hpp"
@@ -86,6 +87,10 @@ class KalmanOdom {
         inline units::AbstractPose<std::ratio<Deriv>> pose() const {
           return {vec<Deriv>(), theta<Deriv>()};
         }
+
+        static const State fromConst(const Eigen::Vector<float, N>& vector) {
+          return {const_cast<Eigen::Vector<float, N>&>(vector)};
+        }
     };
 
     class ProcessModel : public UKF::ProcessModel {
@@ -135,7 +140,10 @@ class KalmanOdom {
     kalman::State<N> predict(Time t) const;
 
     /** @return updated state after incorporating measurement */
-    template <size_t M> void update(const Measurement<M>& m);
+    template <size_t M> void update(Measurement<M> m);
+
+    /** @brief print state (mean and covar) to terminal */
+    void print() const;
 
     KalmanOdom(const Config config);
   private:
@@ -143,8 +151,9 @@ class KalmanOdom {
     StateOps m_stateOps;
 };
 
-template <size_t M> void KalmanOdom::update(const Measurement<M>& m) {
-  m_ukf.update(m.model, m.vector);
+template <size_t M> void KalmanOdom::update(Measurement<M> m) {
+  m_ukf.predict(m_processModel, pros::millis() - m_time.convert(msec));
+  m_ukf.update<M>(m.model, m.vector);
 }
 
 void kalmanTestingMain();

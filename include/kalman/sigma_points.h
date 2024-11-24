@@ -1,6 +1,8 @@
 #pragma once
 
 #include "kalman/types.h"
+#include <cfloat>
+typedef uint64_t timestamp;
 
 namespace kalman {
 
