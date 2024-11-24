@@ -12,12 +12,16 @@ class LemLibOdom {
     /** Used to setup odom */
     lemlib::Drivetrain m_drivetrain;
 
-    /** Updated by update(). Used to return references. */
+    /** @brief Updated by update() and setPose(). Used to return references.
+     * Theta is in standard radians. */
     lemlib::Pose m_pose;
   public:
+    /** @returns Const ref to current pose. Theta is in standard radians. */
     const lemlib::Pose& getPose() const;
+    /** @returns Mutable ref to current pose. Theta is in standard radians. */
     lemlib::Pose& getPose();
-    void setPose(const lemlib::Pose& pose);
+    /** @brief Sets pose to newPose. Theta must be in standard radians. */
+    void setPose(lemlib::Pose newPose);
     void calibrate();
 
     /** Calculates new pose using sensor data. */

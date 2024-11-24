@@ -49,7 +49,7 @@ void Localization::update() {
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
                            bool standardPos) {
   m_mutex.take();
-  if (standardPos) pose.theta = M_PI_2 - pose.theta;
+  if (!standardPos) pose.theta = M_PI_2 - pose.theta;
   if (!radians) pose.theta = lemlib::radToDeg(pose.theta);
 
   m_prevPose = pose;

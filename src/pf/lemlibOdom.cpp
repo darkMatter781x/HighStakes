@@ -7,11 +7,18 @@ const lemlib::Pose& LemLibOdom::getPose() const { return m_pose; }
 
 lemlib::Pose& LemLibOdom::getPose() { return m_pose; }
 
-void LemLibOdom::setPose(const lemlib::Pose& pose) { lemlib::setPose(pose); }
+void LemLibOdom::setPose(lemlib::Pose pose) {
+  m_pose = pose;
+  // Convert to compass radians
+  pose.theta = M_PI_2 - pose.theta;
+  lemlib::setPose(pose, true);
+}
 
 void LemLibOdom::update() {
   lemlib::update();
-  m_pose = lemlib::getPose();
+  m_pose = lemlib::getPose(true);
+  // Convert to standard radians
+  m_pose.theta = M_PI_2 - m_pose.theta;
 }
 
 LemLibOdom::LemLibOdom(lemlib::OdomSensors sensors,
