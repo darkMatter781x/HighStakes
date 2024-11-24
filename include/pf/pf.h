@@ -106,10 +106,13 @@ template <typename P, size_t N> class ParticleFilter {
       return mean;
     }
 
-    /** @brief Sets the PF's particles */
-    void setParticles(const std::array<P, N>& particles) {
+    /**
+     * @brief Lets the particles be modified by a function.
+     * @param func Function to given ability to modify the particles.
+     */
+    void modifyParticles(std::function<void(std::array<P, N>&)> func) {
       m_mutex.take();
-      m_particles = particles;
+      func(m_particles);
       m_mutex.give();
     }
 

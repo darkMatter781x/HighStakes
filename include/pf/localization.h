@@ -3,6 +3,7 @@
 #include "Eigen/Core"
 #include "lemlibOdom.h"
 #include "pf.h"
+#include "pros/rtos.hpp"
 #include "resamplers/systematic.h"
 #include "pros/distance.hpp"
 #include "pf/util/lines.h"
@@ -13,6 +14,8 @@
  * lemlib::Chassis should work.
  */
 class Localization : Subsystem {
+  private:
+    pros::Mutex m_mutex;
   public:
     /** Config for constructing distance sensors*/
     struct DistSensorConfig {
@@ -48,7 +51,7 @@ class Localization : Subsystem {
     LemLibOdom m_odom;
 
     /** Used for displacement calculation */
-    lemlib::Pose prevPose;
+    lemlib::Pose m_prevPose;
 
     /** @brief Moves particle based on lemlib odom readings */
     struct OdomPredictor : PF::Predictor {
@@ -62,13 +65,7 @@ class Localization : Subsystem {
         /** @brief Updates particles according to LemLib odom. */
         void predict(std::array<P, N>& particles) override;
 
-        using RandomFunc =
-            std::function<Eigen::Vector2f(Eigen::Matrix2f& covar)>;
-        /** Used to introduce noise into the system. Must be gaussian and
-         * centered around a mean of [0,0]. */
-        RandomFunc randomFunc;
-
-        OdomPredictor(Eigen::Matrix2f covar, RandomFunc randomFunc);
+        OdomPredictor(Eigen::Matrix2f covar);
     } m_predictor;
 
     std::vector<lines::Segment> m_obstacles;
