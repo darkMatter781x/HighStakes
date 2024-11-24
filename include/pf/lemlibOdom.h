@@ -8,9 +8,9 @@
 class LemLibOdom {
   private:
     /** Used to setup odom */
-    lemlib::OdomSensors& m_sensors;
+    lemlib::OdomSensors m_sensors;
     /** Used to setup odom */
-    lemlib::Drivetrain& m_drivetrain;
+    lemlib::Drivetrain m_drivetrain;
 
     /** Updated by update(). Used to return references. */
     lemlib::Pose m_pose;
@@ -23,6 +23,5 @@ class LemLibOdom {
     /** Calculates new pose using sensor data. */
     void update();
 
-    LemLibOdom(lemlib::OdomSensors& sensors, lemlib::Drivetrain& drivetrain)
-      : m_sensors(sensors), m_drivetrain(drivetrain), m_pose {0, 0} {}
+    LemLibOdom(lemlib::OdomSensors sensors, lemlib::Drivetrain drivetrain);
 };

@@ -1,5 +1,6 @@
 #pragma once
 #include "config.h"
+#include "pf/localization.h"
 #include "subsystems/selector.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
@@ -25,6 +26,7 @@ class Robot : private lemlib::Chassis {
     Lift m_lift;
     pros::Controller m_gamepad;
     Intake::Sensor m_intakeSensor;
+    Localization m_localization;
 
     ALLIANCE m_alliance;
   public:
@@ -40,6 +42,7 @@ class Robot : private lemlib::Chassis {
     MogoClamp& mogo;
     pros::Controller& gamepad;
     AutonSelector& selector;
+    Localization& localization;
 
     void setAlliance(ALLIANCE alliance);
     ALLIANCE getAlliance() const;
@@ -64,7 +67,7 @@ class Robot : private lemlib::Chassis {
     using lemlib::Chassis::waitUntil;
     using lemlib::Chassis::waitUntilDone;
 
-    void setPose(lemlib::Pose pose, bool radians = false);
+    void setPose(lemlib::Pose pose, float stdDev = .5, bool radians = false);
     lemlib::Pose getPose(bool radians = false);
 
     void turnToPoint(lemlib::Pose target, int timeout,

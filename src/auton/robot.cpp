@@ -47,8 +47,8 @@ lemlib::AngularDirection transformAngDir(lemlib::AngularDirection original) {
   else return original;
 }
 
-void Robot::setPose(lemlib::Pose newPose, bool radians) {
-  lemlib::Chassis::setPose(transformPose(newPose), radians);
+void Robot::setPose(lemlib::Pose newPose, float stdDev, bool radians) {
+  localization.setPose(transformPose(newPose), stdDev, radians);
 }
 
 lemlib::Pose Robot::getPose(bool radians) {

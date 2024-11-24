@@ -10,4 +10,6 @@ inline COLOR operator!(COLOR color) {
     case COLOR::RED: return COLOR::BLUE;
     case COLOR::BLUE: return COLOR::RED;
   }
+  // Should never run
+  return COLOR::RED;
 }

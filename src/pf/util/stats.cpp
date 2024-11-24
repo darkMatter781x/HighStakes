@@ -2,6 +2,8 @@
 #include <cmath>
 #include <math.h>
 
+namespace stats {
+
 // TODO: measure performance impact, and potentially optimize
 float norm_pdf(float x, float mu, float sigma) {
   // According to wikipedia: https://en.wikipedia.org/wiki/Normal_distribution
@@ -9,3 +11,4 @@ float norm_pdf(float x, float mu, float sigma) {
 
   return 1 / (sqrt(2 * M_PI) * sigma) * exp(-.5 * pow((x - mu) / sigma, 2));
 }
+} // namespace stats

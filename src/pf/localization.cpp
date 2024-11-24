@@ -1,5 +1,6 @@
 #include "pf/localization.h"
 #include "Eigen/src/Core/Matrix.h"
+#include "lemlib/util.hpp"
 #include "pf/sensors/v5laser.h"
 #include "pros/misc.hpp"
 
@@ -41,8 +42,13 @@ void Localization::update() {
   prevPose = m_odom.getPose();
 }
 
-void Localization::setPose(lemlib::Pose pose, float stdDev) {
+void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
+                           bool standardPos) {
+  if (standardPos) pose.theta = M_PI_2 - pose.theta;
+  if (!radians) pose.theta = lemlib::radToDeg(pose.theta);
+
   prevPose = pose;
+  m_odom.setPose(pose);
   // TODO: Implement
 }
 

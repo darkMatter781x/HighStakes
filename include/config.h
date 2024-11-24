@@ -2,9 +2,12 @@
 
 #include "leds/strip.h"
 #include "lemlib/chassis/chassis.hpp"
+#include "pf/localization.h"
 #include "pros/adi.hpp"
 #include "pros/imu.hpp"
-#include "subsystems/intake.h"
+#include "pf/sensors/laser.h"
+#include "pros/optical.hpp"
+#include <vector>
 
 /**
  * @brief Configuration for the robot. Provides all devices and dimensions of
@@ -36,6 +39,8 @@ struct RobotConfig {
         pros::IMU imu;
         pros::Optical intake;
         pros::adi::Potentiometer autonSelector;
+
+        std::vector<Localization::DistSensorConfig> lasers;
       private:
         friend struct RobotConfig;
         static Sensors sensors;

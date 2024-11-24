@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Eigen/Core"
-#include "Eigen/src/Core/Matrix.h"
 #include "lemlibOdom.h"
 #include "pf.h"
 #include "resamplers/systematic.h"
@@ -25,10 +24,10 @@ class Localization : Subsystem {
 
     /** Config for constructing localizer */
     struct Config {
-        lemlib::OdomSensors& odomSensors;
-        lemlib::Drivetrain& drivetrain;
+        lemlib::OdomSensors odomSensors;
+        lemlib::Drivetrain drivetrain;
         /** Obstacles that distance sensors might sense. */
-        std::vector<lines::Segment>& obstacles;
+        std::vector<lines::Segment> obstacles;
         std::vector<DistSensorConfig> distances;
 
         /**
@@ -63,7 +62,8 @@ class Localization : Subsystem {
         /** @brief Updates particles according to LemLib odom. */
         void predict(std::array<P, N>& particles) override;
 
-        using RandomFunc = std::function<Eigen::Vector2f(Eigen::Matrix2f& covar)>;
+        using RandomFunc =
+            std::function<Eigen::Vector2f(Eigen::Matrix2f& covar)>;
         /** Used to introduce noise into the system. Must be gaussian and
          * centered around a mean of [0,0]. */
         RandomFunc randomFunc;
@@ -79,12 +79,16 @@ class Localization : Subsystem {
     void update() override;
 
     /**
-     * @brief Set the Pose object
+     * @brief Set the pose of the robot. Theta must be in standard radians.
      *
-     * @param pose New pose of the robot
+     * @param pose New pose of the robot. Theta must be in standard radians.
      * @param stdDev How much to trust the new pose
+     * @param radians If theta is in radians
+     * @param standardPos If the pose is in standard position (eg. 0 theta
+     * corresponds to +x axis)
      */
-    void setPose(lemlib::Pose pose, float stdDev);
+    void setPose(lemlib::Pose pose, float stdDev, bool radians = false,
+                 bool standardPos = false);
 
     /**
      * @brief Construct a new Localizer object

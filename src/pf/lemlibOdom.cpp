@@ -14,6 +14,10 @@ void LemLibOdom::update() {
   m_pose = lemlib::getPose();
 }
 
+LemLibOdom::LemLibOdom(lemlib::OdomSensors sensors,
+                       lemlib::Drivetrain drivetrain)
+  : m_sensors(sensors), m_drivetrain(drivetrain), m_pose {0, 0} {}
+
 // The following code is from lemlib/chassis/chassis.cpp:
 // https://github.com/LemLib/LemLib/blob/fb222dbdf250925ccffc79cf3ee46656a8c80faa/src/lemlib/chassis/chassis.cpp#L44C1-L93C2
 // Which is licensed under the MIT License found at:
