@@ -15,7 +15,15 @@ struct Segment {
      */
     Eigen::Vector2f vec;
 
-    static Segment fromEndPts(Eigen::Vector2f& start, Eigen::Vector2f& end);
+    static Segment fromEndPts(Eigen::Vector2f start, Eigen::Vector2f end);
+
+    /**
+     * @brief Connects each point to the next with a line segment, returning a
+     * vector of segments.
+     * @param pts Vector of points.
+     * @returns Vector of segments.
+     */
+    static std::vector<Segment> fromPts(std::vector<Eigen::Vector2f> pts);
 };
 
 struct Ray {

@@ -1,13 +1,22 @@
 #include "pf/util/lines.h"
 #include <cmath>
 #include <optional>
+#include <vector>
 
 #include "Eigen/Dense"
 
 namespace lines {
 
-Segment fromEndPts(Eigen::Vector2f& start, Eigen::Vector2f& end) {
+Segment Segment::fromEndPts(Eigen::Vector2f start, Eigen::Vector2f end) {
   return {.start = start, .vec = end - start};
+}
+
+std::vector<Segment> Segment::fromPts(std::vector<Eigen::Vector2f> pts) {
+  std::vector<Segment> segments;
+  for (size_t i = 0; i < pts.size() - 1; i++) {
+    segments.push_back(Segment::fromEndPts(pts[i], pts[i + 1]));
+  }
+  return segments;
 }
 
 // TODO: test

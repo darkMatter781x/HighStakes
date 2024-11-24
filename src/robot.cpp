@@ -1,10 +1,8 @@
 #include "robot.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "pf/localization.h"
-#include "pf/util/lines.h"
 #include "pros/misc.h"
-#include "pros/motor_group.hpp"
-#include <vector>
+#include "pf/obstacles.h"
 
 lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
   return {&this->motors.left,
@@ -28,15 +26,11 @@ lemlib::OdomSensors RobotConfig::makeSensors() const {
           nullptr, &this->sensors.imu};
 }
 
-std::vector<lines::Segment> makeObstacles() {
-  return {lines::Segment({0, 0}, {0, 0})};
-}
-
 Localization::Config makeLocalizationConfig(const RobotConfig& config) {
   return {
       .odomSensors = config.makeSensors(),
       .drivetrain = config.makeDrivetrain(),
-      .obstacles = makeObstacles(),
+      .obstacles = getObstacles(),
       .distances = config.sensors.lasers,
       .covar = Eigen::Matrix2f::Identity() * .01,
   };
