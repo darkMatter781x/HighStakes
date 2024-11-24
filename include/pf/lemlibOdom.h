@@ -1,5 +1,5 @@
 #pragma once
-#include "lemlib/Pose.hpp"
+#include "lemlib/pose.hpp"
 #include "lemlib/chassis/chassis.hpp"
 
 /**
