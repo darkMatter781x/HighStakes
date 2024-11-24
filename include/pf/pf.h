@@ -1,10 +1,10 @@
 #pragma once
 
-#include <algorithm>
 #include <array>
 #include <numeric>
 #include "pros/rtos.hpp"
 #include "pf/resamplers/resampler.h"
+#include "sensors/sensor.h"
 
 /**
  * @brief Abstract object for Particle Filter algorithm
@@ -36,6 +36,7 @@ template <typename P, size_t N> class ParticleFilter {
     std::array<P, N> m_newParticles;
   public:
     using Resampler = resamplers::Resampler<N>;
+    using Sensor = sensors::Sensor<P, N>;
 
     /** @brief Moves particles and incorporates noise. */
     struct Predictor {
@@ -44,16 +45,6 @@ template <typename P, size_t N> class ParticleFilter {
          * incorporates noise.
          */
         virtual void predict(std::array<P, N>& particles) = 0;
-    };
-
-    /** @brief Updates weights with measurement. */
-    struct Updater {
-        /**
-         * @brief Modifies weights param based on measurement.
-         * Must normalize weights (see `ParticleFilter<N>::normalizeWeights()`).
-         */
-        virtual void update(const std::array<P, N>& particles,
-                            std::array<float, N>& weights) = 0;
     };
 
     /**
@@ -79,11 +70,16 @@ template <typename P, size_t N> class ParticleFilter {
     }
 
     /** Updates weights, and resamples if needed. */
-    void update(Updater& updater, Resampler& resampler) {
+    void update(std::vector<std::unique_ptr<Sensor>>& sensors,
+                Resampler& resampler) {
       m_mutex.take();
-      // Update weights (should be normalized)
-      updater.update(m_particles, m_weights);
-      // If must resample, resample
+      // Update weights
+      for (std::unique_ptr<Sensor>& sensor : sensors)
+        sensor->update(m_particles, m_weights);
+      // Normalize weights
+      normalizeWeights(m_weights);
+
+      // If should resample, then resample
       if (resampler.shouldResample(m_weights)) {
         // Get indices of particles to keep
         resampler.resample(m_weights, m_indices);

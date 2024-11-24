@@ -11,8 +11,12 @@ class LemLibOdom {
     lemlib::OdomSensors& m_sensors;
     /** Used to setup odom */
     lemlib::Drivetrain& m_drivetrain;
+
+    /** Updated by update(). Used to return references. */
+    lemlib::Pose m_pose;
   public:
-    lemlib::Pose getPose() const;
+    const lemlib::Pose& getPose() const;
+    lemlib::Pose& getPose();
     void setPose(const lemlib::Pose& pose);
     void calibrate();
 
@@ -20,5 +24,5 @@ class LemLibOdom {
     void update();
 
     LemLibOdom(lemlib::OdomSensors& sensors, lemlib::Drivetrain& drivetrain)
-      : m_sensors(sensors), m_drivetrain(drivetrain) {}
+      : m_sensors(sensors), m_drivetrain(drivetrain), m_pose {0, 0} {}
 };

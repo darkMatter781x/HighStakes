@@ -7,7 +7,7 @@ namespace resamplers {
 
 // TODO: Test this
 /** @brief Implements Systematic Resampling */
-template <size_t N> class Systematic : Resampler<N> {
+template <size_t N> class Systematic : public Resampler<N> {
   private:
     /** @brief Returns random number between 0 and 1 */
     std::function<float()> m_random;

@@ -3,11 +3,16 @@
 #include "lemlib/logger/logger.hpp"
 #include <cmath>
 
-lemlib::Pose LemLibOdom::getPose() const { return lemlib::getPose(); }
+const lemlib::Pose& LemLibOdom::getPose() const { return m_pose; }
+
+lemlib::Pose& LemLibOdom::getPose() { return m_pose; }
 
 void LemLibOdom::setPose(const lemlib::Pose& pose) { lemlib::setPose(pose); }
 
-void LemLibOdom::update() { lemlib::update(); }
+void LemLibOdom::update() {
+  lemlib::update();
+  m_pose = lemlib::getPose();
+}
 
 // The following code is from lemlib/chassis/chassis.cpp:
 // https://github.com/LemLib/LemLib/blob/fb222dbdf250925ccffc79cf3ee46656a8c80faa/src/lemlib/chassis/chassis.cpp#L44C1-L93C2

@@ -1,12 +1,13 @@
 #pragma once
 
 #include "Eigen/Core"
+#include "Eigen/src/Core/Matrix.h"
 #include "lemlibOdom.h"
 #include "pf.h"
-#include "pros/distance.hpp"
 #include "resamplers/systematic.h"
+#include "pros/distance.hpp"
+#include "pf/util/lines.h"
 #include "subsystems.h"
-#include <vector>
 
 /**
  * @brief Implementation of particle filter. Updates LemLib's Odom so that
@@ -14,19 +15,27 @@
  */
 class Localization : Subsystem {
   public:
-    /** Represent a distance sensor */
-    struct DistanceSensor {
-        /** Pros sensor object */
-        pros::Distance& sensor;
-        /** Relative pose to robot. Theta should be in standard radians. */
+    /** Config for constructing distance sensors*/
+    struct DistSensorConfig {
+        /** Position of sensor relative to center of bot. */
         const lemlib::Pose pose;
+        /** V5 distance sensor object. */
+        pros::Distance& sensor;
     };
 
     /** Config for constructing localizer */
     struct Config {
         lemlib::OdomSensors& odomSensors;
         lemlib::Drivetrain& drivetrain;
-        std::vector<DistanceSensor> distances;
+        /** Obstacles that distance sensors might sense. */
+        std::vector<lines::Segment>& obstacles;
+        std::vector<DistSensorConfig> distances;
+
+        /**
+         * @brief Represents noise in system model.
+         * @symbol Q
+         */
+        Eigen::Matrix2f covar;
     };
   private:
     // Number of particles
@@ -39,29 +48,31 @@ class Localization : Subsystem {
     PF m_pf;
     LemLibOdom m_odom;
 
-    std::vector<DistanceSensor> m_dists;
+    /** Used for displacement calculation */
+    lemlib::Pose prevPose;
 
     /** @brief Moves particle based on lemlib odom readings */
     struct OdomPredictor : PF::Predictor {
         /**
          * @brief Represents noise in system model.
-         * @sybmol Q
+         * @symbol Q
          */
-        Eigen::Matrix2f m_cov;
+        Eigen::Matrix2f m_covar;
         /** @brief Represents change in position, according to LemLib odom. */
         P m_displacement;
         /** @brief Updates particles according to LemLib odom. */
         void predict(std::array<P, N>& particles) override;
+
+        using RandomFunc = std::function<Eigen::Vector2f(Eigen::Matrix2f& covar)>;
+        /** Used to introduce noise into the system. Must be gaussian and
+         * centered around a mean of [0,0]. */
+        RandomFunc randomFunc;
+
+        OdomPredictor(Eigen::Matrix2f covar, RandomFunc randomFunc);
     } m_predictor;
 
-    struct DistSensorUpdater : PF::Updater {
-        const std::vector<DistanceSensor>& m_dists;
-
-        DistSensorUpdater(const std::vector<DistanceSensor>& dists);
-
-        void update(const std::array<P, N>& particles,
-                    std::array<float, N>& weights) override;
-    } m_updater;
+    std::vector<lines::Segment> m_obstacles;
+    std::vector<std::unique_ptr<PF::Sensor>> m_sensors;
 
     resamplers::Systematic<N> m_resampler;
   public:
