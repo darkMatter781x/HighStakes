@@ -22,7 +22,7 @@
     {
       "label": "Run Sim in GDB Mode",
       "type": "shell",
-      "command": "echo \"starting simulator in debug mode!\" && simulator ./bin/monolith.bin --gdb",
+      "command": "echo \"starting simulator in debug mode!\" && simulator monolith ./bin/monolith.bin --gdb",
       "isBackground": true,
       "dependsOn": "Build for Sim",
       "problemMatcher": [

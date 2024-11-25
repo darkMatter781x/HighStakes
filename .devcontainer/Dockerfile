@@ -44,13 +44,11 @@ ENV PATH="$PATH:/usr/local/share/arm-none-eabi/bin"
 # Copy the simulator binary
 COPY --from=builder /target/client-cli/bin/client-cli /usr/local/bin/simulator
 
-# Clone pros kernel source so we can reference it when debugging
-COPY ./project.pros /project.pros
-ENV PROS_SOURCE_PATH="$HOME/.pros"
-RUN git clone https://github.com/purduesigbots/pros.git $PROS_SOURCE_PATH   \
-  --depth 1                                                                 \
-  --branch $(</project.pros jq -r '.["py/state"].templates.kernel.version')
-RUN rm /project.pros # Cleanup image
+# Clone template sources so we can reference it when debugging
+COPY ./project.pros ./project.map.json ./.devcontainer/template_src.bash /
+ENV TEMPLATES_SOURCE_PATH="$HOME/.templates/"
+RUN /template_src.bash /project.pros /project.map.json "$TEMPLATES_SOURCE_PATH"
+RUN rm /project.pros /project.map.json /template_src.bash # Cleanup image
 
 # Copy the sim kernel, as its required to run the simulator
 ENV V5_SIM_PATH="$HOME/.vex-v5-qemu"

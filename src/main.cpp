@@ -3,6 +3,7 @@
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
+#include "pros/apix.h"
 
 void screen() {
   while (1) {
@@ -26,7 +27,11 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
+#ifdef VEXIDE_SIMULATION
+  pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
+#else
   pros::lcd::initialize();
+#endif
 
   // ensure robot is initialized
   Robot::get();

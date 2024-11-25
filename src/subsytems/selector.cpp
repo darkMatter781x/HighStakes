@@ -24,8 +24,6 @@ AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
   : m_pot(pot), m_intakeSensor(intakeSensor), m_alliance(ALLIANCE::RED),
     m_autons(getAutons()), m_indexOffset(0), m_locked(std::nullopt),
     m_ignoreSensor(false) {
-  pros::lcd::initialize();
-
   printf("print m_autons\n");
   for (auto a : m_autons) { printf("\t%s,\n", a.label); }
   printf("end m_autons\n");

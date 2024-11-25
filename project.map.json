@@ -1,0 +1,16 @@
+{
+  "urls": {
+    "kernel": {
+      "url": "https://github.com/purduesigbots/pros.git",
+      "ref": "4.1.0"
+    },
+    "liblvgl": {
+      "url": "https://github.com/purduesigbots/liblvgl.git",
+      "ref": "master"
+    },
+    "LemLib": {
+      "url": "https://github.com/lemlib/lemlib.git",
+      "ref": "v0.5.4"
+    }
+  }
+}

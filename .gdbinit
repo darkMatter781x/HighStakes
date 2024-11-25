@@ -17,9 +17,9 @@ if 'rerunGuard' not in globals():
   
   print("Adding dependency source dirs")
   gdb.execute(
-    "dir \"$cdir:$cwd:{v5_sim}:{pros}\"".format(
+    "dir \"$cdir:$cwd:{v5_sim}:{templates}\"".format(
       v5_sim=os.environ["V5_SIM_SOURCE_PATH"],
-      pros=os.environ["PROS_SOURCE_PATH"]
+      templates=os.environ["TEMPLATES_SOURCE_PATH"]
   ))
   
   print("Added dependency source dirs")
