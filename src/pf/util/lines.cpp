@@ -57,7 +57,7 @@ Ray::findFirstIntersect(const std::vector<Segment>& segments) const {
   // Index corresponding to smallest distance found
   size_t index = -1;
 
-  for (size_t i; i < segments.size(); i++) {
+  for (size_t i = 0; i < segments.size(); i++) {
     // Calculate distance
     auto distance = this->distanceTo(segments[i]);
 
@@ -70,7 +70,7 @@ Ray::findFirstIntersect(const std::vector<Segment>& segments) const {
     index = i;
   }
   // Didn't intersect with anything
-  if (index < 0) return std::nullopt;
+  if (!std::isfinite(minDist)) return std::nullopt;
 
   return std::make_optional<std::pair<float, size_t>>({minDist, index});
 }

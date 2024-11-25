@@ -1,7 +1,9 @@
 #pragma once
 
 #include <array>
+#include <cfloat>
 #include <numeric>
+#include <optional>
 #include "pros/rtos.hpp"
 #include "pf/resamplers/resampler.h"
 #include "sensors/sensor.h"
@@ -52,12 +54,12 @@ template <typename P, size_t N> class ParticleFilter {
      * @time O(N)
      */
     static void normalizeWeights(std::array<float, N>& weights) {
-      float sum = 0;
-      std::reduce(weights.begin(), weights.end(), sum);
+      float sum = std::reduce(weights.begin(), weights.end());
+      // TODO: Investigate if this is necessary/correct
+      // Avoid round of to 0
+      sum += FLT_MIN * N;
       for (float& weight : weights) {
-        // TODO: Investigate if this is necessary/correct
-        // Avoid round of to 0
-        // weight += 1e-300;
+        weight += FLT_MIN;
         weight /= sum;
       }
     }
@@ -125,6 +127,10 @@ template <typename P, size_t N> class ParticleFilter {
 
     /** Create a particle filter. */
     ParticleFilter(std::array<P, N> particles,
-                   std::array<float, N> weights = {1 / N, N})
-      : m_particles(particles), m_weights(weights) {}
+                   std::optional<std::array<float, N>> weights = std::nullopt)
+      : m_particles(particles),
+        m_weights(weights.value_or(std::array<float, N> {})) {
+      if (!weights.has_value())
+        std::fill(m_weights.begin(), m_weights.end(), 1. / N);
+    }
 };

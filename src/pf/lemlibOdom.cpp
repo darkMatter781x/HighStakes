@@ -15,10 +15,12 @@ void LemLibOdom::setPose(lemlib::Pose pose) {
 }
 
 void LemLibOdom::update() {
-  lemlib::update();
-  m_pose = lemlib::getPose(true);
-  // Convert to standard radians
-  m_pose.theta = M_PI_2 - m_pose.theta;
+  if (hasCalibrated) {
+    lemlib::update();
+    m_pose = lemlib::getPose(true);
+    // Convert to standard radians
+    m_pose.theta = M_PI_2 - m_pose.theta;
+  }
 }
 
 LemLibOdom::LemLibOdom(lemlib::OdomSensors sensors,
@@ -90,4 +92,5 @@ void LemLibOdom::calibrate() {
 
   // rumble to controller to indicate success
   pros::c::controller_rumble(pros::E_CONTROLLER_MASTER, ".");
+  hasCalibrated = true;
 }

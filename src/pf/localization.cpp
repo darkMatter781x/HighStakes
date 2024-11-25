@@ -11,11 +11,18 @@ float uniform_float_0_to_1() {
   return dist(stats::rng);
 }
 
+template <size_t N, size_t M>
+std::array<Eigen::Vector<float, M>, N> makeZeroArray() {
+  std::array<Eigen::Vector<float, M>, N> arr;
+  std::fill(arr.begin(), arr.end(), Eigen::Vector<float, M>::Zero());
+  return arr;
+}
+
 Localization::Localization(const Config& config)
-  : m_pf({Eigen::Vector2f::Zero()}),
-    m_odom(config.odomSensors, config.drivetrain), m_sensors(),
-    m_obstacles(config.obstacles), m_resampler(uniform_float_0_to_1),
-    m_predictor(config.covar), m_prevPose(m_odom.getPose()), m_mutex() {
+  : m_pf(makeZeroArray<N, 2>()), m_odom(config.odomSensors, config.drivetrain),
+    m_sensors(), m_obstacles(config.obstacles),
+    m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
+    m_prevPose(m_odom.getPose()), m_mutex() {
   for (const auto& dConf : config.distances)
     m_sensors.push_back(std::make_unique<sensors::V5LaserSensor<N>>(
         sensors::V5Laser::Config {
@@ -42,7 +49,9 @@ void Localization::update() {
 
     m_odom.setPose({mean.x(), mean.y(), m_odom.getPose().theta});
   }
+
   m_prevPose = m_odom.getPose();
+  printf("pose: %s \n", format_as(m_odom.getPose()).c_str());
   m_mutex.give();
 }
 
@@ -70,12 +79,16 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
 void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
   // TODO: deduplicate with code in stats::MultivariateGaussian::sampleMany()
   auto dist = std::normal_distribution<float>(0, 1);
-  Eigen::Vector<float, 2> z;
   Eigen::Matrix<float, 2, 2> L = m_covar.llt().matrixL();
+  Eigen::Vector<float, 2> z;
 
-  for (int i = 0; i < 2; i++) { z(i) = dist(stats::rng); }
+  for (auto& particle : particles) {
+    for (int i = 0; i < 2; i++) { z(i) = dist(stats::rng); }
 
-  for (auto& particle : particles) { particle += m_displacement + L * z; }
+    particle += m_displacement + L * z;
+    if (std::isnan(particle(0)) || std::isnan(particle(1)))
+      printf("particle is nan!");
+  }
 }
 
 Localization::OdomPredictor::OdomPredictor(Eigen::Matrix2f covar)

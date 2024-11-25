@@ -15,6 +15,8 @@ class LemLibOdom {
     /** @brief Updated by update() and setPose(). Used to return references.
      * Theta is in standard radians. */
     lemlib::Pose m_pose;
+
+    bool hasCalibrated = false;
   public:
     /** @returns Const ref to current pose. Theta is in standard radians. */
     const lemlib::Pose& getPose() const;
