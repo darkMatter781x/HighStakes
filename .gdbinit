@@ -21,8 +21,16 @@ if 'rerunGuard' not in globals():
       v5_sim=os.environ["V5_SIM_SOURCE_PATH"],
       templates=os.environ["TEMPLATES_SOURCE_PATH"]
   ))
-  
   print("Added dependency source dirs")
+
+  print("Adding pretty printers")
+  import sys
+  sys.path.insert(0, '.')
+  from printers import register_eigen_printers
+  register_eigen_printers(None)
+  print("Added pretty printers")
+
+
 
   # attach to remote target
   # gdb.execute("target remote localhost:1234")

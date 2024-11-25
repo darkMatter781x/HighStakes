@@ -10,7 +10,8 @@
       "args": [
         "VEXIDE_SIMULATION=1",
         "quick",
-        "-j"
+        "-j",
+        "8"
       ],
       "options": {
         "env": {
