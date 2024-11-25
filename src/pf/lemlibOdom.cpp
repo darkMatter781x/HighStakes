@@ -30,6 +30,7 @@ LemLibOdom::LemLibOdom(lemlib::OdomSensors sensors,
 // Which is licensed under the MIT License found at:
 // https://github.com/LemLib/LemLib/blob/fb222dbdf250925ccffc79cf3ee46656a8c80faa/LICENSE
 
+namespace {
 /**
  * @brief calibrate the IMU given a sensors struct
  *
@@ -64,6 +65,8 @@ void calibrateIMU(lemlib::OdomSensors& sensors) {
                               "wheels / motor encoders");
   }
 }
+
+} // namespace
 
 void LemLibOdom::calibrate() {
   // lemlib::OdomSensors ;
