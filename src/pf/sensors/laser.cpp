@@ -1,4 +1,5 @@
 #include "pf/sensors/laser.h"
+#include <cmath>
 
 using namespace sensors;
 
@@ -10,7 +11,11 @@ lines::Ray Laser::toRay(const Vec2& robotPos) const {
 };
 
 float Laser::expectedDist(const Vec2& robotPos) const {
-  return toRay(robotPos).findFirstIntersect(obstacles).value().first;
+  const auto intersectOpt =
+      toRay(robotPos).findFirstIntersect(obstacles);
+  if (const auto intersect = intersectOpt)
+    return intersect->first;
+  else return INFINITY;
 };
 
 Laser::Laser(const Config config)
