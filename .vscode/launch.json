@@ -21,6 +21,12 @@
           "ignoreFailures": false
         },
       ],
+      // TODO: add to project.map.json and read in .gdbinit
+      "sourceFileMap": {
+        "C:/Users/noama/Documents/pros/pros": "/.templates/kernel",
+        "C:\\Users\\Liam Teale\\Documents\\Programming\\LemLib Stuff\\LemLib": "/.templates/LemLib",
+        "C:\\Users\\noama\\Documents\\pros\\liblvgl": "/.templates/liblvgl",
+      },
       "customLaunchSetupCommands": [],
     }
   ]
