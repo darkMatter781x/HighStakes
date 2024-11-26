@@ -2,6 +2,8 @@
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/pose.hpp"
 
+void Robot::calibrate() { m_localization.calibrate(); }
+
 constexpr auto ALLIANCE_DEFAULT = ALLIANCE::RED;
 
 void Robot::setAlliance(ALLIANCE alliance) { m_alliance = alliance; }

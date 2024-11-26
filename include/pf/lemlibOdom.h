@@ -16,7 +16,7 @@ class LemLibOdom {
      * Theta is in standard radians. */
     lemlib::Pose m_pose;
 
-    bool hasCalibrated = false;
+    bool m_hasCalibrated = false;
   public:
     /** @returns Const ref to current pose. Theta is in standard radians. */
     const lemlib::Pose& getPose() const;
@@ -24,7 +24,11 @@ class LemLibOdom {
     lemlib::Pose& getPose();
     /** @brief Sets pose to newPose. Theta must be in standard radians. */
     void setPose(lemlib::Pose newPose);
+
+    /** @brief Calibrates odometry sensors, if it hasn't been done before */
     void calibrate();
+
+    bool hasCalibrated() const;
 
     /** Calculates new pose using sensor data. */
     void update();

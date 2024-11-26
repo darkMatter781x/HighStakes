@@ -88,6 +88,11 @@ class Localization : Subsystem {
                  bool standardPos = false);
 
     /**
+     * @brief Calibrates the odometry sensors, and enables the particle filter.
+     */
+    void calibrate();
+
+    /**
      * @brief Construct a new Localizer object
      *
      * @param config Configuration for the localizer

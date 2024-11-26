@@ -34,11 +34,16 @@ Localization::Localization(const Config& config)
 }
 
 void Localization::update() {
+  // Don't update if the odom hasn't been calibrated
+  if (!m_odom.hasCalibrated()) return;
+
   m_mutex.take();
 
   m_odom.update();
 
   // Only use distance sensors after match has started
+  // (Humans may be on the field before the match starts, interfering with the
+  // distance sensors)
   if (!pros::competition::is_disabled()) {
     lemlib::Pose displacement = m_odom.getPose() - m_prevPose;
     m_predictor.m_displacement = {displacement.x, displacement.y};
@@ -76,6 +81,8 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   m_mutex.give();
 }
 
+void Localization::calibrate() { m_odom.calibrate(); }
+
 void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
   // TODO: deduplicate with code in stats::MultivariateGaussian::sampleMany()
   auto dist = std::normal_distribution<float>(0, 1);
@@ -87,7 +94,7 @@ void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
 
     particle += m_displacement + L * z;
     if (std::isnan(particle(0)) || std::isnan(particle(1)))
-      printf("particle is nan!");
+      printf("particle is nan!\n");
   }
 }
 

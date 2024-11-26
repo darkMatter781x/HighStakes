@@ -15,13 +15,15 @@ void LemLibOdom::setPose(lemlib::Pose pose) {
 }
 
 void LemLibOdom::update() {
-  if (hasCalibrated) {
+  if (m_hasCalibrated) {
     lemlib::update();
     m_pose = lemlib::getPose(true);
     // Convert to standard radians
     m_pose.theta = M_PI_2 - m_pose.theta;
   }
 }
+
+bool LemLibOdom::hasCalibrated() const { return m_hasCalibrated; }
 
 LemLibOdom::LemLibOdom(lemlib::OdomSensors sensors,
                        lemlib::Drivetrain drivetrain)
@@ -71,7 +73,8 @@ void calibrateIMU(lemlib::OdomSensors& sensors) {
 } // namespace
 
 void LemLibOdom::calibrate() {
-  // lemlib::OdomSensors ;
+  if (hasCalibrated()) return;
+
   const bool calibrateImu = true;
   // calibrate the IMU if it exists and the user doesn't specify otherwise
   if (m_sensors.imu != nullptr && calibrateImu) calibrateIMU(m_sensors);
@@ -92,5 +95,5 @@ void LemLibOdom::calibrate() {
 
   // rumble to controller to indicate success
   pros::c::controller_rumble(pros::E_CONTROLLER_MASTER, ".");
-  hasCalibrated = true;
+  m_hasCalibrated = true;
 }

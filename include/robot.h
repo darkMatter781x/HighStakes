@@ -53,7 +53,6 @@ class Robot : private lemlib::Chassis {
     using lemlib::Chassis::angularSettings;
     using lemlib::Chassis::angularSmallExit;
     using lemlib::Chassis::arcade;
-    using lemlib::Chassis::calibrate;
     using lemlib::Chassis::cancelAllMotions;
     using lemlib::Chassis::cancelMotion;
     using lemlib::Chassis::curvature;
@@ -66,6 +65,8 @@ class Robot : private lemlib::Chassis {
     using lemlib::Chassis::tank;
     using lemlib::Chassis::waitUntil;
     using lemlib::Chassis::waitUntilDone;
+    
+    void calibrate();
 
     void setPose(lemlib::Pose pose, float stdDev = .5, bool radians = false);
     lemlib::Pose getPose(bool radians = false);
