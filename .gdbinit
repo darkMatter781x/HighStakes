@@ -11,14 +11,19 @@ if 'rerunGuard' not in globals():
 
   # add kernel symbol file
   import os
-  print("Adding kernel symbol file")
-  gdb.execute("add-symbol-file \"{}\"".format(os.environ["V5_SIM_KERNEL_PATH"]))
-  print("Added kernel symbol file")
+  # print("Adding kernel symbol file")
+  # gdb.execute("add-symbol-file \"{}\"".format(os.environ["V5_SIM_KERNEL_PATH"]))
+  # print("Added kernel symbol file")
   
   print("Adding dependency source dirs")
+  # gdb.execute(
+  #   "dir \"$cdir:$cwd:{v5_sim}:{templates}\"".format(
+  #     v5_sim=os.environ["V5_SIM_SOURCE_PATH"],
+  #     templates=os.environ["TEMPLATES_SOURCE_PATH"]
+  # ))
   gdb.execute(
     "dir \"$cdir:$cwd:{v5_sim}:{templates}\"".format(
-      v5_sim=os.environ["V5_SIM_SOURCE_PATH"],
+      v5_sim="/workspaces/HighStakes/sim/vex-v5-qemu",
       templates=os.environ["TEMPLATES_SOURCE_PATH"]
   ))
   print("Added dependency source dirs")

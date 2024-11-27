@@ -8,11 +8,12 @@
       "type": "cppdbg",
       "name": "Launch Program",
       "request": "launch",
-      "program": "${env:V5_SIM_KERNEL_PATH}",
+      // "program": "${env:V5_SIM_KERNEL_PATH}",
+      "program": "/workspaces/HighStakes/sim/vex-v5-qemu/target/armv7a-none-eabi/debug/kernel",
       "cwd": "${workspaceFolder}",
       "miDebuggerPath": "/usr/bin/gdb-multiarch",
       "miDebuggerServerAddress": "localhost:1234",
-      "preLaunchTask": "Run Sim in GDB Mode",
+      // "preLaunchTask": "Run Sim in GDB Mode",
 
       "setupCommands": [
         {

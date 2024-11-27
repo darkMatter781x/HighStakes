@@ -1,0 +1,17 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": ".."
+		},
+		{
+			"path": "../../../.templates/kernel"
+		},
+		{
+			"path": "vex-v5-qemu/packages/kernel"
+		}
+	],
+	"settings": {}
+}

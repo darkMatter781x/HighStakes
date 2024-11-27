@@ -1,0 +1,9 @@
+[package]
+name = "sim"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+vex-v5-qemu-host = { path = "./vex-v5-qemu/packages/host" }
+tokio = { version = "1.23.0", features = ["full"] }
+anyhow = "1.0.86"

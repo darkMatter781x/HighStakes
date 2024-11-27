@@ -93,8 +93,8 @@ void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
     for (int i = 0; i < 2; i++) { z(i) = dist(stats::rng); }
 
     particle += m_displacement + L * z;
-    if (std::isnan(particle(0)) || std::isnan(particle(1)))
-      printf("particle is nan!\n");
+    // if (std::isnan(particle(0)) || std::isnan(particle(1)))
+    //   printf("particle is nan!\n");
   }
 }
 

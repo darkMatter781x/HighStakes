@@ -1,6 +1,9 @@
 #include "main.h"
 #include "config.h"
+#include "pros/distance.hpp"
+#include "pros/imu.hpp"
 #include "pros/misc.hpp"
+#include "pros/rotation.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "pros/apix.h"
@@ -32,13 +35,24 @@ void initialize() {
 #else
   pros::lcd::initialize();
 #endif
+  pros::delay(1000);
+  printf("heading: %f\n", bot.m_config.sensors.imu.get_heading());
+  printf("vert pos: %i\n", bot.m_config.sensors.vert.get_position());
+  pros::Distance a {11};
+  printf("dist: %i\n", a.get_distance());
+  printf("num of dists: %i\n", pros::Distance::get_all_devices().size());
+  printf("num of imus: %i\n", pros::Imu::get_all_devices().size());
+  printf("num of rotations: %i\n", pros::Rotation::get_all_devices().size());
+
+  pros::delay(10000);
+  return;
 
   // ensure robot is initialized
   Robot::get();
   // indicate calibration
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFFFF00);
-  bot.calibrate();
+  // bot.calibrate();
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
   // // LED Testing
