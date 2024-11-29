@@ -76,25 +76,23 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   };
 
   // Updates particles to be centered around the new pose
-  m_pf.modifyParticles(
-      [&gaussian](auto& particles) { gaussian.sampleMany<N>(particles); });
+  m_pf.modifyParticles([&gaussian](auto& particles) {
+    gaussian.makeSampler().sampleMany(particles);
+  });
   m_mutex.give();
 }
 
 void Localization::calibrate() { m_odom.calibrate(); }
 
 void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
-  // TODO: deduplicate with code in stats::MultivariateGaussian::sampleMany()
-  auto dist = std::normal_distribution<float>(0, 1);
-  Eigen::Matrix<float, 2, 2> L = m_covar.llt().matrixL();
-  Eigen::Vector<float, 2> z;
+  auto noiseSampler =
+      stats::MultivariateGaussian<2> {.mu = {0, 0}, .sigma = m_covar}
+          .makeSampler();
 
+  Eigen::Vector<float, 2> noise;
   for (auto& particle : particles) {
-    for (int i = 0; i < 2; i++) { z(i) = dist(stats::rng); }
-
-    particle += m_displacement + L * z;
-    // if (std::isnan(particle(0)) || std::isnan(particle(1)))
-    //   printf("particle is nan!\n");
+    noiseSampler.sampleOnce(noise);
+    particle += m_displacement + noise;
   }
 }
 
