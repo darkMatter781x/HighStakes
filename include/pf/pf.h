@@ -2,8 +2,8 @@
 
 #include <array>
 #include <cfloat>
+#include <memory>
 #include <numeric>
-#include <optional>
 #include "pros/rtos.hpp"
 #include "pf/resamplers/resampler.h"
 #include "sensors/sensor.h"
@@ -21,21 +21,21 @@ template <typename P, size_t N> class ParticleFilter {
      */
     pros::Mutex m_mutex;
 
-    std::array<P, N> m_particles;
+    std::unique_ptr<std::array<P, N>> m_particles;
     /** @brief Weights corresponding to the particles. */
-    std::array<float, N> m_weights;
+    std::unique_ptr<std::array<float, N>> m_weights;
 
     /**
      * @brief Used to allocate memory once for resampling. Is not shared
      * between calls to the particle filter.
      */
-    std::array<size_t, N> m_indices;
+    std::unique_ptr<std::array<size_t, N>> m_indices;
 
     /**
      * @brief Used to allocate memory once for resampling. Is not shared
      * between calls to the particle filter.
      */
-    std::array<P, N> m_newParticles;
+    std::unique_ptr<std::array<P, N>> m_newParticles;
   public:
     using Resampler = resamplers::Resampler<N>;
     using Sensor = sensors::Sensor<P, N>;
@@ -67,7 +67,7 @@ template <typename P, size_t N> class ParticleFilter {
     /** Moves particles and incorporates noise. */
     void predict(Predictor& predictor) {
       m_mutex.take();
-      predictor.predict(m_particles);
+      predictor.predict(*m_particles);
       m_mutex.give();
     }
 
@@ -77,20 +77,23 @@ template <typename P, size_t N> class ParticleFilter {
       m_mutex.take();
       // Update weights
       for (std::unique_ptr<Sensor>& sensor : sensors)
-        sensor->update(m_particles, m_weights);
+        sensor->update(*m_particles, *m_weights);
       // Normalize weights
-      normalizeWeights(m_weights);
+      normalizeWeights(*m_weights);
+
+      // TODO: Remove the need for m_indices and m_newParticles
+      // (Some resamplers may not need them)
 
       // If should resample, then resample
-      if (resampler.shouldResample(m_weights)) {
+      if (resampler.shouldResample(*m_weights)) {
         // Get indices of particles to keep
-        resampler.resample(m_weights, m_indices);
+        resampler.resample(*m_weights, *m_indices);
         // Perform the actual resampling
         for (size_t i = 0; i < N; i++)
-          m_newParticles[i] = m_particles[m_indices[i]];
-        m_particles = m_newParticles;
+          (*m_newParticles)[i] = (*m_particles)[(*m_indices)[i]];
+        m_particles.swap(m_newParticles);
         // Reset weights
-        std::fill(m_weights.begin(), m_weights.end(), 1.f / N);
+        std::fill(m_weights->begin(), m_weights->end(), 1.f / N);
       }
       m_mutex.give();
     };
@@ -103,7 +106,8 @@ template <typename P, size_t N> class ParticleFilter {
     P getMean() {
       m_mutex.take();
       P mean;
-      for (size_t i = 0; i < N; i++) mean += m_particles[i] * m_weights[i];
+      for (size_t i = 0; i < N; i++)
+        mean += (*m_particles)[i] * (*m_weights)[i];
       m_mutex.give();
       return mean;
     }
@@ -114,7 +118,7 @@ template <typename P, size_t N> class ParticleFilter {
      */
     void modifyParticles(std::function<void(std::array<P, N>&)> func) {
       m_mutex.take();
-      func(m_particles);
+      func(*m_particles);
       m_mutex.give();
     }
 
@@ -126,11 +130,9 @@ template <typename P, size_t N> class ParticleFilter {
     }
 
     /** Create a particle filter. */
-    ParticleFilter(std::array<P, N> particles,
-                   std::optional<std::array<float, N>> weights = std::nullopt)
-      : m_particles(particles),
-        m_weights(weights.value_or(std::array<float, N> {})) {
-      if (!weights.has_value())
-        std::fill(m_weights.begin(), m_weights.end(), 1. / N);
+    ParticleFilter(std::unique_ptr<std::array<P, N>> particles)
+      : m_particles(std::move(particles)),
+        m_weights(std::make_unique<std::array<float, N>>()) {
+      std::fill((*m_weights).begin(), (*m_weights).end(), 1. / N);
     }
 };
