@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Eigen/Dense"
-#include "Eigen/src/Core/Matrix.h"
 #include <random>
 
 namespace stats {
@@ -39,7 +38,7 @@ template <size_t N> struct MultivariateGaussian {
          * @param result Where to store the sample
          */
         void sampleOnce(Eigen::Vector<float, N>& result) {
-          for (int i = 0; i < N; i++) { z(i) = m_rngDist(rng); }
+          for (size_t i = 0; i < N; i++) { z(i) = m_rngDist(rng); }
           result = m_dist.mu + L * z;
         }
 

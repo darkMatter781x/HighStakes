@@ -39,10 +39,20 @@
           "background": {
             "activeOnStart": true,
             "beginsPattern": ".",
-            "endsPattern": "starting simulator in debug mode!",
+            "endsPattern": "starting simulator in debug mode!"
           }
         }
       ]
+    },
+    // Builds compile_commands.json for clangd for both unit testing and the main project
+    {
+      "label": "Build Compile Commands",
+      "type": "shell",
+      "command": "./scripts/compile_commands.sh",
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "problemMatcher": []
     }
   ]
 }

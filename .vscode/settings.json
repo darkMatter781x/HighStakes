@@ -6,5 +6,8 @@
     "multipliable",
     "Resampler",
     "resamplers"
-  ]
+  ],
+  "cmake.configureSettings": {
+    "gtest_build_samples": "ON"
+  }
 }

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Eigen/Core"
+#include <optional>
 
 // Used for distance sensor expected measurements
 
