@@ -34,7 +34,7 @@ TEST(Lines, Ray_distanceTo_Hit) {
   auto ray =
       lines::Ray {.start = {3, -1}, .direction = {sqrt(2) / 2, -sqrt(2) / 2}};
   auto dist = ray.distanceTo(segment);
-  EXPECT_TRUE(dist.has_value());
+  ASSERT_TRUE(dist.has_value());
   EXPECT_FLOAT_EQ(dist.value(), 2 * sqrt(2));
 }
 
@@ -59,7 +59,7 @@ TEST(Lines, Ray_distanceTo_HitColinear) {
   auto ray =
       lines::Ray {.start = {3, -1}, .direction = segment.vec.normalized()};
   auto dist = ray.distanceTo(segment);
-  EXPECT_TRUE(dist.has_value());
+  ASSERT_TRUE(dist.has_value());
   EXPECT_FLOAT_EQ(dist.value(), 0);
 }
 
@@ -86,6 +86,19 @@ TEST(Lines, Ray_findFirstIntersect_MissEmptyVector) {
       lines::Ray {.start = {3, -1}, .direction = {sqrt(2) / 2, sqrt(2) / 2}};
   auto intersect = ray.findFirstIntersect(segments);
   EXPECT_FALSE(intersect.has_value());
+}
+
+TEST(Lines, Ray_findFirstIntersect_HitNearest) {
+  auto segments = std::vector<lines::Segment> {
+      {.start = {-1, 2}, .vec = {2, 0}},
+      {.start = {-1, 1}, .vec = {2, 0}},
+      {.start = {-1, 3}, .vec = {2, 0}},
+  };
+  auto ray = lines::Ray {.start = {0, 0}, .direction = {0, 1}};
+  auto intersect = ray.findFirstIntersect(segments);
+  ASSERT_TRUE(intersect.has_value());
+  EXPECT_FLOAT_EQ(intersect.value().first, 1);
+  EXPECT_EQ(intersect.value().second, 1);
 }
 
 #endif
