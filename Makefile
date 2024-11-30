@@ -8,7 +8,6 @@ CXXEXTS:=cpp c++ cc
 # probably shouldn't modify these, but you may need them below
 ROOT=.
 FWDIR:=$(ROOT)/firmware
-BINDIR=$(ROOT)/bin
 SRCDIR=$(ROOT)/src
 INCDIR=$(ROOT)/include
 EXTRA_INCDIR=$(ROOT)/include/packages
@@ -22,11 +21,13 @@ $(info COMPILING FOR V5 BRAIN)
 
 # Set to 1 to enable hot/cold linking
 USE_PACKAGE:=1
+BINDIR=$(ROOT)/bin/bot
 else
 $(info COMPILING FOR SIM)
 
 USE_PACKAGE:=0
 EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION -O0
+BINDIR=$(ROOT)/bin/sim
 endif
 
 # ifndef TUNING
@@ -57,7 +58,10 @@ EXCLUDE_SRC_FROM_LIB+=$(foreach file, $(SRCDIR)/main,$(foreach cext,$(CEXTS),$(f
 # that are in the directory include/LIBNAME
 TEMPLATE_FILES=$(INCDIR)/$(LIBNAME)/*.h $(INCDIR)/$(LIBNAME)/*.hpp
 
-.DEFAULT_GOAL=quick
+.DEFAULT_GOAL=my-quick
+
+my-quick: quick
+	$(shell cp $(BINDIR)/*.bin $(BINDIR)/..)
 
 ################################################################################
 ################################################################################

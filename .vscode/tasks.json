@@ -23,7 +23,7 @@
     {
       "label": "Run Sim in GDB Mode",
       "type": "shell",
-      "command": "echo \"starting simulator in debug mode!\" && simulator monolith ./bin/monolith.bin --gdb",
+      "command": "echo \"starting simulator in debug mode!\" && simulator monolith ./bin/sim/monolith.bin --gdb",
       "isBackground": true,
       "dependsOn": "Build for Sim",
       "problemMatcher": [
@@ -44,7 +44,6 @@
         }
       ]
     },
-    // Builds compile_commands.json for clangd for both unit testing and the main project
     {
       "label": "Build Compile Commands",
       "type": "shell",
@@ -53,6 +52,14 @@
         "runOn": "folderOpen"
       },
       "problemMatcher": []
+    },
+    {
+      "label": "CMake: build",
+      "type": "shell",
+      "command": "./scripts/build-test.sh",
+      "group": "build",
+      "problemMatcher": [],
+      "detail": "CMake template build task"
     }
   ]
 }
