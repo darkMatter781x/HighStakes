@@ -102,3 +102,7 @@ template <size_t N> struct MultivariateGaussian {
 };
 
 }; // namespace stats
+
+namespace test {
+void test_multivariate_gaussian();
+}

@@ -69,7 +69,6 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   m_prevPose = pose;
   m_odom.setPose(pose);
 
-  // TODO: Test
   stats::MultivariateGaussian<2> gaussian {
       .mu = {pose.x, pose.y},
       .sigma = Eigen::Matrix2f::Identity() * stdDev,
