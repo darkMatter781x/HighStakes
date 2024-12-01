@@ -6,7 +6,7 @@ if 'rerunGuard' not in globals():
   rerunGuard = True
 
   print("Adding monolith symbol file")
-  gdb.execute("add-symbol-file ./bin/monolith.elf")
+  gdb.execute("add-symbol-file ./bin/sim/monolith.elf")
   print("Added monolith symbol file")
 
   # add kernel symbol file
