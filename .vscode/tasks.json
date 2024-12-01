@@ -6,13 +6,7 @@
     {
       "label": "Build for Sim",
       "type": "shell",
-      "command": "make",
-      "args": [
-        "VEXIDE_SIMULATION=1",
-        "quick",
-        "-j",
-        "8"
-      ],
+      "command": "./scripts/build-sim.sh",
       "options": {
         "env": {
           "PATH": "${env:PATH}:/home/vscode/.vscode-remote/data/User/globalStorage/sigbots.pros/install/pros-toolchain-linux/bin"
