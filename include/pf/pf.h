@@ -87,7 +87,7 @@ template <typename P, size_t N> class ParticleFilter {
       // If should resample, then resample
       if (resampler.shouldResample(*m_weights)) {
         // Get indices of particles to keep
-        resampler.resample(*m_weights, *m_indices);
+        m_indices = resampler.resample(*m_weights, std::move(m_indices));
         // Perform the actual resampling
         for (size_t i = 0; i < N; i++)
           (*m_newParticles)[i] = (*m_particles)[(*m_indices)[i]];
@@ -132,7 +132,9 @@ template <typename P, size_t N> class ParticleFilter {
     /** Create a particle filter. */
     ParticleFilter(std::unique_ptr<std::array<P, N>> particles)
       : m_particles(std::move(particles)),
-        m_weights(std::make_unique<std::array<float, N>>()) {
+        m_weights(std::make_unique<std::array<float, N>>()),
+        m_indices(std::make_unique<std::array<size_t, N>>()),
+        m_newParticles(std::make_unique<std::array<P, N>>()) {
       std::fill((*m_weights).begin(), (*m_weights).end(), 1. / N);
     }
 };

@@ -12,8 +12,8 @@ template <size_t N> class Systematic : public Resampler<N> {
     /** @brief Returns random number between 0 and 1 */
     std::function<float()> m_random;
   public:
-    void resample(const std::array<float, N>& weights,
-                  std::array<size_t, N>& indices) {
+    std::unique_ptr<std::array<size_t, N>> resample(const std::array<float, N>& weights,
+                  std::unique_ptr<std::array<size_t, N>> indices) override{
       float offset = m_random() / N;
 
       /** Current sum. */
@@ -32,12 +32,14 @@ template <size_t N> class Systematic : public Resampler<N> {
         // If current weight is at desired position
         while (currSum > position) {
           // Then add it to the indices
-          indices[i_i] = i_w;
+          (*indices)[i_i] = i_w;
           ++i_i;
           // And move to next position
           position += 1.f / N;
         }
       }
+
+      return std::move(indices);
     };
 
     /** @param random Returns random number between 0 and 1 */
