@@ -26,15 +26,18 @@ Localization::Localization(const Config& config)
         config.sensorFactory(SensorFactoryConfig {.botPose = m_odom->getPose(),
                                                   .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
-    m_prevPose(m_odom->getPose()), m_mutex() {}
+    m_prevPose(m_odom->getPose()), m_mutex() {
+  setPose({0, 0, 0}, 0.5, true, true);
+}
 
-void printParticles(
-    const std::array<Eigen::Vector<float, 2>, Localization::N>& particles) {
-  printf("\n[Localization::printParticles]:\t[");
-  for (const auto& particle : particles) {
-    printf("[%f,%f],", particle.x(), particle.y());
+Localization::PF::Data printParticles(Localization::PF::Data data) {
+  printf("\n[TELEMETRY.PF.DATA]:");
+  for (size_t i = 0; i < Localization::N; i++) {
+    printf("%f,%f,%f;", (*data.particles)[i].x(), (*data.particles)[i].y(),
+           (*data.weights)[i]);
   }
-  printf("]\n");
+  printf("\n");
+  return data;
 }
 
 void Localization::update() {
@@ -60,13 +63,14 @@ void Localization::update() {
 
     m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
 
-    if (iteration == 72) m_pf.modifyParticles(printParticles);
+    /* if ((iteration % 3) == 0) */ m_pf.modify(printParticles);
   }
 
   m_prevPose = m_odom->getPose();
   m_mutex.give();
 
-  printf("[%4u]\tpose: %s \n", iteration, format_as(m_odom->getPose()).c_str());
+  printf("[TELEMETRY.PF.POSE]: %4u:(x=%f,y=%f,theta=%f)\n", iteration,
+         m_odom->getPose().x, m_odom->getPose().y, m_odom->getPose().theta);
   iteration++;
 
   // size_t endMillis = pros::millis();
@@ -88,8 +92,9 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   };
 
   // Updates particles to be centered around the new pose
-  m_pf.modifyParticles([&gaussian](auto& particles) {
-    gaussian.makeSampler().sampleMany(particles);
+  m_pf.modify([&gaussian](auto data) {
+    gaussian.makeSampler().sampleMany(*(data.particles));
+    return data;
   });
   m_mutex.give();
 }

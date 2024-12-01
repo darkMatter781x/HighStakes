@@ -112,13 +112,24 @@ template <typename P, size_t N> class ParticleFilter {
       return mean;
     }
 
+    struct Data {
+        std::unique_ptr<std::array<P, N>> particles;
+        std::unique_ptr<std::array<float, N>> weights;
+    };
+
     /**
-     * @brief Lets the particles be modified by a function.
+     * @brief Lets the particles and weights be modified by a function.
      * @param func Function to given ability to modify the particles.
      */
-    void modifyParticles(std::function<void(std::array<P, N>&)> func) {
+    void modify(std::function<Data(Data)> func) {
       m_mutex.take();
-      func(*m_particles);
+      Data data {
+          .particles = std::move(m_particles),
+          .weights = std::move(m_weights),
+      };
+      Data newData = func(std::move(data));
+      m_particles = std::move(newData.particles);
+      m_weights = std::move(newData.weights);
       m_mutex.give();
     }
 
