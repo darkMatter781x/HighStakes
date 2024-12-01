@@ -3,6 +3,7 @@
 #include "lemlib/util.hpp"
 #include "pf/sensors/v5laser.h"
 #include "pros/misc.hpp"
+#include "pros/rtos.hpp"
 #include "util/stats.h"
 
 /** Uniform distribution for resampling */
@@ -19,45 +20,57 @@ std::unique_ptr<std::array<Eigen::Vector<float, M>, N>> makeZeroArray() {
 }
 
 Localization::Localization(const Config& config)
-  : m_pf(makeZeroArray<N, 2>()), m_odom(config.odomSensors, config.drivetrain),
-    m_sensors(), m_obstacles(config.obstacles),
+  : m_pf(makeZeroArray<N, 2>()), m_odom(config.odom),
+    m_obstacles(config.obstacles),
+    m_sensors(
+        config.sensorFactory(SensorFactoryConfig {.botPose = m_odom->getPose(),
+                                                  .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
-    m_prevPose(m_odom.getPose()), m_mutex() {
-  for (const auto& dConf : config.distances)
-    m_sensors.push_back(std::make_unique<sensors::V5LaserSensor<N>>(
-        sensors::V5Laser::Config {
-            .pose = dConf.pose,
-            .botTheta = m_odom.getPose().theta,
-            .obstacles = m_obstacles,
-        },
-        dConf.sensor));
+    m_prevPose(m_odom->getPose()), m_mutex() {}
+
+void printParticles(
+    const std::array<Eigen::Vector<float, 2>, Localization::N>& particles) {
+  printf("\n[Localization::printParticles]:\t[");
+  for (const auto& particle : particles) {
+    printf("[%f,%f],", particle.x(), particle.y());
+  }
+  printf("]\n");
 }
 
 void Localization::update() {
   // Don't update if the odom hasn't been calibrated
-  if (!m_odom.hasCalibrated()) return;
+  if (!m_odom->hasCalibrated()) return;
 
+  static size_t iteration = 0;
+  // size_t startMillis = pros::millis();
   m_mutex.take();
 
-  m_odom.update();
+  m_odom->update();
 
   // Only use distance sensors after match has started
   // (Humans may be on the field before the match starts, interfering with the
   // distance sensors)
   if (!pros::competition::is_disabled()) {
-    lemlib::Pose displacement = m_odom.getPose() - m_prevPose;
+    lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
     m_predictor.m_displacement = {displacement.x, displacement.y};
     m_pf.predict(m_predictor);
 
     m_pf.update(m_sensors, m_resampler);
     const auto mean = m_pf.getMean();
 
-    m_odom.setPose({mean.x(), mean.y(), m_odom.getPose().theta});
+    m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
+
+    if (iteration == 72) m_pf.modifyParticles(printParticles);
   }
 
-  m_prevPose = m_odom.getPose();
-  printf("pose: %s \n", format_as(m_odom.getPose()).c_str());
+  m_prevPose = m_odom->getPose();
   m_mutex.give();
+
+  printf("[%4u]\tpose: %s \n", iteration, format_as(m_odom->getPose()).c_str());
+  iteration++;
+
+  // size_t endMillis = pros::millis();
+  // printf("diff:%3.3f\n", (endMillis - startMillis) / 1000.);
 }
 
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
@@ -67,7 +80,7 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   if (!radians) pose.theta = lemlib::radToDeg(pose.theta);
 
   m_prevPose = pose;
-  m_odom.setPose(pose);
+  m_odom->setPose(pose);
 
   stats::MultivariateGaussian<2> gaussian {
       .mu = {pose.x, pose.y},
@@ -81,7 +94,7 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   m_mutex.give();
 }
 
-void Localization::calibrate() { m_odom.calibrate(); }
+void Localization::calibrate() { m_odom->calibrate(); }
 
 void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
   auto noiseSampler =

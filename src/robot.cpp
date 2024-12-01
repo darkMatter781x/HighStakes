@@ -1,8 +1,12 @@
 #include "robot.h"
-#include "Eigen/src/Core/Matrix.h"
+#include "pf/odom/lemlib.h"
+#include "pf/odom/sim.h"
 #include "pf/localization.h"
+#include "pf/sensors/simLaser.h"
+#include "pf/sensors/v5laser.h"
 #include "pros/misc.h"
 #include "pf/obstacles.h"
+#include <memory>
 
 lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
   return {&this->motors.left,
@@ -26,14 +30,73 @@ lemlib::OdomSensors RobotConfig::makeSensors() const {
           nullptr, &this->sensors.imu};
 }
 
-Localization::Config makeLocalizationConfig(const RobotConfig& config) {
-  return {
-      .odomSensors = config.makeSensors(),
-      .drivetrain = config.makeDrivetrain(),
-      .obstacles = getObstacles(),
-      .distances = config.sensors.lasers,
-      .covar = Eigen::Matrix2f::Identity() * .01,
+std::shared_ptr<Odom> makeRealOdom(const RobotConfig& config) {
+  return std::make_shared<LemLibOdom>(config.makeSensors(),
+                                      config.makeDrivetrain());
+}
+
+std::shared_ptr<SimOdom> makeSimOdom(const RobotConfig& config) {
+  return std::make_shared<SimOdom>();
+}
+
+Localization makeRealLocalization(const RobotConfig& config) {
+  auto factory =
+      [&bot_conf = config](const Localization::SensorFactoryConfig& sensor_conf)
+      -> Localization::SensorVector {
+    Localization::SensorVector sensors {};
+    for (const auto& laser_conf : bot_conf.sensors.lasers) {
+      sensors.push_back(
+          std::make_unique<sensors::V5LaserSensor<Localization::N>>(
+              sensors::Laser::Config {
+                  .pose = laser_conf.pose,
+                  .botTheta = sensor_conf.botPose.theta,
+                  .obstacles = sensor_conf.obstacles,
+              },
+              laser_conf.sensor));
+    }
+    return sensors;
   };
+  return {Localization::Config {
+      .odom = makeRealOdom(config),
+      .obstacles = getObstacles(),
+      .sensorFactory = factory,
+      .covar = Eigen::Matrix2f::Identity() * .01,
+  }};
+}
+
+// TODO: Deduplicate this with makeRealLocalization
+Localization makeSimLocalization(const RobotConfig& config) {
+  auto odom = makeSimOdom(config);
+  auto factory = [&bot_conf = config,
+                  &odom](const Localization::SensorFactoryConfig& sensor_conf)
+      -> Localization::SensorVector {
+    Localization::SensorVector sensors {};
+    for (const auto& laser_conf : bot_conf.sensors.lasers) {
+      sensors.push_back(
+          std::make_unique<sensors::SimLaserSensor<Localization::N>>(
+              sensors::Laser::Config {
+                  .pose = laser_conf.pose,
+                  .botTheta = sensor_conf.botPose.theta,
+                  .obstacles = sensor_conf.obstacles,
+              },
+              odom->getRealPose()));
+    }
+    return sensors;
+  };
+  return {Localization::Config {
+      .odom = odom,
+      .obstacles = getObstacles(),
+      .sensorFactory = factory,
+      .covar = Eigen::Matrix2f::Identity() * .01,
+  }};
+}
+
+Localization makeLocalization(const RobotConfig& config) {
+#ifdef VEXIDE_SIMULATION
+  return makeSimLocalization(config);
+#else
+  return makeRealLocalization(config);
+#endif
 }
 
 Robot::Robot(const RobotConfig& config)
@@ -49,7 +112,6 @@ Robot::Robot(const RobotConfig& config)
     lift(m_lift), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
-    m_localization(makeLocalizationConfig(config)),
-    localization(m_localization) {}
+    m_localization(makeLocalization(config)), localization(m_localization) {}
 
 Robot Robot::instance {RobotConfig::config};

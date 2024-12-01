@@ -1,13 +1,14 @@
 #pragma once
 
 #include "Eigen/Core"
-#include "lemlibOdom.h"
+#include "Eigen/src/Core/Matrix.h"
 #include "pf.h"
+#include "pf/odom/odom.h"
 #include "pros/rtos.hpp"
 #include "resamplers/systematic.h"
-#include "pros/distance.hpp"
 #include "pf/util/lines.h"
 #include "subsystems.h"
+#include <memory>
 
 /**
  * @brief Implementation of particle filter. Updates LemLib's Odom so that
@@ -17,21 +18,30 @@ class Localization : Subsystem {
   private:
     pros::Mutex m_mutex;
   public:
-    /** Config for constructing distance sensors*/
-    struct DistSensorConfig {
-        /** Position of sensor relative to center of bot. */
-        const lemlib::Pose pose;
+    // Number of particles
+    static constexpr size_t N = 500;
+    /** Particle type */
+    typedef Eigen::Vector2f P;
+    /** Particle filter type */
+    typedef ParticleFilter<P, N> PF;
+
+    typedef std::vector<std::unique_ptr<PF::Sensor>> SensorVector;
+
+    /** Config for constructing sensors, given to sensor factory */
+    struct SensorFactoryConfig {
         /** V5 distance sensor object. */
-        pros::Distance& sensor;
+        const lemlib::Pose& botPose;
+
+        /** Obstacles that a laser sensor might sense. */
+        std::vector<lines::Segment>& obstacles;
     };
 
     /** Config for constructing localizer */
     struct Config {
-        lemlib::OdomSensors odomSensors;
-        lemlib::Drivetrain drivetrain;
+        std::shared_ptr<Odom> odom;
         /** Obstacles that distance sensors might sense. */
         std::vector<lines::Segment> obstacles;
-        std::vector<DistSensorConfig> distances;
+        std::function<SensorVector(SensorFactoryConfig)> sensorFactory;
 
         /**
          * @brief Represents noise in system model.
@@ -40,15 +50,8 @@ class Localization : Subsystem {
         Eigen::Matrix2f covar;
     };
   private:
-    // Number of particles
-    static constexpr size_t N = 100;
-    /** Particle type */
-    typedef Eigen::Vector2f P;
-    /** Particle filter type */
-    typedef ParticleFilter<P, N> PF;
-
     PF m_pf;
-    LemLibOdom m_odom;
+    std::shared_ptr<Odom> m_odom;
 
     /** Used for displacement calculation */
     lemlib::Pose m_prevPose;
@@ -69,7 +72,7 @@ class Localization : Subsystem {
     } m_predictor;
 
     std::vector<lines::Segment> m_obstacles;
-    std::vector<std::unique_ptr<PF::Sensor>> m_sensors;
+    SensorVector m_sensors;
 
     resamplers::Systematic<N> m_resampler;
   public:

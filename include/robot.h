@@ -7,6 +7,7 @@
 #include "subsystems/lift.h"
 #include "subsystems/mogo.h"
 #include "color.h"
+#include <memory>
 
 /**
  * @brief Provides an abstracted interface for controlling the robot and reading
@@ -65,7 +66,7 @@ class Robot : private lemlib::Chassis {
     using lemlib::Chassis::tank;
     using lemlib::Chassis::waitUntil;
     using lemlib::Chassis::waitUntilDone;
-    
+
     void calibrate();
 
     void setPose(lemlib::Pose pose, float stdDev = .5, bool radians = false);

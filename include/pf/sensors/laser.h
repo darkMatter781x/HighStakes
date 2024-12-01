@@ -18,7 +18,7 @@ class Laser {
         /** Position relative to the robot. Theta should in standard radians. */
         const lemlib::Pose pose;
         /** Theta of bot in standard radians. Must be constantly updated. */
-        float& botTheta;
+        const float& botTheta;
         /** Obstacles that sensor might sense. */
         std::vector<lines::Segment>& obstacles;
     };
@@ -26,14 +26,15 @@ class Laser {
     using Vec2 = Eigen::Vector2f;
 
     Laser(const Config config);
-  private:
+    // private:
+  protected:
     /** Position of sensor relative to center of bot. */
     const Vec2 m_pos;
     /** Angle of sensor relative to bot. Should be in standard radians. */
     const float m_theta;
 
     /** Holds theta of bot in standard radians. */
-    float& m_botTheta;
+    const float& m_botTheta;
 
     std::vector<lines::Segment>& obstacles;
   public:

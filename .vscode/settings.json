@@ -5,7 +5,8 @@
     "lemlib",
     "multipliable",
     "Resampler",
-    "resamplers"
+    "resamplers",
+    "VEXIDE"
   ],
   "cmake.configureSettings": {
     "gtest_build_samples": "ON"

@@ -2,10 +2,9 @@
 
 #include "leds/strip.h"
 #include "lemlib/chassis/chassis.hpp"
-#include "pf/localization.h"
 #include "pros/adi.hpp"
+#include "pros/distance.hpp"
 #include "pros/imu.hpp"
-#include "pf/sensors/laser.h"
 #include "pros/optical.hpp"
 #include <vector>
 
@@ -40,7 +39,15 @@ struct RobotConfig {
         pros::Optical intake;
         pros::adi::Potentiometer autonSelector;
 
-        std::vector<Localization::DistSensorConfig> lasers;
+        /** Config for constructing distance sensors*/
+        struct DistSensorConfig {
+            /** Position of sensor relative to center of bot. */
+            const lemlib::Pose pose;
+            /** V5 distance sensor object. */
+            pros::Distance& sensor;
+        };
+
+        std::vector<DistSensorConfig> lasers;
       private:
         friend struct RobotConfig;
         static Sensors sensors;
