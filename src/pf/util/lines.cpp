@@ -28,7 +28,7 @@ std::optional<float> Ray::distanceTo(const Segment& other) const {
   auto& p = start;
   auto& r = direction;
 
-  const auto r_x_s = r.cross(s);
+  const float r_x_s = r.cross(s);
   // Ray and segment are parallel / colinear
   if (r_x_s == 0) return std::nullopt;
 
