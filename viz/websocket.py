@@ -4,57 +4,64 @@ import json
 import numpy as np
 import websockets
 from websockets.asyncio.server import ServerConnection
+from parser import Handler, Particle
+from typing import Generator, override
 
-connections = defaultdict[str, set[ServerConnection]]()
-connections.default_factory = lambda: set()
+class WebsocketServer:
 
+    def __init__(self, port: int = 8766, host: str = "127.0.0.1"):
+        self.connections = defaultdict[str, set[ServerConnection]]()
+        self.connections.default_factory = lambda: set()
+        self.port = port
+        self.host = host
 
-async def send_data(path: str, data: dict):
-    conn_set = connections.get(path)
-    if not conn_set:
-        return
-    for conn in conn_set:
-        await conn.send(json.dumps(data))
+    async def send_data(self, path: str, data: dict):
+        conn_set = self.connections.get(path)
+        if not conn_set:
+            return
+        for conn in conn_set:
+            await conn.send(json.dumps(data))
 
+    def print_connections(self):
+        print("Connections:")
+        for path, conns in self.connections.items():
+            print(f"{path}: {len(conns)} connections")
 
-async def handle_connection(conn: ServerConnection):
-    path = conn.request.path
-    print(f"Connection established at path: {path}")
-    connections[path].add(conn)
-    try:
-        await conn.wait_closed()
-        connections[path].remove(conn)
-    except websockets.exceptions.ConnectionClosedOK:
-        print("Connection closed normally")
-    except Exception as e:
-        print(f"An error occurred: {e}")
+    async def handle_connection(self, conn: ServerConnection):
+        path = conn.request.path
+        print(f"Connection established at path: {path}")
+        self.connections[path].add(conn)
+        try:
+            await conn.wait_closed()
+            self.connections[path].remove(conn)
+        except websockets.exceptions.ConnectionClosedOK:
+            print("Connection closed normally")
+        except Exception as e:
+            print(f"An error occurred: {e}")
 
+    @override
+    def update_particles(self, particles: Generator[Particle, None, None]):
+        xs = []
+        ys = []
+        weights = []
+        for particle in particles:
+            xs.append(particle["x"])
+            ys.append(particle["y"])
+            weights.append(particle["weight"])
 
-async def update_particles():
-    particles = np.random.multivariate_normal(np.array([0., 0.]),
-                                              np.array([[1., 0.], [0., 1.]]),
-                                              size=1000)
-    weight = np.random.uniform(0., 1., 1000)
-    data = {
-        "x": particles[:, 0].tolist(),
-        "y": particles[:, 1].tolist(),
-        "weight": weight.tolist()
-    }
-    await send_data("/particles", data)
+        data = {"particles": {"x": xs, "y": ys, "weight": weights}}
+        print("Sending data")
+        asyncio.run(self.send_data("/particles", data))
+        print("Sent data!")
 
+    async def start(self):
+        print("Starting websocket server")
 
-async def particle_updater():
-    while True:
-        await update_particles()
-        await asyncio.sleep(1)
+        async with websockets.serve(self.handle_connection, self.host,
+                                    self.port):
+            await asyncio.Future()  # run forever
 
-
-async def start_ws_server():
-    print("Starting websocket server")
-
-    async with websockets.serve(handle_connection, "127.0.0.1", 8766):
-        await particle_updater()  # run forever
-
-
-def cleanup_ws():
-    pass
+    def cleanup(self):
+        for conns in self.connections.values():
+            for conn in conns:
+                conn.close()
