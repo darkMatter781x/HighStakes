@@ -1,6 +1,5 @@
 from typing import Callable
 
-
 class Target:
     """
     Runs program and provides access to the raw output
@@ -20,3 +19,5 @@ class Target:
         Cleans up the target
         """
         raise NotImplementedError
+
+from .sim import Simulator

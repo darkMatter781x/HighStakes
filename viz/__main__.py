@@ -2,11 +2,11 @@ import asyncio
 import atexit
 from threading import Thread
 
-from app import start_web_server, cleanup_app
-from parser import Parser
-from websocket import WebsocketServer
-from target.sim import Simulator
-from build_project import build
+from host.app import start_web_server, cleanup_app
+from host.parser import Parser
+from host.websocket import WebsocketServer
+from host.target.sim import Simulator
+from host.build_project import build
 from multiprocessing import Process
 
 cleanup_funcs = [cleanup_app]
@@ -31,7 +31,8 @@ sim = Simulator()
 ws_server = WebsocketServer()
 cleanup_funcs.append(ws_server.cleanup)
 
-parser=Parser(listener=ws_server)
+parser = Parser(listener=ws_server)
+
 
 def run_dash_app():
     start_web_server()

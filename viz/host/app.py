@@ -9,27 +9,6 @@ from dash import Input, Output, State, callback
 from dash_extensions import WebSocket
 # pip install dash dash-extensions quart --break-system
 
-# update_graph = """
-# function(msg) {
-#     if(!msg) { return null; }  // no data, just return
-#     const data = JSON.parse(msg.data);
-#     let len = data.x.length;
-#     let xs = data.x;
-#     let ys = data.y;
-#     let opacity = data.weight;
-
-#     return [
-#         {
-#             x: [xs],
-#             y: [ys],
-#             'marker.opacity': [ opacity ],
-#         },
-#         [0],
-#         len,
-#     ];
-# }
-# """
-
 # Callback to handle websocket close event.
 # Ideally, we should attempt to reconnect the websocket here,
 # but I don't think this is possible with the WebSocket component.

@@ -4,7 +4,7 @@ import json
 import numpy as np
 import websockets
 from websockets.asyncio.server import ServerConnection
-from parser import Handler, Particle
+from .parser import Handler, Particle
 from typing import Generator, override
 
 class WebsocketServer:

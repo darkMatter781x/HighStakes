@@ -3,7 +3,7 @@ import signal
 import subprocess
 from typing import Callable
 
-from target import Target
+from . import Target
 
 
 class Simulator(Target):
