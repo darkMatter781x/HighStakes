@@ -16,7 +16,8 @@ temp.errors
 *.ini
 .d/
 
-# GDB pretty printers
+# GDB pretty printers & visualization
+# Also specified in viz/.gitignore
 __pycache__
 
 # unit testing

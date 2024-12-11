@@ -1,11 +1,8 @@
 # Sets up a web app for the data visualization.
 
+import os
 import dash
-from dash import html
-from dash import dcc
-import numpy as np
-
-from dash import Input, Output, State, callback
+from dash import dcc, Input, Output, html
 from dash_extensions import WebSocket
 # pip install dash dash-extensions quart --break-system
 
@@ -20,7 +17,12 @@ function(ws_state) {
 }
 """
 
-dashApp = dash.Dash(__name__)
+dashApp = dash.Dash(
+    __name__,
+    assets_folder=os.path.dirname(os.path.realpath(__file__)) + "/../client/dist",
+    # TODO: check if this syntax is correct
+    assets_ignore=".*.ts|tsconfig.json|out/.*",
+)
 
 
 # Create small example app.
