@@ -1,11 +1,9 @@
 import asyncio
 from collections import defaultdict
 import json
-import numpy as np
 import websockets
 from websockets.asyncio.server import ServerConnection
-from .parser import Handler, Particle
-from typing import Generator, override
+
 
 class WebsocketServer:
 
@@ -21,6 +19,7 @@ class WebsocketServer:
             return
         for conn in conn_set:
             await conn.send(json.dumps(data))
+        # print(data.keys())
 
     def print_connections(self):
         print("Connections:")
@@ -39,21 +38,6 @@ class WebsocketServer:
         except Exception as e:
             print(f"An error occurred: {e}")
 
-    @override
-    def update_particles(self, particles: Generator[Particle, None, None]):
-        xs = []
-        ys = []
-        weights = []
-        for particle in particles:
-            xs.append(particle["x"])
-            ys.append(particle["y"])
-            weights.append(particle["weight"])
-
-        data = {"particles": {"x": xs, "y": ys, "weight": weights}}
-        print("Sending data")
-        asyncio.run(self.send_data("/particles", data))
-        print("Sent data!")
-
     async def start(self):
         print("Starting websocket server")
 
@@ -61,7 +45,7 @@ class WebsocketServer:
                                     self.port):
             await asyncio.Future()  # run forever
 
-    def cleanup(self):
+    async def cleanup(self):
         for conns in self.connections.values():
             for conn in conns:
-                conn.close()
+                await conn.close()

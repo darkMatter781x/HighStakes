@@ -11,7 +11,7 @@ namespace sensors {
 class SimLaser : public Laser {
   private:
     /** Actual pose simulated robot is at, not the computed pose */
-    lemlib::Pose m_realPose;
+    const lemlib::Pose& m_realPose;
 
     template <size_t N> friend struct SimLaserSensor;
 

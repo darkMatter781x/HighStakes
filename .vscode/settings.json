@@ -4,6 +4,7 @@
     "Eigen",
     "lemlib",
     "multipliable",
+    "Plotly",
     "Resampler",
     "resamplers",
     "VEXIDE"

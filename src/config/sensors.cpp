@@ -15,11 +15,11 @@ RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .lasers =
         {
             {
-                .pose {-1, -4, 0},
+                .pose {-1, -4, -M_PI / 4},
                 .sensor {laserA},
             },
             {
-                .pose {-1, -6, M_PI},
+                .pose {-1, -6, M_PI / 4},
                 .sensor {laserB},
             },
         },

@@ -10,16 +10,10 @@ export default defineConfig(({ mode }): UserConfig => {
         name: "VizClient",
         // the proper extensions will be added
         fileName: "viz-client",
+        formats: ["umd"],
       },
-      sourcemap: DEV_MODE,
-      minify: !DEV_MODE,
-      rollupOptions: {
-        output: {
-          compact: !DEV_MODE,
-          
-        },
-      },
-    },
+      sourcemap: DEV_MODE
+    }
   } satisfies UserConfig;
   return config;
 });

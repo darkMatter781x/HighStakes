@@ -77,5 +77,13 @@ class Laser {
 
         Sensor(Laser& laser) : laser(laser) {}
     };
+  protected:
+    static size_t lastUsedId;
+    /**
+     * @warning SHOULD ONLY BE USED FOR TELEMETRY PURPOSES!
+     * @brief Unique identifier for this sensor.
+     * @todo Make a logger class to handle this, and prevent misuse.
+     */
+    const size_t m_id;
 };
 }; // namespace sensors

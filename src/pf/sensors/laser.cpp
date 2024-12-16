@@ -3,6 +3,8 @@
 
 using namespace sensors;
 
+size_t Laser::lastUsedId = 0;
+
 lines::Ray Laser::toRay(const Vec2& robotPos) const {
   const float theta = m_botTheta + m_theta;
   const float hypot = m_pos.norm();
@@ -20,4 +22,6 @@ float Laser::expectedDist(const Vec2& robotPos) const {
 
 Laser::Laser(const Config config)
   : m_pos {config.pose.x, config.pose.y}, m_theta(config.pose.theta),
-    m_botTheta(config.botTheta), obstacles(config.obstacles) {}
+    m_botTheta(config.botTheta), obstacles(config.obstacles),
+    m_id(Laser::lastUsedId++) {}
+

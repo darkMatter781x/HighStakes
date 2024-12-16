@@ -1,4 +1,8 @@
 #include "pf/odom/sim.h"
+#include "pf/util/stats.h"
+#include <cmath>
+#include <cstdio>
+#include <random>
 
 const lemlib::Pose& SimOdom::getPose() const { return m_pose; }
 
@@ -6,14 +10,38 @@ const lemlib::Pose& SimOdom::getRealPose() const { return m_realPose; }
 
 void SimOdom::setPose(lemlib::Pose pose) { m_pose = pose; }
 
+std::normal_distribution<float> distNoise(0, 1);
+
 void SimOdom::update() {
   static lemlib::Pose prevRealPose = m_realPose;
   if (m_hasCalibrated) {
-    // Drive forward
-    m_realPose.y += .1;
+    printf("[TELEMETRY.PF.ACTUAL_POSE]:%f,%f,%f\n", m_realPose.x, m_realPose.y,
+           m_realPose.theta);
+
+    // m_realPose.theta = M_PI / 4;
+    // m_realPose.x += .1 * cos(m_realPose.theta);
+    // m_realPose.y += .1 * sin(m_realPose.theta);
+
+    // Drive forward in circle with radius 12 inches
+    /** Number of iterations for a full rotation */
+    constexpr int period = 200;
+    /** Magic coefficient to make the circle radius 12 inches. See
+     * https://www.desmos.com/calculator/7veyhyceh6 */
+    constexpr float magicCoefficient = 12 * M_PI / period;
+    m_realPose.theta -= 2 * M_PI / period;
+    // printf("theta_odom:\t%f\n", m_realPose.theta);
+    m_realPose.x += magicCoefficient * cos(m_realPose.theta);
+    m_realPose.y += magicCoefficient * sin(m_realPose.theta);
+    
 
     // Update pose
-    lemlib::Pose displacement = m_realPose - prevRealPose;
+    lemlib::Pose displacement {m_realPose.x - prevRealPose.x,
+                               m_realPose.y - prevRealPose.y,
+                               m_realPose.theta - prevRealPose.theta};
+    // Inject noise
+    displacement.x += .05*distNoise(stats::rng);
+    displacement.y += .05*distNoise(stats::rng);
+
     m_pose.x += displacement.x;
     m_pose.y += displacement.y;
     m_pose.theta += displacement.theta;

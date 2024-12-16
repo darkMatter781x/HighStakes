@@ -1,4 +1,5 @@
 #pragma once
+#include "lemlib/pose.hpp"
 #include <array>
 
 namespace sensors {

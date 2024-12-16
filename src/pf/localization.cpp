@@ -27,11 +27,11 @@ Localization::Localization(const Config& config)
                                                   .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
     m_prevPose(m_odom->getPose()), m_mutex() {
-  setPose({0, 0, 0}, 0.5, true, true);
+  setPose({0, 0, 0}, 10, true, true);
 }
 
 Localization::PF::Data printParticles(Localization::PF::Data data) {
-  printf("\n[TELEMETRY.PF.DATA]:");
+  printf("[TELEMETRY.PF.PARTICLES]:");
   for (size_t i = 0; i < Localization::N; i++) {
     printf("%f,%f,%f;", (*data.particles)[i].x(), (*data.particles)[i].y(),
            (*data.weights)[i]);
@@ -69,8 +69,8 @@ void Localization::update() {
   m_prevPose = m_odom->getPose();
   m_mutex.give();
 
-  printf("[TELEMETRY.PF.POSE]: %4u:(x=%f,y=%f,theta=%f)\n", iteration,
-         m_odom->getPose().x, m_odom->getPose().y, m_odom->getPose().theta);
+  printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
+         m_odom->getPose().y, m_odom->getPose().theta);
   iteration++;
 
   // size_t endMillis = pros::millis();

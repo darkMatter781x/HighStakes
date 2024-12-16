@@ -1,7 +1,8 @@
+import asyncio
 import os
 import signal
 import subprocess
-from typing import Callable
+from typing import Callable, Coroutine, override
 
 from . import Target
 
@@ -29,7 +30,8 @@ class Simulator(Target):
             self.command = command
         self.process = None
 
-    def run(self, on_receive_line: Callable[[str], None]):
+    @override
+    async def run(self, on_receive_line: Callable[[str], None]):
         """ 
         Runs the vexide sim and calls on_receive_line for each line of output
         """
@@ -37,18 +39,18 @@ class Simulator(Target):
         if self.process is not None:
             raise Exception("Simulator is already running")
 
-        self.process = subprocess.Popen(self.command,
-                                        shell=True,
-                                        preexec_fn=os.setsid,
-                                        text=True,
-                                        stdout=subprocess.PIPE)
+        self.process = await asyncio.create_subprocess_shell(
+            self.command,
+            shell=True,
+            preexec_fn=os.setsid,
+            stdout=subprocess.PIPE)
         while True:
-            line = self.process.stdout.readline()
+            line = (await self.process.stdout.readline()).decode()
             if line == '' and self.process.poll() is not None:
                 break
-            on_receive_line(line)
+            await on_receive_line(line)
         print("Simulation finished??")
 
     def cleanup(self):
-        if self.process is not None and self.process.poll() is None:
+        if self.process is not None and self.process.returncode is None:
             os.killpg(os.getpgid(self.process.pid), signal.SIGTERM)

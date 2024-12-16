@@ -1,12 +1,48 @@
-from multiprocessing.connection import Listener as ConnListener
-from parser import Handler, Particle
+import asyncio
+import json
+from typing import Generator, override
+
+import numpy as np
+from host.parser import Handler, Particle, Point, Pose
+from host.websocket import WebsocketServer
 
 
 class PacketHandler(Handler):
-    def __init__(self,
-                 port: int = 8765,
-                 host: str = "localhost",
-                 authkey: bytes = b''):
-        self.listener = ConnListener((host, port), authkey=authkey)
-        self.listener.accept()
+
+    def __init__(self, ws_server: WebsocketServer):
+        self.ws_server: WebsocketServer = ws_server
+
+    async def _send_dict(self, topic: str, data: dict):
+        await self.ws_server.send_data("/data", {topic: data})
+
+    @override
+    async def update_particles(self, particlesGen: Generator[Particle, None, None]):
+        data = {"x": [], "y": [], "weight": []}
+        particleList = list(particlesGen)
+        particleList.sort(key=lambda p: p["weight"], reverse=True)
         
+        for particle in particleList[:]:
+            data["x"].append(particle["x"])
+            data["y"].append(particle["y"])
+            data["weight"].append(particle["weight"])
+
+        await self._send_dict("particles", data)
+
+    @override
+    async def update_calculated_pose(self, pose: Pose):
+        # print(f"updated calculated pose: {pose}")
+        await self._send_dict("calculated_pose", pose)
+
+    @override
+    async def update_actual_pose(self, pose: Pose):
+        # print(f"updated actual pose: {pose}")
+        await self._send_dict("actual_pose", pose)
+
+    @override
+    async def update_lasers(self, laser_data: tuple[int, Point, Point]):
+        # print(f"updated lasers pose: {laser_data}")
+        await self._send_dict("lasers", laser_data)
+        # print(f"updated lasers: {laser_data}")
+
+    def cleanup(self):
+        pass

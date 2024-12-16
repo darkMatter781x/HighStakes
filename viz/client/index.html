@@ -5,9 +5,30 @@
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Vite + TS</title>
+    <style>
+      #top-banner {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+      }
+      .left-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
-    <script type="module" src="/src/main.ts"></script>
+    <div id="app">
+      <div id="top-banner">
+        <div class="left-group">
+          <div id="timing-output" style="white-space: pre-wrap"></div>
+          <button id="reset-timings">Reset Timings!</button>
+        </div>
+        <div id="error" style="white-space: pre-wrap">sdfdsafs</div>
+      </div>
+      <div id="graph" class="viz-graph"></div>
+    </div>
+    <script type="module" src="/src/index.ts"></script>
   </body>
 </html>
