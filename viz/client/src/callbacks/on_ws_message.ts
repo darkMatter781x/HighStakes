@@ -23,7 +23,8 @@ const TRACE_ID = {
   CONTOUR: 1,
   CALCULATED_POSE: 2,
   ACTUAL_POSE: 3,
-  LASERS: [4, 5],
+  RAW_ODOM_POSE: 4,
+  LASERS: [5, 6],
 } satisfies {
   [k: string]: any;
   LASERS: HomogenousTuple<number, typeof NUM_OF_LASERS>;
@@ -187,6 +188,7 @@ function handle_pose(pose: Pose, trace: number) {
 
 let calculatedPose: Pose = { x: 0, y: 0, theta: 0 };
 let actualPose: Pose = { x: 0, y: 0, theta: 0 };
+let rawPose: Pose = { x: 0, y: 0, theta: 0 };
 let errorElement: HTMLElement | null = null;
 
 /** Maps event types to the corresponding handler */
@@ -201,9 +203,17 @@ const handlers = {
     actualPose = pose;
     handle_pose(pose, TRACE_ID.ACTUAL_POSE);
     if (errorElement == null) return;
-    errorElement.innerText = `Error:
-x:\t${(actualPose.x - calculatedPose.x).toFixed(3)}in
-y:\t${(actualPose.y - calculatedPose.y).toFixed(3)}in`;
+    errorElement.innerText = `ERROR:\t\tCalc\t\tRaw
+\t\tx:\t${(actualPose.x - calculatedPose.x).toFixed(3)}in\t${(
+      actualPose.x - rawPose.x
+    ).toFixed(3)}in
+\t\ty:\t${(actualPose.y - calculatedPose.y).toFixed(3)}in\t${(
+      actualPose.y - rawPose.y
+    ).toFixed(3)}in`;
+  },
+  raw_odom_pose: (pose: Pose) => {
+    rawPose = pose;
+    handle_pose(pose, TRACE_ID.RAW_ODOM_POSE);
   },
 };
 

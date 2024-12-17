@@ -44,5 +44,10 @@ class PacketHandler(Handler):
         await self._send_dict("lasers", laser_data)
         # print(f"updated lasers: {laser_data}")
 
+    @override
+    async def update_raw_odom_pose(self, pose: Pose):
+        # print(f"updated raw odom pose: {pose}")
+        await self._send_dict("raw_odom_pose", pose)
+    
     def cleanup(self):
         pass

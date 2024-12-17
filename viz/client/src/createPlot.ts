@@ -85,7 +85,7 @@ export async function createPlot(config: PlotConfig): Promise<PlotlyHTMLElement>
     },
   } satisfies Partial<ScatterData>;
 
-  const poseDatas = ["Actual", "Calculated"].map((name) => {
+  const poseDatas = ["Actual", "Calculated", "Raw Odom"].map((name) => {
     const out: Partial<ScatterData> = JSON.parse(
       JSON.stringify(poseDataTemplate)
     ) as typeof poseDataTemplate;

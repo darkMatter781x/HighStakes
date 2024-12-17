@@ -27,13 +27,17 @@ class Handler:
     Listens to output from the parser and updates the visualizer
     """
 
-    async def update_particles(self, particles: Generator[Particle, None, None]):
+    async def update_particles(self, particles: Generator[Particle, None,
+                                                          None]):
         raise NotImplementedError
 
     async def update_calculated_pose(self, pose: Pose):
         raise NotImplementedError
 
     async def update_actual_pose(self, pose: Pose):
+        raise NotImplementedError
+
+    async def update_raw_odom_pose(self, pose: Pose):
         raise NotImplementedError
 
     async def update_lasers(self, laser_data: tuple[int, Point, Point]):
@@ -91,6 +95,11 @@ class Parser:
             Parser.PacketType(
                 "TELEMETRY.PF.ACTUAL_POSE",
                 handler=(lambda dataStr: handler.update_actual_pose(
+                    parse_pose(dataStr))),
+                shouldPrint=False),
+            Parser.PacketType(
+                "TELEMETRY.PF.RAW_ODOM_POSE",
+                handler=(lambda dataStr: handler.update_raw_odom_pose(
                     parse_pose(dataStr))),
                 shouldPrint=False),
             Parser.PacketType("TELEMETRY.PF.LASERS",

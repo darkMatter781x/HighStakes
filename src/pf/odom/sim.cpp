@@ -1,4 +1,5 @@
 #include "pf/odom/sim.h"
+#include "lemlib/pose.hpp"
 #include "pf/util/stats.h"
 #include <cmath>
 #include <cstdio>
@@ -14,9 +15,13 @@ std::normal_distribution<float> distNoise(0, 1);
 
 void SimOdom::update() {
   static lemlib::Pose prevRealPose = m_realPose;
+  /** Pose had pf not existed */
+  static lemlib::Pose rawOdomPose = m_realPose;
   if (m_hasCalibrated) {
     printf("[TELEMETRY.PF.ACTUAL_POSE]:%f,%f,%f\n", m_realPose.x, m_realPose.y,
            m_realPose.theta);
+    printf("[TELEMETRY.PF.RAW_ODOM_POSE]:%f,%f,%f\n", rawOdomPose.x,
+           rawOdomPose.y, rawOdomPose.theta);
 
     // m_realPose.theta = M_PI / 4;
     // m_realPose.x += .1 * cos(m_realPose.theta);
@@ -32,15 +37,18 @@ void SimOdom::update() {
     // printf("theta_odom:\t%f\n", m_realPose.theta);
     m_realPose.x += magicCoefficient * cos(m_realPose.theta);
     m_realPose.y += magicCoefficient * sin(m_realPose.theta);
-    
 
     // Update pose
     lemlib::Pose displacement {m_realPose.x - prevRealPose.x,
                                m_realPose.y - prevRealPose.y,
                                m_realPose.theta - prevRealPose.theta};
     // Inject noise
-    displacement.x += .05*distNoise(stats::rng);
-    displacement.y += .05*distNoise(stats::rng);
+    displacement.x += .05 * distNoise(stats::rng);
+    displacement.y += .05 * distNoise(stats::rng);
+
+    rawOdomPose.x += displacement.x;
+    rawOdomPose.y += displacement.y;
+    rawOdomPose.theta += displacement.theta;
 
     m_pose.x += displacement.x;
     m_pose.y += displacement.y;
