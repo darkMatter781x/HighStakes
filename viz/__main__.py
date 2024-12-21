@@ -2,15 +2,16 @@ import asyncio
 import atexit
 from threading import Thread
 
-from host.app import start_web_server, cleanup_app
+
 from host.parser import Parser
 from host.websocket import WebsocketServer
 from host.target.sim import Simulator
+from host.target.v5_brain import V5Brain
 from host.build_project import build
 from host.handler import PacketHandler
 from multiprocessing import Process
 
-cleanup_funcs = [cleanup_app]
+cleanup_funcs = []
 
 
 def cleanup(_=None):
@@ -21,13 +22,16 @@ def cleanup(_=None):
             print(f"Error during cleanup: {e}")
 
 
+# TODO: Add cli arg to specify build target
 # Build the project
 build("sim")
 
 # Handle cleanup
 atexit.register(cleanup)
 
-sim = Simulator()
+# TODO: Add cli arg to specify target
+# sim = Simulator()
+sim = V5Brain()
 
 ws_server = WebsocketServer()
 cleanup_funcs.append(ws_server.cleanup)

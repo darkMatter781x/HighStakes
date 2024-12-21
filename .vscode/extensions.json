@@ -8,6 +8,8 @@
     "sigbots.pros",
     "eamodio.gitlens",
     "vivaxy.vscode-conventional-commits",
-    "ms-vscode.cpptools"
+    "ms-vscode.cpptools",
+    "eeyore.yapf",
+    "esbenp.prettier-vscode"
   ]
 }

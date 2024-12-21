@@ -24,11 +24,9 @@ const TRACE_ID = {
   CALCULATED_POSE: 2,
   ACTUAL_POSE: 3,
   RAW_ODOM_POSE: 4,
-  LASERS: [5, 6],
-} satisfies {
-  [k: string]: any;
-  LASERS: HomogenousTuple<number, typeof NUM_OF_LASERS>;
-};
+  // TODO: dynamically create traces for lasers
+  LASERS: [5, 6, 7, 8, 9, 10, 11, 12],
+} as const;
 
 interface Point {
   x: number;
@@ -135,7 +133,6 @@ function handle_particles(particles: Record<"x" | "y" | "weight", number[]>) {
       (w) => w / Math.max(...particles.weight)
     ),
   });
-  plot.update();
   // return await plot<2>({
   //   updateData: {
   //     x: [particles.x, particles.x],
@@ -308,6 +305,14 @@ export async function startPlotting(plotlyDiv: PlotlyHTMLElement) {
         // );
         eventSpecificTimer.end();
         timer.end();
+        // TODO: Try running after previous plot update is complete
+        if (eventType == "calculated_pose") {
+          setTimeout(() => {
+            const plotTimer = new timings.Timer("plot");
+            plot.update();
+            plotTimer.end();
+          }, 0);
+        }
       }
     }
   };

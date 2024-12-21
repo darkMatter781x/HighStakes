@@ -46,7 +46,7 @@ class Simulator(Target):
             stdout=subprocess.PIPE)
         while True:
             line = (await self.process.stdout.readline()).decode()
-            if line == '' and self.process.poll() is not None:
+            if line == '' and self.process.returncode is not None:
                 break
             await on_receive_line(line)
         print("Simulation finished??")

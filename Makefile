@@ -26,7 +26,12 @@ else
 $(info COMPILING FOR SIM)
 
 USE_PACKAGE:=0
-EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION -O0
+# TODO: Measure performance impact of -Ofast vs -O3
+# TODO: Figure out potential safety concerns of -Ofast
+# TODO: Add flag for all targets
+EXTRA_C_BOTH_FLAGS+=-Ofast
+
+EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION
 BINDIR=$(ROOT)/bin/sim
 endif
 

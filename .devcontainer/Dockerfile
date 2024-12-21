@@ -1,5 +1,7 @@
 FROM rust:1.67 as builder
 
+# TODO: Automatically install cargo-v5 as a standalone tool
+
 RUN git clone https://github.com/vexide/vex-v5-qemu.git /vex-v5-qemu
 
 WORKDIR /vex-v5-qemu
@@ -18,22 +20,25 @@ RUN rm /packagelist # Cleanup image
 RUN sudo apt-get clean # Cleanup image
 
 # ------------
+# Install PIP packages
+# ------------
+COPY ./.devcontainer/pip_packagelist /pip_packagelist
+RUN pip install --break-system-packages $(cat /pip_packagelist | sed 's/\r//') 
+RUN rm /pip_packagelist # Cleanup image
+
+# ------------
 # Install Clangd
 # ------------
 RUN curl -sLo clangd.zip $(                                                                 \
-    curl -s https://api.github.com/repos/clangd/clangd/releases/latest                      \
-    | jq -r '[.assets[] | select(.name | test ("^clangd-linux"))][0].browser_download_url'  \
-  )                                                                                         \
-  && unzip clangd.zip -d /usr/local/share                                                   \
-  && mv /usr/local/share/clangd_*/ /usr/local/share/clangd                                  \
-  && rm clangd.zip
+curl -s https://api.github.com/repos/clangd/clangd/releases/latest                      \
+| jq -r '[.assets[] | select(.name | test ("^clangd-linux"))][0].browser_download_url'  \
+)                                                                                         \
+&& unzip clangd.zip -d /usr/local/share                                                   \
+&& mv /usr/local/share/clangd_*/ /usr/local/share/clangd                                  \
+&& rm clangd.zip
 
 ENV PATH="$PATH:/usr/local/share/clangd/bin"
-
-# ------------
-# Install PROS CLI
-# ------------
-RUN pip install --break-system-packages pros-cli
+    
 
 # ------------ 
 # Install ARM Toolchain
@@ -58,3 +63,5 @@ COPY --from=builder /target/kernel/armv7a-none-eabi/debug/kernel $V5_SIM_KERNEL_
 # Copy the sim source, so we can reference it when debugging
 ENV V5_SIM_SOURCE_PATH="$V5_SIM_PATH/source"
 COPY --from=builder /vex-v5-qemu $V5_SIM_SOURCE_PATH
+
+RUN sudo usermod -aG dialout vscode

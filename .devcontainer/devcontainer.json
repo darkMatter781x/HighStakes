@@ -3,11 +3,17 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
+  // TODO: don't require brain to be connected to successfully build container
+  "runArgs": [
+    "--device=/dev/ttyACM0",
+    "--device=/dev/ttyACM1"
+  ],
   "customizations": {
     "vscode": {
       "settings": {
         "clangd.path": "/usr/local/share/clangd/bin/clangd"
       },
+      // TODO: sync with .vscode/extensions.json
       "extensions": [
         "jeff-hykin.better-cpp-syntax",
         "llvm-vs-code-extensions.vscode-clangd",
@@ -17,8 +23,19 @@
         "ms-azuretools.vscode-docker",
         "eamodio.gitlens",
         "vivaxy.vscode-conventional-commits",
-        "ms-vscode.cpptools"
+        "ms-vscode.cpptools",
+        "eeyore.yapf",
+        "esbenp.prettier-vscode"
       ]
+    }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/node:1": {
+      "nodeGypDependencies": true,
+      "installYarnUsingApt": true,
+      "version": "23",
+      "pnpmVersion": "none",
+      "nvmVersion": "0.39"
     }
   }
 }

@@ -40,12 +40,14 @@ Localization::PF::Data printParticles(Localization::PF::Data data) {
   return data;
 }
 
+// TODO:  Identify performance bottlenecks and resolve them (PROFILING!?)
+//        (Each epoch takes ~14ms, and we want <5ms)
 void Localization::update() {
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
 
   static size_t iteration = 0;
-  // size_t startMillis = pros::millis();
+  size_t startMicros = pros::micros();
   m_mutex.take();
 
   m_odom->update();
@@ -63,11 +65,16 @@ void Localization::update() {
 
     m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
 
-    /* if ((iteration % 3) == 0) */ m_pf.modify(printParticles);
+    // TODO:  Try denser telemetry. eg: send binary representation of floats
+    //        rather than strings.
+    // m_pf.modify(printParticles);
   }
 
   m_prevPose = m_odom->getPose();
   m_mutex.give();
+
+  printf("[deltaT]\t%u\t%2.4f\n", iteration,
+         float(pros::micros() - startMicros) / 1000.f);
 
   printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
          m_odom->getPose().y, m_odom->getPose().theta);

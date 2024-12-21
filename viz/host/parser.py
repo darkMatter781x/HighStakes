@@ -120,7 +120,6 @@ class Parser:
                     await type.handle(line)
                 except Exception as e:
                     print("Error handling packet: ", e)
-                    raise e
                 return
 
 
