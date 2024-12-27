@@ -29,9 +29,10 @@ USE_PACKAGE:=0
 # TODO: Measure performance impact of -Ofast vs -O3
 # TODO: Figure out potential safety concerns of -Ofast
 # TODO: Add flag for all targets
-EXTRA_C_BOTH_FLAGS+=-Ofast
+EXTRA_C_BOTH_FLAGS+=-O0
+PROFILER=1
 
-EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION
+EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION -DPROFILER
 BINDIR=$(ROOT)/bin/sim
 endif
 

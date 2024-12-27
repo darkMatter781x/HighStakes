@@ -5,6 +5,16 @@
 #include "robot.h"
 #include "pros/apix.h"
 
+#include "profiler.h"
+
+static int tickCount = 0;
+
+extern "C" {
+void vApplicationTickHook(void);
+}
+
+void vApplicationTickHook(void) { tickCount++; }
+
 void screen() {
   while (1) {
     // Only print if auton selection is complete
@@ -16,6 +26,7 @@ void screen() {
       pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
       pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
     }
+    // printf("tickCount: %d\n", tickCount);
     pros::delay(50);
   }
 }
@@ -32,7 +43,9 @@ void initialize() {
 #else
   pros::lcd::initialize();
 #endif
-
+#ifdef PROFILER
+  start_profiling();
+#endif
   // ensure robot is initialized
   Robot::get();
   // indicate calibration
@@ -41,6 +54,12 @@ void initialize() {
   bot.calibrate();
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
+
+  #ifdef PROFILER
+    pros::delay(3000);
+    output_profiling_data();
+  #endif
+
   // // LED Testing
   // LED Testing
   // pros::delay(1000);

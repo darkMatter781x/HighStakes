@@ -305,4 +305,6 @@ cxx-sysroot:
 $(DEPDIR)/%.d: ;
 .PRECIOUS: $(DEPDIR)/%.d
 
+-include $(wildcard $(FWDIR)/after/*.mk)
+
 include $(wildcard $(patsubst $(SRCDIR)/%,$(DEPDIR)/%.d,$(CSRC) $(CXXSRC)))

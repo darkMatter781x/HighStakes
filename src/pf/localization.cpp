@@ -1,3 +1,5 @@
+/// EXTRA_FLAGS=-pg
+
 #include "pf/localization.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/util.hpp"
@@ -6,14 +8,24 @@
 #include "pros/rtos.hpp"
 #include "util/stats.h"
 
+#if false
+extern "C" void __gnu_mcount_nc(void);
+#define PROFILER_THINGY() __gnu_mcount_nc()
+#else
+#define PROFILER_THINGY()
+#endif
+
+// std::uniform_real_distribution<float> dist {0, 1};
 /** Uniform distribution for resampling */
 float uniform_float_0_to_1() {
-  static std::uniform_real_distribution<float> dist {0, 1};
-  return dist(stats::rng);
+  PROFILER_THINGY();
+  // return dist(stats::rng);
+  return 0;
 }
 
 template <size_t N, size_t M>
 std::unique_ptr<std::array<Eigen::Vector<float, M>, N>> makeZeroArray() {
+  PROFILER_THINGY();
   auto arr = std::make_unique<std::array<Eigen::Vector<float, M>, N>>();
   std::fill(arr->begin(), arr->end(), Eigen::Vector<float, M>::Zero());
   return arr;
@@ -31,6 +43,7 @@ Localization::Localization(const Config& config)
 }
 
 Localization::PF::Data printParticles(Localization::PF::Data data) {
+  PROFILER_THINGY();
   printf("[TELEMETRY.PF.PARTICLES]:");
   for (size_t i = 0; i < Localization::N; i++) {
     printf("%f,%f,%f;", (*data.particles)[i].x(), (*data.particles)[i].y(),
@@ -43,6 +56,7 @@ Localization::PF::Data printParticles(Localization::PF::Data data) {
 // TODO:  Identify performance bottlenecks and resolve them (PROFILING!?)
 //        (Each epoch takes ~14ms, and we want <5ms)
 void Localization::update() {
+  PROFILER_THINGY();
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
 
@@ -70,11 +84,14 @@ void Localization::update() {
     // m_pf.modify(printParticles);
   }
 
+
+
   m_prevPose = m_odom->getPose();
   m_mutex.give();
 
   printf("[deltaT]\t%u\t%2.4f\n", iteration,
          float(pros::micros() - startMicros) / 1000.f);
+
 
   printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
          m_odom->getPose().y, m_odom->getPose().theta);
@@ -86,6 +103,7 @@ void Localization::update() {
 
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
                            bool standardPos) {
+  PROFILER_THINGY();
   m_mutex.take();
   if (!standardPos) pose.theta = M_PI_2 - pose.theta;
   if (!radians) pose.theta = lemlib::radToDeg(pose.theta);
@@ -106,9 +124,13 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
   m_mutex.give();
 }
 
-void Localization::calibrate() { m_odom->calibrate(); }
+void Localization::calibrate() {
+  PROFILER_THINGY();
+  m_odom->calibrate();
+}
 
 void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
+  PROFILER_THINGY();
   auto noiseSampler =
       stats::MultivariateGaussian<2> {.mu = {0, 0}, .sigma = m_covar}
           .makeSampler();
