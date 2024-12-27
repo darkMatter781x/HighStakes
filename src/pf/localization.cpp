@@ -46,7 +46,11 @@ void Localization::update() {
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
 
+  // TODO: Extract timing code to a Timer class
   static size_t iteration = 0;
+  static float averageMicros = 0;
+  static float averageSquaredMicros = 0;
+  static size_t firstStart = pros::micros();
   size_t startMicros = pros::micros();
   m_mutex.take();
 
@@ -73,12 +77,30 @@ void Localization::update() {
   m_prevPose = m_odom->getPose();
   m_mutex.give();
 
-  printf("[deltaT]\t%u\t%2.4f\n", iteration,
-         float(pros::micros() - startMicros) / 1000.f);
-
-  printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
-         m_odom->getPose().y, m_odom->getPose().theta);
   iteration++;
+  const size_t nowMicros = pros::micros();
+  const size_t durationMicros = nowMicros - startMicros;
+  averageMicros *= ((iteration - 1) / float(iteration));
+  averageMicros += durationMicros / float(iteration);
+
+  averageSquaredMicros *= (iteration - 1) / float(iteration);
+  averageSquaredMicros += (durationMicros * durationMicros) / float(iteration);
+  const float stdDevMicros =
+      sqrt(averageSquaredMicros - averageMicros * averageMicros);
+
+  printf("[PF.UPDATE]\ti: %u\tdt: %2.3f\tmu: %2.4f\tsigma: %2.4f\n", iteration,
+         durationMicros / 1000.f, averageMicros / 1000.f,
+         stdDevMicros / 1000.f);
+  if (iteration == 1000) {
+    printf("\n[PF.END]\ttotal: %2.4fs\tmu: %2.4fms ±%2.4f\n",
+           (pros::micros() - firstStart) / 1e6f, averageMicros / 1000.f,
+           stdDevMicros / 1000.f);
+    pros::delay(1000);
+    std::abort();
+  }
+
+  // printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
+  //        m_odom->getPose().y, m_odom->getPose().theta);
 
   // size_t endMillis = pros::millis();
   // printf("diff:%3.3f\n", (endMillis - startMillis) / 1000.);

@@ -53,8 +53,6 @@ class Laser {
     /** Creates a ray from this laser object. */
     lines::Ray toRay(const Vec2& robotPos) const;
 
-    float expectedDist(const Vec2& robotPos) const;
-
     /**
      * @brief Implements the PF sensor for the laser sensor.
      * Also prevents the rest of the Laser code from being in the header file.
@@ -68,10 +66,27 @@ class Laser {
         void update(const std::array<Vec2, N>& particles,
                     std::array<float, N>& weights) override {
           auto measurement = laser.sense();
+          lines::Ray ray = laser.toRay({0, 0});
+
+          const stats::NormPDF pdf {measurement.dist, measurement.stdDev};
+
+          ray.start = particles[0];
+
+          // TODO: Improve safety (ray might not intersect anything)
+          // Assume all particles will intersect the same line
+          auto seg =
+              laser.obstacles[ray.findFirstIntersect(laser.obstacles)->second];
+
           for (size_t i = 0; i < particles.size(); i++) {
-            float dist = laser.expectedDist(particles[i]);
-            weights[i] *=
-                stats::norm_pdf(dist, measurement.dist, measurement.stdDev);
+            // TODO: make cleaner
+            ray.start = particles[i];
+            auto intersectOpt = ray.distanceTo(seg);
+            if (const auto intersect = intersectOpt) {
+              weights[i] *= pdf.eval(*intersect);
+            } else {
+              weights[i] *=
+                  pdf.eval(ray.findFirstIntersect(laser.obstacles)->first);
+            }
           }
         };
 

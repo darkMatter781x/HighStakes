@@ -16,6 +16,22 @@ extern std::mt19937 rng;
  */
 float norm_pdf(float x, float mu, float sigma);
 
+// TODO: Document
+// TODO: Move impl to .cpp
+class NormPDF {
+  private:
+    const float m_mu;
+    const float m_sigma;
+    const float m_coeff;
+  public:
+    NormPDF(float mu, float sigma)
+      : m_mu(mu), m_sigma(sigma), m_coeff(1 / sqrt(2 * M_PI) * m_sigma) {};
+
+    inline float eval(float x) const {
+      return m_coeff * exp(-.5 * pow((x - m_mu) / m_sigma, 2));
+    }
+};
+
 template <size_t N> struct MultivariateGaussian {
     Eigen::Vector<float, N> mu;
     Eigen::Matrix<float, N, N> sigma;

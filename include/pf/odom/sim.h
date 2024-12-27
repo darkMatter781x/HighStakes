@@ -15,7 +15,9 @@ class SimOdom : public Odom {
      * actually in. Theta is in standard radians. */
     lemlib::Pose m_realPose;
 
-    bool m_hasCalibrated = false;
+    /** @brief Used to determine when calibration is complete. Measured in
+     * milliseconds */
+    size_t m_calibrationStartTime = -1;
   public:
     /** @returns Const ref to the current pose. Theta is in standard radians. */
     const lemlib::Pose& getPose() const override;

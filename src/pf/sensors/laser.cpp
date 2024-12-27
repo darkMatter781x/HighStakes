@@ -12,14 +12,6 @@ lines::Ray Laser::toRay(const Vec2& robotPos) const {
           {cos(theta), sin(theta)}};
 };
 
-float Laser::expectedDist(const Vec2& robotPos) const {
-  const auto intersectOpt =
-      toRay(robotPos).findFirstIntersect(obstacles);
-  if (const auto intersect = intersectOpt)
-    return intersect->first;
-  else return INFINITY;
-};
-
 Laser::Laser(const Config config)
   : m_pos {config.pose.x, config.pose.y}, m_theta(config.pose.theta),
     m_botTheta(config.botTheta), obstacles(config.obstacles),

@@ -86,7 +86,7 @@ template <typename P, size_t N> class ParticleFilter {
 
       // If should resample, then resample
       if (resampler.shouldResample(*m_weights)) {
-        printf("[%ims] Resampling!\n", pros::millis());
+        // printf("[%ims] Resampling!\n", pros::millis());
         // Get indices of particles to keep
         m_indices = resampler.resample(*m_weights, std::move(m_indices));
         // Perform the actual resampling

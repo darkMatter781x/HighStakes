@@ -1,0 +1,24 @@
+[2024-12-27 05:24:28] trig once per laser ->
+  [PF.END]	total: 9.9940s	mu: 3.9282ms ±0.3450
+[2024-12-27 05:35:17]	-lto ->
+	[PF.END]	total: 9.9940s	mu: 3.9281ms ±0.3462
+[2024-12-27 05:36:44]	remove unneeded obstacle ->
+	[PF.END]	total: 9.9918s	mu: 2.0174ms ±0.7788
+[2024-12-27 05:37:05]	remove unneeded obstacle ->
+	[PF.END]	total: 9.9919s	mu: 2.0319ms ±0.7695
+[2024-12-27 05:41:46]	start after 1 second ->
+	[PF.END]	total: 9.9918s	mu: 2.0302ms ±0.6981
+[2024-12-27 05:43:03]	start after 3 seconds ->
+	[PF.END]	total: 9.9918s	mu: 2.0306ms ±0.6991
+[2024-12-27 05:45:27]	use 2 obstacles && start after 1 second ->
+	[PF.END]	total: 9.9916s	mu: 1.5403ms ±0.3250
+[2024-12-27 06:00:27]	back to 4 obstacles ->
+	[PF.END]	total: 9.9918s	mu: 2.0304ms ±0.6986
+[2024-12-27 06:27:59]	oh actually the obstacles were correct originally. I was changing the number of points, not obstacles. Using 4 obstacles now ->
+	[PF.END]	total: 9.9940s	mu: 3.9345ms ±0.1924
+[2024-12-27 06:37:18]	cache norm_pdf coefficient using object ->
+	[PF.END]	total: 9.9939s	mu: 3.9073ms ±0.1837
+[2024-12-27 06:46:13]	assume all particles intersect same obstacle ->
+	[PF.END]	total: 9.9936s	mu: 3.5337ms ±0.1920
+[2024-12-27 06:49:45]	inline norm pdf eval ->
+	[PF.END]	total: 9.9936s	mu: 3.5375ms ±0.1940

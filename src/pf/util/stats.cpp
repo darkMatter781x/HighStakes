@@ -16,6 +16,7 @@ float norm_pdf(float x, float mu, float sigma) {
   // f(x) = 1/(sqrt(2pi) * sigma) * (e^(-(1/2) / sigma^2))^((x-mu)^2)
   return 1 / (sqrt(2 * M_PI) * sigma) * exp(-.5 * pow((x - mu) / sigma, 2));
 }
+
 } // namespace stats
 
 namespace test {

@@ -19,7 +19,6 @@ std::vector<Segment> Segment::fromPts(std::vector<Eigen::Vector2f> pts) {
   return segments;
 }
 
-// TODO: test
 std::optional<float> Ray::distanceTo(const Segment& other) const {
   // Source: https://stackoverflow.com/a/565282
 
@@ -50,6 +49,7 @@ std::optional<float> Ray::distanceTo(const Segment& other) const {
   return t;
 }
 
+// TODO: skip obstacles that will be definitely missed
 std::optional<std::pair<float, size_t>>
 Ray::findFirstIntersect(const std::vector<Segment>& segments) const {
   // Smallest distance found

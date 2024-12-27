@@ -1,6 +1,7 @@
 #include "pf/odom/sim.h"
 #include "lemlib/pose.hpp"
 #include "pf/util/stats.h"
+#include "pros/rtos.hpp"
 #include <cmath>
 #include <cstdio>
 #include <random>
@@ -17,11 +18,12 @@ void SimOdom::update() {
   static lemlib::Pose prevRealPose = m_realPose;
   /** Pose had pf not existed */
   static lemlib::Pose rawOdomPose = m_realPose;
-  if (m_hasCalibrated) {
-    printf("[TELEMETRY.PF.ACTUAL_POSE]:%f,%f,%f\n", m_realPose.x, m_realPose.y,
-           m_realPose.theta);
-    printf("[TELEMETRY.PF.RAW_ODOM_POSE]:%f,%f,%f\n", rawOdomPose.x,
-           rawOdomPose.y, rawOdomPose.theta);
+  if (hasCalibrated()) {
+    // printf("[TELEMETRY.PF.ACTUAL_POSE]:%f,%f,%f\n", m_realPose.x,
+    // m_realPose.y,
+    //        m_realPose.theta);
+    // printf("[TELEMETRY.PF.RAW_ODOM_POSE]:%f,%f,%f\n", rawOdomPose.x,
+    //        rawOdomPose.y, rawOdomPose.theta);
 
     // m_realPose.theta = M_PI / 4;
     // m_realPose.x += .1 * cos(m_realPose.theta);
@@ -59,8 +61,11 @@ void SimOdom::update() {
   }
 }
 
-bool SimOdom::hasCalibrated() const { return m_hasCalibrated; }
+bool SimOdom::hasCalibrated() const {
+  if (m_calibrationStartTime == -1) return false;
+  return (pros::millis() - m_calibrationStartTime) > 1000;
+}
 
 SimOdom::SimOdom() : m_pose {0, 0}, m_realPose {0, 0} {}
 
-void SimOdom::calibrate() { m_hasCalibrated = true; }
+void SimOdom::calibrate() { m_calibrationStartTime = pros::millis(); }
