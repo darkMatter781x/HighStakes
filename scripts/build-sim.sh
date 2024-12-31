@@ -4,4 +4,4 @@
 
 set -e
 
-nice -10 make VEXIDE_SIMULATION=1 quick -j $(($(nproc) - 2)) 
+nice -10 make SIM=1 quick -j $(($(nproc) - 2)) 
