@@ -4,3 +4,5 @@ python3-pip
 qemu-system
 gdb-multiarch
 jq
+expect
+libudev-dev
