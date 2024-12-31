@@ -4,6 +4,7 @@
 #include <functional>
 #include <cmath>
 #include <climits>
+#include <optional>
 #include "color.h"
 namespace auton {
 struct Auton {

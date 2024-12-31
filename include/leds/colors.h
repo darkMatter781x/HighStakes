@@ -3,6 +3,7 @@
 #include <cfloat>
 #include <cmath>
 #include <cstdint>
+#include <algorithm>
 
 using HexRGB = uint32_t;
 

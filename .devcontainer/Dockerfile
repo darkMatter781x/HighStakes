@@ -43,7 +43,7 @@ ENV PATH="$PATH:/usr/local/share/clangd/bin"
 # ------------ 
 # Install ARM Toolchain
 # ------------
-COPY --from=ghcr.io/lemlib/pros-build:v2.0.2 /gcc-arm-none-eabi-10.3-2021.10 /usr/local/share/arm-none-eabi
+COPY --from=ghcr.io/lemlib/pros-build:v3.0.0 /arm-none-eabi-toolchain /usr/local/share/arm-none-eabi
 ENV PATH="$PATH:/usr/local/share/arm-none-eabi/bin"  
 
 # Copy the simulator binary
