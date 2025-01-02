@@ -4,6 +4,7 @@
 #include "pf/sensors/v5laser.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
+#include "profiler/profiler.h"
 #include "util/stats.h"
 
 /** Uniform distribution for resampling */
@@ -48,10 +49,7 @@ void Localization::update() {
 
   // TODO: Extract timing code to a Timer class
   static size_t iteration = 0;
-  static float averageMicros = 0;
-  static float averageSquaredMicros = 0;
-  static size_t firstStart = pros::micros();
-  size_t startMicros = pros::micros();
+  START_PROFILE("LL.update()") // Starts profiled section
   m_mutex.take();
 
   m_odom->update();
@@ -62,9 +60,11 @@ void Localization::update() {
   if (!pros::competition::is_disabled()) {
     lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
     m_predictor.m_displacement = {displacement.x, displacement.y};
-    m_pf.predict(m_predictor);
 
-    m_pf.update(m_sensors, m_resampler);
+    PROFILE_SECTION("PF.predict", { m_pf.predict(m_predictor); })
+
+    PROFILE_SECTION("PF.update", { m_pf.update(m_sensors, m_resampler); })
+
     const auto mean = m_pf.getMean();
 
     m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
@@ -77,33 +77,26 @@ void Localization::update() {
   m_prevPose = m_odom->getPose();
   m_mutex.give();
 
+  END_PROFILE() // Ends profiled section
+
   iteration++;
-  const size_t nowMicros = pros::micros();
-  const size_t durationMicros = nowMicros - startMicros;
-  averageMicros *= ((iteration - 1) / float(iteration));
-  averageMicros += durationMicros / float(iteration);
-
-  averageSquaredMicros *= (iteration - 1) / float(iteration);
-  averageSquaredMicros += (durationMicros * durationMicros) / float(iteration);
-  const float stdDevMicros =
-      sqrt(averageSquaredMicros - averageMicros * averageMicros);
-
-  printf("[PF.UPDATE]\ti: %u\tdt: %2.3f\tmu: %2.4f\tsigma: %2.4f\n", iteration,
-         durationMicros / 1000.f, averageMicros / 1000.f,
-         stdDevMicros / 1000.f);
   if (iteration == 1000) {
-    printf("\n[PF.END]\ttotal: %2.4fs\tmu: %2.4fms ±%2.4f\n",
-           (pros::micros() - firstStart) / 1e6f, averageMicros / 1000.f,
-           stdDevMicros / 1000.f);
+    printf("[ProfSummary.Start]\n"); // Used by time script to identify which
+                                     // data to put in log file
+#ifdef ENABLE_PROFILING
+    Profiler::get().printReport(false, (char*)"");
+#endif
+    printf("[ProfSummary.End]\n");
+
     pros::delay(1000);
     std::abort();
   }
+#ifdef ENABLE_PROFILING
+  Profiler::get().printReport();
+#endif
 
   // printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
   //        m_odom->getPose().y, m_odom->getPose().theta);
-
-  // size_t endMillis = pros::millis();
-  // printf("diff:%3.3f\n", (endMillis - startMillis) / 1000.);
 }
 
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,

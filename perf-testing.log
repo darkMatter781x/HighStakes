@@ -1,24 +1,30 @@
-[2024-12-27 05:24:28] trig once per laser ->
+[2024-12-27 05:24:28] do trig once per laser ->
   [PF.END]	total: 9.9940s	mu: 3.9282ms ±0.3450
 [2024-12-27 05:35:17]	-lto ->
 	[PF.END]	total: 9.9940s	mu: 3.9281ms ±0.3462
-[2024-12-27 05:36:44]	remove unneeded obstacle ->
-	[PF.END]	total: 9.9918s	mu: 2.0174ms ±0.7788
-[2024-12-27 05:37:05]	remove unneeded obstacle ->
-	[PF.END]	total: 9.9919s	mu: 2.0319ms ±0.7695
-[2024-12-27 05:41:46]	start after 1 second ->
-	[PF.END]	total: 9.9918s	mu: 2.0302ms ±0.6981
-[2024-12-27 05:43:03]	start after 3 seconds ->
-	[PF.END]	total: 9.9918s	mu: 2.0306ms ±0.6991
-[2024-12-27 05:45:27]	use 2 obstacles && start after 1 second ->
-	[PF.END]	total: 9.9916s	mu: 1.5403ms ±0.3250
-[2024-12-27 06:00:27]	back to 4 obstacles ->
-	[PF.END]	total: 9.9918s	mu: 2.0304ms ±0.6986
-[2024-12-27 06:27:59]	oh actually the obstacles were correct originally. I was changing the number of points, not obstacles. Using 4 obstacles now ->
-	[PF.END]	total: 9.9940s	mu: 3.9345ms ±0.1924
 [2024-12-27 06:37:18]	cache norm_pdf coefficient using object ->
 	[PF.END]	total: 9.9939s	mu: 3.9073ms ±0.1837
 [2024-12-27 06:46:13]	assume all particles intersect same obstacle ->
 	[PF.END]	total: 9.9936s	mu: 3.5337ms ±0.1920
 [2024-12-27 06:49:45]	inline norm pdf eval ->
 	[PF.END]	total: 9.9936s	mu: 3.5375ms ±0.1940
+[2024-12-30 09:30:07]	new toolchain version ->
+	[PF.END]	total: 9.9937s	mu: 3.5777ms ±0.1660
+[2024-12-30 09:37:11]	remove -Ofast and try just -fno-math-errno ->
+	[PF.END]	total: 9.9939s	mu: 3.7702ms ±0.192Q4
+[2024-12-30 09:39:44]	remove -fno-math-errno and try just -funsafe-math-optimizations ->
+	[PF.END]	total: 9.9942s	mu: 4.0432ms ±0.1842
+[2024-12-30 09:41:09]	make clean just to be sure ->
+	[PF.END]	total: 9.9942s	mu: 4.0436ms ±0.1843
+[2024-12-30 09:44:19]	try only -fno-math-errno again ->
+	[PF.END]	total: 9.9939s	mu: 3.7703ms ±0.1925
+[2024-12-30 09:46:10]	try only -ffast-math ->
+	[PF.END]	total: 9.9939s	mu: 3.7050ms ±0.1809
+[2024-12-30 09:48:22]	add -O3 ->
+	[PF.END]	total: 9.9937s	mu: 3.5774ms ±0.1655
+[2024-12-31 09:35:43] try	using clang (see commit: 3118283a21044f20aceb587e09db2732961a9299) ->
+	[PF.END]	total: 9.9935s	mu: 3.4073ms ±0.1736
+poor man's profiling ->
+ [2025-01-02 19:51:56]	LL.update():	3.6062±0.1857
+ [2025-01-02 19:51:56]	PF.predict:	1.0027±0.0150
+ [2025-01-02 19:51:56]	PF.update:	2.5671±0.1837
