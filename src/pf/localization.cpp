@@ -80,20 +80,18 @@ void Localization::update() {
   END_PROFILE() // Ends profiled section
 
   iteration++;
+#ifdef ENABLE_PROFILING
   if (iteration == 1000) {
     printf("[ProfSummary.Start]\n"); // Used by time script to identify which
                                      // data to put in log file
-#ifdef ENABLE_PROFILING
     Profiler::get().printReport(false, (char*)"");
-#endif
     printf("[ProfSummary.End]\n");
 
     pros::delay(1000);
     std::abort();
   }
-#ifdef ENABLE_PROFILING
-  Profiler::get().printReport();
 #endif
+
 
   // printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
   //        m_odom->getPose().y, m_odom->getPose().theta);
