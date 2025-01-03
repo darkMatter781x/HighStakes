@@ -26,6 +26,8 @@ struct RobotConfig {
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
         pros::adi::Pneumatics ringKicker;
+        pros::adi::Pneumatics doinker;
+        pros::adi::Pneumatics intakeLift;
       private:
         friend struct RobotConfig;
         static Pneumatics pneumatics;
@@ -41,7 +43,8 @@ struct RobotConfig {
 
         /** Config for constructing distance sensors*/
         struct DistSensorConfig {
-            /** Position of sensor relative to center of bot. */
+            /** Position of sensor relative to center of bot. Theta should be in
+             * standard radians. */
             const lemlib::Pose pose;
             /** V5 distance sensor object. */
             pros::Distance& sensor;

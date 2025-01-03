@@ -1,11 +1,11 @@
 #pragma once
 #include "config.h"
 #include "pf/localization.h"
+#include "pros/adi.hpp"
 #include "subsystems/selector.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
-#include "subsystems/mogo.h"
 #include "color.h"
 #include <memory>
 
@@ -22,7 +22,6 @@ class Robot : private lemlib::Chassis {
   public:
     const RobotConfig& m_config;
   private:
-    MogoClamp m_mogo;
     Intake m_intake;
     Lift m_lift;
     pros::Controller m_gamepad;
@@ -40,7 +39,9 @@ class Robot : private lemlib::Chassis {
 
     Lift& lift;
     Intake& intake;
-    MogoClamp& mogo;
+    pros::adi::Pneumatics& mogoClamp;
+    pros::adi::Pneumatics& doinker;
+    pros::adi::Pneumatics& intakeLift;
     pros::Controller& gamepad;
     AutonSelector& selector;
     Localization& localization;

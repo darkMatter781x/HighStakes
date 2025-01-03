@@ -103,7 +103,6 @@ Robot::Robot(const RobotConfig& config)
   : lemlib::Chassis(config.makeDrivetrain(), config.tunables.lateralController,
                     config.tunables.angularController, config.makeSensors(),
                     &config.tunables.driveCurve),
-    m_mogo {config.pneumatics.mogoClamp}, mogo(m_mogo),
     m_intakeSensor(config.sensors.intake),
     m_intake {config.motors.intake, m_intakeSensor,
               config.pneumatics.ringKicker, Intake::Config::config},
@@ -112,6 +111,8 @@ Robot::Robot(const RobotConfig& config)
     lift(m_lift), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
-    m_localization(makeLocalization(config)), localization(m_localization) {}
+    m_localization(makeLocalization(config)), localization(m_localization),
+    intakeLift(config.pneumatics.intakeLift), mogoClamp(config.pneumatics.mogoClamp),
+    doinker(config.pneumatics.doinker) {}
 
 Robot Robot::instance {RobotConfig::config};

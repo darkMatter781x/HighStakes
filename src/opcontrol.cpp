@@ -6,19 +6,24 @@
 #include "auton.h"
 
 namespace controller_mapping {
-const pros::controller_analog_e_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
-const pros::controller_analog_e_t RIGHT_DRIVE =
-    pros::E_CONTROLLER_ANALOG_RIGHT_Y;
-const pros::controller_digital_e_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
-const pros::controller_digital_e_t INTAKE_FILTER_TO_LIFT =
-    pros::E_CONTROLLER_DIGITAL_R2;
-const pros::controller_digital_e_t INTAKE_FILTER_COLOR_CHANGE =
-    pros::E_CONTROLLER_DIGITAL_A;
-const pros::controller_digital_e_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
-const pros::controller_digital_e_t MOGO = pros::E_CONTROLLER_DIGITAL_R1;
-const pros::controller_digital_e_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
-const pros::controller_digital_e_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
+typedef pros::controller_analog_e_t axis_t;
+typedef pros::controller_digital_e_t button_t;
 
+constexpr axis_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
+constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
+
+constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
+constexpr button_t INTAKE_FILTER_TO_LIFT = pros::E_CONTROLLER_DIGITAL_R2;
+constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
+constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
+
+constexpr button_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
+constexpr button_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
+
+// Pneumatic controls
+constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
+constexpr button_t INTAKE_LIFT_TOGGLE = pros::E_CONTROLLER_DIGITAL_X;
+constexpr button_t DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
 }; // namespace controller_mapping
 namespace map = controller_mapping;
 
@@ -79,7 +84,7 @@ void skillsMacro() {
   waitUntil([grabMogo1] {
     return bot.getPose().y < grabMogo1.y + 3 || !bot.isInMotion();
   });
-  bot.mogo.close();
+  bot.mogoClamp.extend();
   bot.waitUntilDone();
 }
 
@@ -133,7 +138,13 @@ void opcontrol() {
     else bot.intake.stop();
 
     // Mogo control
-    if (master.get_digital_new_press(map::MOGO)) bot.mogo.toggle();
+    if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
+      bot.mogoClamp.toggle();
+    // Intake lift control
+    if (master.get_digital_new_press(map::INTAKE_LIFT_TOGGLE))
+      bot.intakeLift.toggle();
+    // Doinker control
+    if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
     if (master.get_digital_new_press(map::LIFT_UP)) bot.lift.goUp();
