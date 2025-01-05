@@ -1,6 +1,7 @@
 #include "main.h"
 #include "pros/misc.h"
 #include "robot.h"
+#include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"
@@ -13,15 +14,13 @@ constexpr axis_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
 constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 
 constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
-constexpr button_t INTAKE_FILTER_TO_LIFT = pros::E_CONTROLLER_DIGITAL_R2;
 constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 
-constexpr button_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
-constexpr button_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
+constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R1;
 
 // Pneumatic controls
-constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
+constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R2;
 constexpr button_t INTAKE_LIFT_TOGGLE = pros::E_CONTROLLER_DIGITAL_X;
 constexpr button_t DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
 }; // namespace controller_mapping
@@ -66,11 +65,11 @@ void skillsMacro() {
                  {.minSpeed = 64, .earlyExitRange = 5});
   // Deploy basket
   bot.intake.outtake();
-  bot.lift.goToMiddle();
+  //bot.lift.goToMiddle();
   pros::delay(400);
 
   // Reset lift and intake
-  bot.lift.goToBottom();
+  //bot.lift.goToBottom();
   bot.intake.stop();
 
   // Go to mogo
@@ -124,11 +123,7 @@ void opcontrol() {
              master.get_analog(map::RIGHT_DRIVE));
 
     // Intake control
-    if (master.get_digital(map::INTAKE_FILTER_TO_LIFT)) {
-      // Selected color to lift
-      bot.intake.intakeTo(filterColor, Intake::LIFT);
-      bot.intake.intakeTo(!filterColor, Intake::KICK);
-    } else if (master.get_digital(map::INTAKE)) {
+    if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button
 
       // Intake current color to mogo, other color to kicker
@@ -147,8 +142,8 @@ void opcontrol() {
     if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
-    if (master.get_digital_new_press(map::LIFT_UP)) bot.lift.goUp();
-    if (master.get_digital_new_press(map::LIFT_DOWN)) bot.lift.goDown();
+    if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) bot.lady.nextState();
+
 
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))

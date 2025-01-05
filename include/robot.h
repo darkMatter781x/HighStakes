@@ -6,6 +6,7 @@
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
 #include "subsystems/lift.h"
+#include "subsystems/LadyBrown.h"
 #include "color.h"
 #include <memory>
 
@@ -23,7 +24,7 @@ class Robot : private lemlib::Chassis {
     const RobotConfig& m_config;
   private:
     Intake m_intake;
-    Lift m_lift;
+    LadyBrown m_lady;
     pros::Controller m_gamepad;
     Intake::Sensor m_intakeSensor;
     Localization m_localization;
@@ -37,7 +38,7 @@ class Robot : private lemlib::Chassis {
      */
     inline static Robot& get() { return instance; };
 
-    Lift& lift;
+    LadyBrown& lady;
     Intake& intake;
     pros::adi::Pneumatics& mogoClamp;
     pros::adi::Pneumatics& doinker;

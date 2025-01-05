@@ -17,7 +17,7 @@ struct RobotConfig {
         pros::MotorGroup left;
         pros::MotorGroup right;
         pros::MotorGroup intake;
-        pros::MotorGroup lift;
+        pros::MotorGroup LadyBrown;
       private:
         friend struct RobotConfig;
         static Motors motors;

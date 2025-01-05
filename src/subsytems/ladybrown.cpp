@@ -1,0 +1,92 @@
+#include "subsystems/ladybrown.h"
+#include "lemlib/util.hpp"
+#include "pros/llemu.hpp"
+#include "pros/motors.h"
+#include "robot.h"
+
+void LadyBrown::update(){
+    if (m_state == State::EMERGENCY_STOP){
+        m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
+        m_motors.brake();
+        return;
+    }
+    const float error = calcError();
+    const float output = m_pid.update(error);
+    bool shouldBrake = m_exitCondition.update(error);
+  // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
+  // output);
+  if (shouldBrake) {
+    // if error > smallError, then don't brake and reset exit condition
+    if (std::abs(error) > m_config.controllerSettings.smallError)
+      m_exitCondition.reset();
+    else {
+      switch (m_state) {
+        case State::IDLE:
+          m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+          break;
+        default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
+      };
+      m_motors.brake();
+      if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
+      return;
+    }
+  }
+  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
+  m_motors.move_voltage(output);
+}
+
+LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation, Config& config)
+  : m_state(State::IDLE), m_config(config), m_motors(motors),
+    m_rotation(rotation),
+    m_pid(m_config.controllerSettings.kP, m_config.controllerSettings.kI,
+          m_config.controllerSettings.kD,
+          m_config.controllerSettings.windupRange, true),
+    m_exitCondition(m_config.controllerSettings.smallError,
+                    m_config.controllerSettings.smallErrorTimeout) {}
+
+float LadyBrown::getTargetAngle() const {
+  switch (m_state) {
+    case State::IDLE: return m_config.idle;
+    case State::COLLECT: return m_config.collect;
+    case State::MOVE_SCORE: return m_config.move_score;
+    case State::IDLE_SCORE: return m_config.idle_score;
+    default: return NAN;
+  }
+}
+
+float LadyBrown::calcLBAngle() const {
+  // Prevent lift from moving if rotation sensor is not installed
+  if (!m_rotation.is_installed()) return getTargetAngle();
+  return m_rotation.get_angle() / 100.0;
+}
+
+float LadyBrown::calcError() const {
+  return lemlib::angleError(getTargetAngle(), calcLBAngle(), false);
+}
+
+const LadyBrown::State& LadyBrown::getState(){ return m_state; }
+
+void LadyBrown::setState(State state) {
+    m_state = state;
+    m_exitCondition.reset();
+}
+
+void LadyBrown::emergencyStop() { setState(State::EMERGENCY_STOP); }
+
+void LadyBrown::goToBottom() { setState(State::IDLE); }
+
+void LadyBrown::goToCollect() { setState(State::COLLECT); }
+
+void LadyBrown::goToMoveScore() { setState(State::MOVE_SCORE); }
+
+void LadyBrown::goToTop(){ setState(State::IDLE_SCORE); }
+
+void LadyBrown::nextState() {
+    switch (m_state) {
+        case State::IDLE: goToCollect(); break;
+        case State::COLLECT: goToMoveScore(); break;
+        case State::MOVE_SCORE: goToTop(); break;
+        case State::IDLE_SCORE: goToBottom(); break;
+        default: break;
+    }
+}
