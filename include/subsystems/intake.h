@@ -20,7 +20,7 @@ class Intake : public Subsystem {
     };
 
     /** @brief The destination of the ring. */
-    enum DESTINATION { MOGO, KICK, LIFT };
+    enum DESTINATION { MOGO, KICK, LB };
 
     struct BaseState {
         virtual void update(Intake& intake) = 0;
@@ -75,19 +75,12 @@ class Intake : public Subsystem {
         FilteringState(Filtering afterState, COLOR color);
     };
 
-    struct IntakingToLift : public FilteringState {
-        DESTINATION dest = LIFT;
+    struct IntakingToLB : public FilteringState {
+        DESTINATION dest = LB;
 
-        IntakingToLift(Filtering afterState, COLOR color);
+        IntakingToLB(Filtering afterState, COLOR color);
         void update(Intake& intake) override;
         void switchDest(Intake& intake, DESTINATION dest) override;
-    };
-
-    struct OuttakingToLift : public FilteringState {
-        DESTINATION dest = LIFT;
-
-        OuttakingToLift(Filtering afterState, COLOR color);
-        void update(Intake& intake) override;
     };
 
     struct IntakingToKick : public FilteringState {
@@ -124,8 +117,8 @@ class Intake : public Subsystem {
     };
 
     using State =
-        std::variant<Filtering, IntakingToKick, IdlingToKick, IntakingToLift,
-                     OuttakingToLift, Outtaking, Idling, IntakingToMogo>;
+        std::variant<Filtering, IntakingToKick, IdlingToKick, IntakingToLB,
+                    Outtaking, Idling, IntakingToMogo> ;
 
     struct Config {
         float intakingToLiftInches;
@@ -164,6 +157,7 @@ class Intake : public Subsystem {
     void update() override;
 
     const State& getState() const;
+    //const DESTINATION& getDestination() const;
 
     /** @brief Number of rings intaked. */
     size_t numOfRings = 0;

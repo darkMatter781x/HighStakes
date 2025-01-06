@@ -2,12 +2,15 @@
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "robot.h"
+#include "subsystems/intake.h"
 #include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"
 #include <climits>
 #include <cstdlib>
+#include <iostream>
+#include <variant>
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -39,7 +42,7 @@ std::string destToStrOp(Intake::DESTINATION dest) {
   switch (dest) {
     case Intake::MOGO: return "MOGO";
     case Intake::KICK: return "KICK";
-    case Intake::LIFT: return "LIFT";
+    case Intake::LB: return "LIFT";
   }
 }
 
@@ -130,10 +133,16 @@ void opcontrol() {
       // Rising edge of Intake button
 
       // Intake current color to mogo, other color to kicker
-      bot.intake.intakeTo(filterColor, Intake::MOGO);
-      bot.intake.intakeTo(!filterColor, Intake::KICK);
+      if (bot.lady.getState() == LadyBrown::COLLECT){
+        bot.intake.intakeTo(filterColor, Intake::LB);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      } else{
+        bot.intake.intakeTo(filterColor, Intake::MOGO);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      }
     } else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
+
 
     // Mogo control
     if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
@@ -155,9 +164,13 @@ void opcontrol() {
       }
     }
     if (pros::millis() > time_since_press + 500) {
-      bot.lady.goToBottom();
+      bot.lady.goToIDLE();
       time_since_press = INT_MAX-1000;
     }
+    if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::IdlingToKick>(bot.intake.getState()))){
+      bot.lady.goToIDLE();
+    }
+
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;

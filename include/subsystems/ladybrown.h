@@ -65,10 +65,10 @@ class LadyBrown : Subsystem {
     void setState(State state);
 
     void emergencyStop();
-    void goToBottom();
-    void goToCollect();
-    void goToMoveScore();
-    void goToTop();
+    void goToIDLE();
+    void goToCOLLECT();
+    void goToMOVE_SCORE();
+    void goToIDLE_SCORE();
 
     /* cycles the lady brown to the next state */  
     void nextState();  

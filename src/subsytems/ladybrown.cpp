@@ -74,20 +74,20 @@ void LadyBrown::setState(State state) {
 
 void LadyBrown::emergencyStop() { setState(State::EMERGENCY_STOP); }
 
-void LadyBrown::goToBottom() { setState(State::IDLE); }
+void LadyBrown::goToIDLE() { setState(State::IDLE); }
 
-void LadyBrown::goToCollect() { setState(State::COLLECT); }
+void LadyBrown::goToCOLLECT() { setState(State::COLLECT); }
 
-void LadyBrown::goToMoveScore() { setState(State::MOVE_SCORE); }
+void LadyBrown::goToMOVE_SCORE() { setState(State::MOVE_SCORE); }
 
-void LadyBrown::goToTop(){ setState(State::IDLE_SCORE); }
+void LadyBrown::goToIDLE_SCORE(){ setState(State::IDLE_SCORE); }
 
 void LadyBrown::nextState() {
     switch (m_state) {
-        case State::IDLE: goToCollect();  break;
-        case State::COLLECT: goToMoveScore(); break;
-        case State::MOVE_SCORE: goToTop(); break;
-        case State::IDLE_SCORE: goToBottom(); break;
+        case State::IDLE: goToCOLLECT();  break;
+        case State::COLLECT: goToMOVE_SCORE(); break;
+        case State::MOVE_SCORE: goToIDLE_SCORE(); break;
+        case State::IDLE_SCORE: goToIDLE(); break;
         default: break;
     }
 }
