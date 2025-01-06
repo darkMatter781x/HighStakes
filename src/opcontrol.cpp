@@ -3,7 +3,7 @@
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "subsystems/intake.h"
-#include "subsystems/ladybrown.h"
+#include "subsystems/LadyBrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"
@@ -169,8 +169,8 @@ void opcontrol() {
     }
     if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::IdlingToKick>(bot.intake.getState()))){
       bot.lady.goToIDLE();
-    }
-
+    } 
+    
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
