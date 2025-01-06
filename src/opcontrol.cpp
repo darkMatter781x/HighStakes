@@ -1,10 +1,13 @@
 #include "main.h"
 #include "pros/misc.h"
+#include "pros/rtos.hpp"
 #include "robot.h"
 #include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"
+#include <climits>
+#include <cstdlib>
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -17,10 +20,10 @@ constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
 constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 
-constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R1;
+constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
 
 // Pneumatic controls
-constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R2;
+constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
 constexpr button_t INTAKE_LIFT_TOGGLE = pros::E_CONTROLLER_DIGITAL_X;
 constexpr button_t DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
 }; // namespace controller_mapping
@@ -65,11 +68,11 @@ void skillsMacro() {
                  {.minSpeed = 64, .earlyExitRange = 5});
   // Deploy basket
   bot.intake.outtake();
-  //bot.lift.goToMiddle();
+  // bot.lift.goToMiddle();
   pros::delay(400);
 
   // Reset lift and intake
-  //bot.lift.goToBottom();
+  // bot.lift.goToBottom();
   bot.intake.stop();
 
   // Go to mogo
@@ -117,7 +120,7 @@ void opcontrol() {
         [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
     skillsMacro();
   }
-
+  int time_since_press = INT_MAX-1000;
   while (true) {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
@@ -142,9 +145,19 @@ void opcontrol() {
     if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
-    if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) bot.lady.nextState();
-
-
+    if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) {
+      if (bot.lady.getState() == LadyBrown::MOVE_SCORE) {
+        time_since_press = pros::millis();
+        std::cout << time_since_press << "\n";
+        bot.lady.nextState();
+      } else {
+        bot.lady.nextState();
+      }
+    }
+    if (pros::millis() > time_since_press + 500) {
+      bot.lady.goToBottom();
+      time_since_press = INT_MAX-1000;
+    }
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
@@ -156,7 +169,6 @@ void opcontrol() {
         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
       tuningCLI();
 #endif
-
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

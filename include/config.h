@@ -36,7 +36,7 @@ struct RobotConfig {
     struct Sensors {
         pros::Rotation vert;
         pros::Rotation hori;
-        pros::Rotation lift;
+        pros::Rotation lb;
         pros::IMU imu;
         pros::Optical intake;
         pros::adi::Potentiometer autonSelector;

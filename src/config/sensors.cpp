@@ -9,7 +9,7 @@ pros::Distance laserB {3};
 RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .vert {20},
     .hori {19},
-    .lift {10},
+    .lb {4},
     .imu {7},
     .intake {1},
     .autonSelector = pros::adi::Potentiometer {'D'},

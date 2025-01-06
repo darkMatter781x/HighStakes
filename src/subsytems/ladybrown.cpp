@@ -3,6 +3,7 @@
 #include "pros/llemu.hpp"
 #include "pros/motors.h"
 #include "robot.h"
+#include <iostream>
 
 void LadyBrown::update(){
     if (m_state == State::EMERGENCY_STOP){
@@ -11,7 +12,7 @@ void LadyBrown::update(){
         return;
     }
     const float error = calcError();
-    const float output = m_pid.update(error);
+    const float output = std::min(9020.0f, m_pid.update(error));
     bool shouldBrake = m_exitCondition.update(error);
   // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
   // output);
@@ -31,7 +32,7 @@ void LadyBrown::update(){
       return;
     }
   }
-  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
+  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f",  output);
   m_motors.move_voltage(output);
 }
 
@@ -83,7 +84,7 @@ void LadyBrown::goToTop(){ setState(State::IDLE_SCORE); }
 
 void LadyBrown::nextState() {
     switch (m_state) {
-        case State::IDLE: goToCollect(); break;
+        case State::IDLE: goToCollect();  break;
         case State::COLLECT: goToMoveScore(); break;
         case State::MOVE_SCORE: goToTop(); break;
         case State::IDLE_SCORE: goToBottom(); break;

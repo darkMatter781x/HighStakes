@@ -108,7 +108,7 @@ Robot::Robot(const RobotConfig& config)
     m_intake {config.motors.intake, m_intakeSensor,
               config.pneumatics.ringKicker, Intake::Config::config},
     intake(m_intake),
-    m_lady {config.motors.LadyBrown, config.sensors.lift, LadyBrown::Config::config},
+    m_lady {config.motors.LadyBrown, config.sensors.lb, LadyBrown::Config::config},
     lady(m_lady), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
