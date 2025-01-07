@@ -44,7 +44,7 @@ namespace robot {
 /** @todo change to correct track width */
 constexpr float TRACK_WIDTH = 27.0 / 2;
 constexpr float DRIVE_WIDTH = 29.0 / 2;
-constexpr float DRIVE_LENGTH = 30.0 / 2;
+constexpr float DRIVE_LENGTH = 32.0 / 2;
 
 } // namespace robot
 

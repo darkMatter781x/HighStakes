@@ -17,7 +17,7 @@ def build(target: str,
         command = ["make"]
         match target:
             case "sim":
-                command.append("VEXIDE_SIMULATION=1")
+                command.append("SIM=1")
                 command.append("quick")
             case "bot":
                 pass

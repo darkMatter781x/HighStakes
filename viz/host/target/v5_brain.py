@@ -14,7 +14,8 @@ class V5Brain(Target):
     def __init__(
         self,
     ):
-        self.command = "cargo v5 run --file ./bin/sim/monolith.bin -s 7 -i question-mark"
+        self.command = "pros ut --slot 6 --after run"
+        # self.command = "v5 run --file ./bin/sim/monolith.bin -s 7 -i question-mark"
         self.process = None
 
     @override

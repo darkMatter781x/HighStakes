@@ -18,6 +18,10 @@ class Particle(Point):
     weight: float
 
 
+class ParticleTelemetry(tuple[float, Generator[Particle, None, None]]):
+    pass
+
+
 class Pose(Point):
     theta: float
 
@@ -27,8 +31,7 @@ class Handler:
     Listens to output from the parser and updates the visualizer
     """
 
-    async def update_particles(self, particles: Generator[Particle, None,
-                                                          None]):
+    async def update_particles(self, particles: ParticleTelemetry):
         raise NotImplementedError
 
     async def update_calculated_pose(self, pose: Pose):
@@ -133,10 +136,10 @@ def split_iter(string, sep):
                 for _ in re.finditer(f'(?:^|{sep})((?:(?!{sep}).)*)', string))
 
 
-def parse_particles(dataStr: str) -> Generator[Particle, None, None]:
-    # dataStr is formatted like:
+def particle_gen(particleStr: str) -> Generator[Particle, None, None]:
+    # particleStr is formatted like:
     # "<x_float_1>,<y_float_1>,<weight_float_1>;<x_float_2>,<y_float_2>,<weight_float_2>;..."
-    for particle in split_iter(dataStr, ";"):
+    for particle in split_iter(particleStr, ";"):
         coords = particle.split(",")
         if len(coords) == 1 and coords[0].strip() == "":
             # Should be end of string
@@ -147,6 +150,15 @@ def parse_particles(dataStr: str) -> Generator[Particle, None, None]:
         yield Particle(x=float(x_new),
                        y=float(y_new),
                        weight=float(weight_new))
+
+
+def parse_particles(dataStr: str) -> ParticleTelemetry:
+    # dataStr is formatted like:
+    # "<micros>;<x_float_1>,<y_float_1>,<weight_float_1>;<x_float_2>,<y_float_2>,<weight_float_2>;..."
+    microsStr, particleStr = dataStr.split(";", maxsplit=1)
+    micros = int(microsStr)
+    seconds = float(micros) / 1000 / 1000
+    return (seconds, particle_gen(particleStr))
 
 
 def parse_pose(dataStr: str) -> Pose:

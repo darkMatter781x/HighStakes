@@ -1,4 +1,5 @@
 #include "main.h"
+#include "color.h"
 #include "config.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"

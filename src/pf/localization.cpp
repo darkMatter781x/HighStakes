@@ -31,13 +31,15 @@ Localization::Localization(const Config& config)
   setPose({0, 0, 0}, 10, true, true);
 }
 
-Localization::PF::Data printParticles(Localization::PF::Data data) {
-  printf("[TELEMETRY.PF.PARTICLES]:");
-  for (size_t i = 0; i < Localization::N; i++) {
+static Localization::PF::Data printParticles(Localization::PF::Data data) {
+  size_t i = 0;
+  printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
+  for (; i < Localization::N; i++) {
     printf("%f,%f,%f;", (*data.particles)[i].x(), (*data.particles)[i].y(),
            (*data.weights)[i]);
   }
   printf("\n");
+  printf("[printParticles()]: i=%u\n", i);
   return data;
 }
 
@@ -46,7 +48,6 @@ Localization::PF::Data printParticles(Localization::PF::Data data) {
 void Localization::update() {
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
-
   // TODO: Extract timing code to a Timer class
   static size_t iteration = 0;
   START_PROFILE("LL.update()") // Starts profiled section
@@ -71,7 +72,7 @@ void Localization::update() {
 
     // TODO:  Try denser telemetry. eg: send binary representation of floats
     //        rather than strings.
-    // m_pf.modify(printParticles);
+    m_pf.modify(printParticles);
   }
 
   m_prevPose = m_odom->getPose();
@@ -91,7 +92,6 @@ void Localization::update() {
     std::abort();
   }
 #endif
-
 
   // printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
   //        m_odom->getPose().y, m_odom->getPose().theta);

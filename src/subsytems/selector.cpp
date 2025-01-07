@@ -84,6 +84,7 @@ const ALLIANCE& AutonSelector::getAlliance() const {
 }
 
 void AutonSelector::setIndex(size_t newIndex) {
+  printf("AutonSelector::setIndex()\n");
   newIndex = newIndex % m_autons.size();
 
   m_indexOffset = newIndex - getSensedIndex();
@@ -179,4 +180,6 @@ void AutonSelector::display() const {
   // TODO
 }
 
-bool AutonSelector::isLocked() const { return m_locked.has_value(); }
+bool AutonSelector::isLocked() const {
+  return m_locked.has_value();
+}

@@ -121,6 +121,8 @@ const plot: Plot = new Plot();
 
 function handle_particles(particles: Record<"x" | "y" | "weight", number[]>) {
   // return null;
+  console.log("First particle:", {x: particles.x[0], y: particles.y[0]});
+
   plot.addTrace(TRACE_ID.CONTOUR, {
     x: particles.x,
     y: particles.y,
@@ -306,7 +308,7 @@ export async function startPlotting(plotlyDiv: PlotlyHTMLElement) {
         eventSpecificTimer.end();
         timer.end();
         // TODO: Try running after previous plot update is complete
-        if (eventType == "calculated_pose") {
+        if (eventType == "particles") {
           setTimeout(() => {
             const plotTimer = new timings.Timer("plot");
             plot.update();

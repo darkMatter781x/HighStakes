@@ -17,29 +17,38 @@ lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
           this->tunables.horizontalDrift};
 }
 
-lemlib::OdomSensors RobotConfig::makeSensors() const {
-  return {new lemlib::TrackingWheel(&this->sensors.vert,
-                                    this->dimensions.vertEncDiameter,
-                                    this->dimensions.vertEncDistance,
-                                    this->dimensions.vertEncGearRatio),
-          nullptr,
-          new lemlib::TrackingWheel(&this->sensors.hori,
-                                    this->dimensions.horiEncDiameter,
-                                    this->dimensions.horiEncDistance,
-                                    this->dimensions.horiEncGearRatio),
-          nullptr, &this->sensors.imu};
+static lemlib::TrackingWheel* makeTrackingWheel(pros::Rotation* encoder,
+                                                float wheelDiameter,
+                                                float distance,
+                                                float gearRatio = 1) {
+  if (encoder->is_installed())
+    return new lemlib::TrackingWheel(encoder, wheelDiameter, distance,
+                                     gearRatio);
+  else return nullptr;
 }
 
-std::shared_ptr<Odom> makeRealOdom(const RobotConfig& config) {
+lemlib::OdomSensors RobotConfig::makeSensors() const {
+  return {
+      makeTrackingWheel(&this->sensors.vert, this->dimensions.vertEncDiameter,
+                        this->dimensions.vertEncDistance,
+                        this->dimensions.vertEncGearRatio),
+      nullptr,
+      makeTrackingWheel(&this->sensors.hori, this->dimensions.horiEncDiameter,
+                        this->dimensions.horiEncDistance,
+                        this->dimensions.horiEncGearRatio),
+      nullptr, &this->sensors.imu};
+}
+
+static std::shared_ptr<Odom> makeRealOdom(const RobotConfig& config) {
   return std::make_shared<LemLibOdom>(config.makeSensors(),
                                       config.makeDrivetrain());
 }
 
-std::shared_ptr<SimOdom> makeSimOdom(const RobotConfig& config) {
+static std::shared_ptr<SimOdom> makeSimOdom(const RobotConfig& config) {
   return std::make_shared<SimOdom>();
 }
 
-Localization makeRealLocalization(const RobotConfig& config) {
+static Localization makeRealLocalization(const RobotConfig& config) {
   auto factory =
       [&bot_conf = config](const Localization::SensorFactoryConfig& sensor_conf)
       -> Localization::SensorVector {
@@ -65,7 +74,7 @@ Localization makeRealLocalization(const RobotConfig& config) {
 }
 
 // TODO: Deduplicate this with makeRealLocalization
-Localization makeSimLocalization(const RobotConfig& config) {
+static Localization makeSimLocalization(const RobotConfig& config) {
   auto odom = makeSimOdom(config);
   auto factory = [&bot_conf = config,
                   &odom](const Localization::SensorFactoryConfig& sensor_conf)
@@ -91,7 +100,7 @@ Localization makeSimLocalization(const RobotConfig& config) {
   }};
 }
 
-Localization makeLocalization(const RobotConfig& config) {
+static Localization makeLocalization(const RobotConfig& config) {
 #ifdef VEXIDE_SIMULATION
   return makeSimLocalization(config);
 #else
@@ -112,7 +121,8 @@ Robot::Robot(const RobotConfig& config)
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
     m_localization(makeLocalization(config)), localization(m_localization),
-    intakeLift(config.pneumatics.intakeLift), mogoClamp(config.pneumatics.mogoClamp),
-    doinker(config.pneumatics.doinker) {}
+    intakeLift(config.pneumatics.intakeLift),
+    mogoClamp(config.pneumatics.mogoClamp), doinker(config.pneumatics.doinker) {
+}
 
 Robot Robot::instance {RobotConfig::config};
