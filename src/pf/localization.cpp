@@ -20,6 +20,8 @@ std::unique_ptr<std::array<Eigen::Vector<float, M>, N>> makeZeroArray() {
   return arr;
 }
 
+static bool isInitialized = false;
+
 Localization::Localization(const Config& config)
   : m_pf(makeZeroArray<N, 2>()), m_odom(config.odom),
     m_obstacles(config.obstacles),
@@ -29,6 +31,7 @@ Localization::Localization(const Config& config)
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
     m_prevPose(m_odom->getPose()), m_mutex() {
   setPose({0, 0, 0}, 10, true, true);
+  isInitialized = true;
 }
 
 static Localization::PF::Data printParticles(Localization::PF::Data data) {
@@ -39,7 +42,6 @@ static Localization::PF::Data printParticles(Localization::PF::Data data) {
            (*data.weights)[i]);
   }
   printf("\n");
-  printf("[printParticles()]: i=%u\n", i);
   return data;
 }
 
@@ -72,7 +74,7 @@ void Localization::update() {
 
     // TODO:  Try denser telemetry. eg: send binary representation of floats
     //        rather than strings.
-    m_pf.modify(printParticles);
+    // PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
   }
 
   m_prevPose = m_odom->getPose();
@@ -82,6 +84,7 @@ void Localization::update() {
 
   iteration++;
 #ifdef ENABLE_PROFILING
+  Profiler::get().printReport();
   if (iteration == 1000) {
     printf("[ProfSummary.Start]\n"); // Used by time script to identify which
                                      // data to put in log file
@@ -100,8 +103,8 @@ void Localization::update() {
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
                            bool standardPos) {
   m_mutex.take();
+  if (!radians) pose.theta = lemlib::degToRad(pose.theta);
   if (!standardPos) pose.theta = M_PI_2 - pose.theta;
-  if (!radians) pose.theta = lemlib::radToDeg(pose.theta);
 
   m_prevPose = pose;
   m_odom->setPose(pose);
@@ -116,6 +119,7 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
     gaussian.makeSampler().sampleMany(*(data.particles));
     return data;
   });
+  if (isInitialized) m_pf.modify(printParticles);
   m_mutex.give();
 }
 

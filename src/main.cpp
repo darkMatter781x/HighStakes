@@ -1,6 +1,7 @@
 #include "main.h"
 #include "color.h"
 #include "config.h"
+#include "dimensions.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
@@ -40,6 +41,8 @@ void initialize() {
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFFFF00);
   bot.calibrate();
+
+  bot.setPose({-36, -36, dimensions::field::REFEREE}, 48);
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
   // // LED Testing

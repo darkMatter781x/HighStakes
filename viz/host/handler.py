@@ -11,6 +11,7 @@ import rerun as rr
 rr.init("781x-PF", spawn=False)
 rr.connect_tcp()
 
+
 class PacketHandler(Handler):
 
     def __init__(self, ws_server: WebsocketServer):
@@ -21,22 +22,24 @@ class PacketHandler(Handler):
 
     @override
     async def update_particles(self, particleTelemetry: ParticleTelemetry):
-        # data = {"x": [], "y": [], "weight": []}
-        # particleList = list(particlesGen)
-        # particleList.sort(key=lambda p: p["weight"], reverse=True)
+        data = {"x": [], "y": [], "weight": []}
+        particleList = list(particleTelemetry[1])
+        particleList.sort(key=lambda p: p["weight"], reverse=True)
 
-        # for particle in particleList[:]:
-        #     data["x"].append(particle["x"])
-        #     data["y"].append(particle["y"])
-        #     data["weight"].append(particle["weight"])
-        rr.set_time_seconds("capture_time", particleTelemetry[0])
-        data = [[p["x"], p["y"]] for p in particleTelemetry[1]]
+        for particle in particleList[:]:
+            data["x"].append(particle["x"])
+            data["y"].append(particle["y"])
+            data["weight"].append(particle["weight"])
+
+        await self._send_dict("particles", data)
+        # rr.set_time_seconds("capture_time", particleTelemetry[0])
+        # data = [[p["x"], p["y"]] for p in particleTelemetry[1]]
         # print(f"sending particles: {data}")
 
-        rr.log(
-            "pf/particles",
-            rr.Points2D(data, radii=0.01),
-        )
+        # rr.log(
+        #     "pf/particles",
+        #     rr.Points2D(data, radii=0.01),
+        # )
 
     @override
     async def update_calculated_pose(self, pose: Pose):

@@ -69,7 +69,7 @@ static Localization makeRealLocalization(const RobotConfig& config) {
       .odom = makeRealOdom(config),
       .obstacles = getObstacles(),
       .sensorFactory = factory,
-      .covar = Eigen::Matrix2f::Identity() * .01,
+      .covar = Eigen::Matrix2f::Identity() * .05,
   }};
 }
 

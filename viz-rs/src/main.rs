@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader, Read},
+    io::{BufRead, BufReader},
     process::{Child, ChildStdout, Command, Stdio},
 };
 
@@ -8,13 +8,8 @@ use anyhow::anyhow;
 use itertools::Itertools as _;
 
 use rerun::{
-    components::TensorData,
-    external::{
-        arrow2,
-        image::{GenericImageView, ImageReader},
-        re_types,
-    },
-    ComponentBatch, RecordingStream, RecordingStreamError, Tensor,
+    external::{arrow2, re_types},
+    ComponentBatch, RecordingStream, RecordingStreamError,
 };
 
 struct Message<'a> {
@@ -86,6 +81,15 @@ fn run_sim_on_brain() -> Result<Child, std::io::Error> {
         .stderr(Stdio::inherit())
         .spawn()
 }
+/// Runs real sensor program on v5 brain
+fn run_real_on_brain() -> Result<Child, std::io::Error> {
+    Command::new("sh")
+        .arg("-c")
+        .arg("pros ut --slot 6 --after run")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+}
 
 /// Runs program in v5 sim
 fn run_simulator() -> Result<Child, std::io::Error> {
@@ -143,8 +147,6 @@ impl RerunParticles {
             .into_iter()
             .max_by(|a, b| a.partial_cmp(b).expect("ordering failed!?"))
             .expect("max weight failed!?");
-        println!("coords.length(): {}", coords.len());
-
         let (colors, confidences): (Vec<rerun::Color>, Vec<Confidence>) = weights
             .into_iter()
             .map(|w| -> (rerun::Color, Confidence) {
@@ -197,10 +199,6 @@ impl rerun::AsComponents for RerunParticles {
 #[derive(Debug, Clone, Copy)]
 struct Confidence(rerun::Float32);
 
-// impl Confidence {
-//     fn new(f32)
-// }
-
 impl From<f32> for Confidence {
     fn from(v: f32) -> Self {
         Self(rerun::Float32(v))
@@ -246,11 +244,6 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
             .split_once(';')
             .ok_or(anyhow!("Could not split with ';': {}", raw_str))?;
         let micros: i64 = micros_str.parse()?;
-
-        println!(
-            "num of semicolons in raw_str: {}",
-            raw_str.chars().filter(|&c| c == ';').count()
-        );
         // println!("parse_particles: string after removing micros {rest}");
 
         // let (points, confidences): (Vec<_>, Vec<_>) = iter.unzip();
@@ -274,7 +267,7 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
                     }),
             ),
         )?;
-        println!("sent data!");
+        // println!("sent data!");
         Ok(())
     };
     if let Err(err) = body() {
@@ -282,27 +275,27 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
     }
 }
 
-// fn load_image(file_path: &str) -> Tensor {
-//     let img = ImageReader::open(file_path)
-//         .expect("Failed to open image file")
-//         .decode()
-//         .expect("Failed to decode image");
-//     let rgba = img.to_rgba8(); // Convert to RGBA
-//     let (width, height) = rgba.dimensions();
-//     let data = TensorData:: (rgba.into_raw());
-//     Tensor::new((height as usize, width as usize, 4), data)
-// }
-
 fn add_background(rec: &RecordingStream) -> Result<(), RecordingStreamError> {
     let image = include_bytes!("../h2h.png");
 
     rec.log_static(
         "background/image",
-        &rerun::EncodedImage::from_file_contents(image.to_vec())
+        &rerun::EncodedImage::from_file_contents(image.to_vec()),
     )?;
 
-    // let rr_img = rerun::Image::from_rgba32(rgba.into_vec(), img.dimensions().into());
-    // rec.log("background", &rr_img)?;
+    Ok(())
+}
+
+fn add_field_grid(rec: &RecordingStream) -> Result<(), RecordingStreamError> {
+    let border = [
+        (-72., -72.),
+        (72., -72.),
+        (72., 72.),
+        (-72., 72.),
+        (-72., -72.),
+    ];
+    rec.log_static("field/border", &rerun::LineStrips2D::new([border]))?;
+
     Ok(())
 }
 
@@ -310,13 +303,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("{}", rerun::default_server_addr());
     let rec = rerun::RecordingStreamBuilder::new("781xMCL").connect_tcp()?;
 
-    add_background(&rec)?;
+    add_field_grid(&rec)?;
+    // add_background(&rec)?;
 
     let handler = &mut MessageHandler::new();
 
     handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
 
-    let child_process = run_sim_on_brain()?;
+    let child_process = run_real_on_brain()?;
+    // let child_process = run_sim_on_brain()?;
     // let child_process = run_simulator()?;
     let child_stdout = child_process
         .stdout

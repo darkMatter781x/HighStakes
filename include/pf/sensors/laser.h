@@ -48,7 +48,7 @@ class Laser {
      * reading.
      * @return Measurement of the sensor.
      */
-    virtual Measurement sense() = 0;
+    virtual std::optional<Measurement> sense() = 0;
 
     /** Creates a ray from this laser object. */
     lines::Ray toRay(const Vec2& robotPos) const;
@@ -65,27 +65,32 @@ class Laser {
 
         void update(const std::array<Vec2, N>& particles,
                     std::array<float, N>& weights) override {
-          auto measurement = laser.sense();
+          auto measurement_opt = laser.sense();
+          if (!measurement_opt) return;
+          auto& measurement = *measurement_opt;
           lines::Ray ray = laser.toRay({0, 0});
-
+          const Vec2 startOffset = ray.start;
           const stats::NormPDF pdf {measurement.dist, measurement.stdDev};
 
           ray.start = particles[0];
 
           // TODO: Improve safety (ray might not intersect anything)
           // Assume all particles will intersect the same line
-          auto seg =
-              laser.obstacles[ray.findFirstIntersect(laser.obstacles)->second];
+          auto seg = laser.obstacles[ray.findFirstIntersect(laser.obstacles)
+                                         .value_or(std::pair {0.f, 0u})
+                                         .second];
 
           for (size_t i = 0; i < particles.size(); i++) {
             // TODO: make cleaner
-            ray.start = particles[i];
+            ray.start = particles[i] + startOffset;
             auto intersectOpt = ray.distanceTo(seg);
             if (const auto intersect = intersectOpt) {
               weights[i] *= pdf.eval(*intersect);
             } else {
-              weights[i] *=
-                  pdf.eval(ray.findFirstIntersect(laser.obstacles)->first);
+              if (const auto intersect =
+                      ray.findFirstIntersect(laser.obstacles)) {
+                weights[i] *= pdf.eval(intersect->first);
+              } else weights[i] = 0;
             }
           }
         };

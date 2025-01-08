@@ -32,8 +32,8 @@ build("sim")
 atexit.register(cleanup)
 
 # TODO: Add cli arg to specify target
-sim = Simulator()
-# sim = V5Brain()
+# sim = Simulator()
+sim = V5Brain()
 
 ws_server = WebsocketServer()
 cleanup_funcs.append(ws_server.cleanup)

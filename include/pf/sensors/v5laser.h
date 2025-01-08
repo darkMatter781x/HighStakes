@@ -16,7 +16,7 @@ class V5Laser : public Laser {
 
     V5Laser(const Laser::Config config, pros::Distance& sensor);
   public:
-    Measurement sense() override;
+    std::optional<Measurement> sense() override;
 };
 
 /**
