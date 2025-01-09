@@ -107,31 +107,19 @@ void Intake::KickingRing::start(Intake& intake){
 }
 
 void Intake::KickingRing::end(Intake &intake){
-  printFiltering(afterState);
-  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
-  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
-    // printf("naturally switching to filtering\n");
-    intake.m_kicker.retract();
-    intake.setState(afterState);
-    intake.numOfKickRings++;
-    intake.numOfRings++;
-  }
+  intake.m_kicker.retract();
+  intake.numOfKickRings++;
+  intake.numOfRings++;
+  
 }
  
-/*void Intake::KickingRing::update(Intake& intake) {
-  intake.m_motors.move(127);
-  intake.m_kicker.extend();
-  // printf("idling to kick\n");
+void Intake::KickingRing::update(Intake& intake) {
   printFiltering(afterState);
-  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
+
   if (pros::millis() - startTime > intake.m_conf.KickingRing) {
-    // printf("naturally switching to filtering\n");
-    intake.m_kicker.retract();
     intake.setState(afterState);
-    intake.numOfKickRings++;
-    intake.numOfRings++;
   }
-} */
+} 
 
 
 void Intake::IntakingToLB::update(Intake& intake) {
