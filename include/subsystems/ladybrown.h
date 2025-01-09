@@ -14,9 +14,8 @@ class LadyBrown : Subsystem {
             /* Height where the lady brown picks up the ring from the hooks */
             COLLECT,
             /* Height where the you are able to score onto the wall stake by driving onto the wall stake */
-            MOVE_SCORE,
+            SCORE,
             /* Height where the lady brown scores without extra force from the drivetrain*/
-            IDLE_SCORE,
             /* brakes motor in case of emergency */
             EMERGENCY_STOP,
         };
@@ -27,9 +26,7 @@ class LadyBrown : Subsystem {
         /* target angle of lady brown for State::COLLECT */
         float collect;
         /* target angle of lady brown for State::MOVE_SCORE */
-        float move_score;
-        /* target angle of lady brown for State::IDLE_SCORE */
-        float idle_score;
+        float score;
 
         /* Controller Settings for lift */
         lemlib::ControllerSettings controllerSettings;
@@ -67,7 +64,7 @@ class LadyBrown : Subsystem {
     void emergencyStop();
     void goToIDLE();
     void goToCOLLECT();
-    void goToMOVE_SCORE();
+    void goToSCORE();
     void goToIDLE_SCORE();
 
     /* cycles the lady brown to the next state */  

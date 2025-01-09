@@ -12,7 +12,7 @@ void LadyBrown::update(){
         return;
     }
     const float error = calcError();
-    const float output = std::min(9020.0f, m_pid.update(error));
+    const float output = std::min(8720.0f, m_pid.update(error));
     bool shouldBrake = m_exitCondition.update(error);
   // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
   // output);
@@ -49,8 +49,7 @@ float LadyBrown::getTargetAngle() const {
   switch (m_state) {
     case State::IDLE: return m_config.idle;
     case State::COLLECT: return m_config.collect;
-    case State::MOVE_SCORE: return m_config.move_score;
-    case State::IDLE_SCORE: return m_config.idle_score;
+    case State::SCORE: return m_config.score;
     default: return NAN;
   }
 }
@@ -78,16 +77,13 @@ void LadyBrown::goToIDLE() { setState(State::IDLE); }
 
 void LadyBrown::goToCOLLECT() { setState(State::COLLECT); }
 
-void LadyBrown::goToMOVE_SCORE() { setState(State::MOVE_SCORE); }
-
-void LadyBrown::goToIDLE_SCORE(){ setState(State::IDLE_SCORE); }
+void LadyBrown::goToSCORE() { setState(State::SCORE); }
 
 void LadyBrown::nextState() {
     switch (m_state) {
         case State::IDLE: goToCOLLECT();  break;
-        case State::COLLECT: goToMOVE_SCORE(); break;
-        case State::MOVE_SCORE: goToIDLE_SCORE(); break;
-        case State::IDLE_SCORE: goToIDLE(); break;
+        case State::COLLECT: goToSCORE(); break;
+        case State::SCORE: goToIDLE(); break;
         default: break;
     }
 }

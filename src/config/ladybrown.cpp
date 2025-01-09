@@ -4,9 +4,8 @@
 
 LadyBrown::Config LadyBrown::Config::config {
     .idle = 0,
-    .collect = 39.17,
-    .move_score = 127.37,
-    .idle_score = 165.87,
+    .collect = 34.17,
+    .score = 148.00,
     .controllerSettings =
-        lemlib::ControllerSettings {75, 1, 40, 0, 3, 150, 5, 300, 0},
+        lemlib::ControllerSettings {65, 5, 220, 0, 4, 100, 8, 100, 0},
 };

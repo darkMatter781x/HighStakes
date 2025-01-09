@@ -155,7 +155,7 @@ void opcontrol() {
 
     // Lift control
     if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) {
-      if (bot.lady.getState() == LadyBrown::MOVE_SCORE) {
+      if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
         bot.lady.nextState();
