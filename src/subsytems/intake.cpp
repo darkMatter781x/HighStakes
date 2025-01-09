@@ -117,8 +117,8 @@ void Intake::KickingRing::end(Intake &intake){
     intake.numOfRings++;
   }
 }
-
-void Intake::KickingRing::update(Intake& intake) {
+ 
+/*void Intake::KickingRing::update(Intake& intake) {
   intake.m_motors.move(127);
   intake.m_kicker.extend();
   // printf("idling to kick\n");
@@ -131,17 +131,8 @@ void Intake::KickingRing::update(Intake& intake) {
     intake.numOfKickRings++;
     intake.numOfRings++;
   }
-}
+} */
 
-void Intake::KickingRing::start(Intake& intake) {
-  Intake::FilteringState::start(intake);
-  // intake.m_kicker.set_value(true);
-}
-
-void Intake::KickingRing::end(Intake& intake) {
-  Intake::FilteringState::start(intake);
-  // intake.m_kicker.set_value(false);
-}
 
 void Intake::IntakingToLB::update(Intake& intake) {
   intake.m_motors.move(127);
