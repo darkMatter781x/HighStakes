@@ -167,7 +167,7 @@ void opcontrol() {
       bot.lady.goToIDLE();
       time_since_press = INT_MAX-1000;
     }
-    if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::IdlingToKick>(bot.intake.getState()))){
+    if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))){
       bot.lady.goToIDLE();
     } 
     

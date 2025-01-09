@@ -25,7 +25,7 @@ struct RobotConfig {
 
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
-        pros::adi::Pneumatics ringKicker;
+        pros::adi::Pneumatics kicker;
         pros::adi::Pneumatics doinker;
         pros::adi::Pneumatics intakeLift;
       private:

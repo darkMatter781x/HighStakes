@@ -2,6 +2,7 @@
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
 #include "subsystems/ladybrown.h"
+#include "robot.h"
 #include <cmath>
 #include <cstdio>
 
@@ -66,7 +67,7 @@ void Intake::FilteringState::end(Intake& intake) {
 Intake::IntakingToKick::IntakingToKick(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
-Intake::IdlingToKick::IdlingToKick(Filtering afterState, COLOR color)
+Intake::KickingRing::KickingRing(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
 Intake::IntakingToLB::IntakingToLB(Filtering afterState, COLOR color)
@@ -81,7 +82,7 @@ void Intake::IntakingToKick::update(Intake& intake) {
   printFiltering(afterState);
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
     // printf("naturally switching to idle\n");
-    intake.setState(IdlingToKick {afterState, color});
+    intake.setState(KickingRing {afterState, color});
   }
 }
 
@@ -100,25 +101,44 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   }
 }
 
-void Intake::IdlingToKick::update(Intake& intake) {
-  intake.m_motors.move(-127);
-  // printf("idling to kick\n");
+void Intake::KickingRing::start(Intake& intake){
+  intake.m_motors.move(127);
+  intake.m_kicker.extend();
+}
+
+void Intake::KickingRing::end(Intake &intake){
   printFiltering(afterState);
   // if (pros::millis() % 200 < 10) printf("idling to kick\n");
-  if (pros::millis() - startTime > intake.m_conf.idlingToKickDuration) {
+  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
     // printf("naturally switching to filtering\n");
+    intake.m_kicker.retract();
     intake.setState(afterState);
     intake.numOfKickRings++;
     intake.numOfRings++;
   }
 }
 
-void Intake::IdlingToKick::start(Intake& intake) {
+void Intake::KickingRing::update(Intake& intake) {
+  intake.m_motors.move(127);
+  intake.m_kicker.extend();
+  // printf("idling to kick\n");
+  printFiltering(afterState);
+  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
+  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
+    // printf("naturally switching to filtering\n");
+    intake.m_kicker.retract();
+    intake.setState(afterState);
+    intake.numOfKickRings++;
+    intake.numOfRings++;
+  }
+}
+
+void Intake::KickingRing::start(Intake& intake) {
   Intake::FilteringState::start(intake);
   // intake.m_kicker.set_value(true);
 }
 
-void Intake::IdlingToKick::end(Intake& intake) {
+void Intake::KickingRing::end(Intake& intake) {
   Intake::FilteringState::start(intake);
   // intake.m_kicker.set_value(false);
 }

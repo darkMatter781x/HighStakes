@@ -40,6 +40,7 @@ class Robot : private lemlib::Chassis {
 
     LadyBrown& lady;
     Intake& intake;
+    //pros::adi::Pneumatics& kicker;
     pros::adi::Pneumatics& mogoClamp;
     pros::adi::Pneumatics& doinker;
     pros::adi::Pneumatics& intakeLift;

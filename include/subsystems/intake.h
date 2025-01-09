@@ -91,12 +91,12 @@ class Intake : public Subsystem {
         void switchDest(Intake& intake, DESTINATION dest) override;
     };
 
-    struct IdlingToKick : public FilteringState {
+    struct KickingRing : public FilteringState {
         DESTINATION dest = KICK;
 
         virtual void start(Intake& intake) override;
         virtual void end(Intake& intake) override;
-        IdlingToKick(Filtering afterState, COLOR color);
+        KickingRing(Filtering afterState, COLOR color);
         void update(Intake& intake) override;
     };
 
@@ -117,14 +117,14 @@ class Intake : public Subsystem {
     };
 
     using State =
-        std::variant<Filtering, IntakingToKick, IdlingToKick, IntakingToLB,
+        std::variant<Filtering, IntakingToKick, KickingRing, IntakingToLB,
                     Outtaking, Idling, IntakingToMogo> ;
 
     struct Config {
         float intakingToLiftInches;
         size_t outtakingToLiftDuration;
         size_t intakingToKickDuration;
-        size_t idlingToKickDuration;
+        size_t KickingRing;
 
         /**
          * @brief ratio of motor rotations to inches traveled by instascore
