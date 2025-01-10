@@ -3,9 +3,11 @@
 namespace dimensions {
 namespace field {
 namespace long_headings {
-/** Heading to face referee. This side of the field is furthest from the climb stake. */
+/** Heading to face referee. This side of the field is furthest from the climb
+ * stake. */
 constexpr float REFEREE = 0;
-/** Heading to face audience. This side of the field is closest to the climb stake. */
+/** Heading to face audience. This side of the field is closest to the climb
+ * stake. */
 constexpr float AUDIENCE = 180;
 /** Heading to face red station */
 constexpr float RED_STATION = 270;
@@ -16,9 +18,11 @@ constexpr float BLUE_STATION = 90;
 using namespace long_headings;
 
 namespace short_headings {
-/** Heading to face referee. This side of the field is furthest from the climb stake. */
+/** Heading to face referee. This side of the field is furthest from the climb
+ * stake. */
 constexpr float REF = long_headings::REFEREE;
-/** Heading to face referee (stands). This side of the field is furthest from the climb stake. */
+/** Heading to face referee (stands). This side of the field is furthest from
+ * the climb stake. */
 constexpr float STANDS = long_headings::AUDIENCE;
 /** Heading to face red driver station */
 constexpr float RED = long_headings::RED_STATION;
@@ -42,8 +46,8 @@ constexpr float RING_DIAM = 7;
 
 namespace robot {
 /** @todo change to correct track width */
-constexpr float TRACK_WIDTH = 27.0 / 2;
-constexpr float DRIVE_WIDTH = 29.0 / 2;
+constexpr float TRACK_WIDTH = 16.5 - 1. / 8;
+constexpr float DRIVE_WIDTH = 29.0 / 2 + 1. / 8;
 constexpr float DRIVE_LENGTH = 32.0 / 2;
 
 } // namespace robot
