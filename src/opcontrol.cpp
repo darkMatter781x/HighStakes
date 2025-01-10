@@ -108,6 +108,10 @@ void skillsMacro() {
  */
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
+
+  // Drop intake automatically
+  bot.intakeLift.retract();
+
   /** The color of ring we are directing to the destination with the filter. */
   COLOR filterColor = bot.selector.getAlliance();
   auto intakeStateToStr = overloads(
@@ -123,7 +127,7 @@ void opcontrol() {
         [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
     skillsMacro();
   }
-  int time_since_press = INT_MAX-1000;
+  int time_since_press = INT_MAX - 1000;
   while (true) {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
@@ -133,16 +137,15 @@ void opcontrol() {
       // Rising edge of Intake button
 
       // Intake current color to mogo, other color to kicker
-      if (bot.lady.getState() == LadyBrown::COLLECT){
+      if (bot.lady.getState() == LadyBrown::COLLECT) {
         bot.intake.intakeTo(filterColor, Intake::LB);
         bot.intake.intakeTo(!filterColor, Intake::KICK);
-      } else{
+      } else {
         bot.intake.intakeTo(filterColor, Intake::MOGO);
         bot.intake.intakeTo(!filterColor, Intake::KICK);
       }
     } else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
-
 
     // Mogo control
     if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
@@ -165,12 +168,15 @@ void opcontrol() {
     }
     if (pros::millis() > time_since_press + 500) {
       bot.lady.goToIDLE();
-      time_since_press = INT_MAX-1000;
+      time_since_press = INT_MAX - 1000;
     }
-    if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))){
+    if (bot.lady.getState() == LadyBrown::COLLECT &&
+        (std::holds_alternative<Intake::IntakingToKick>(
+             bot.intake.getState()) ||
+         std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))) {
       bot.lady.goToIDLE();
-    } 
-    
+    }
+
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
