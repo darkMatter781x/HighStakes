@@ -3,6 +3,8 @@
 #include "robot.h"
 #include <cmath>
 
+#include "units/Temperature.hpp"
+
 std::vector<std::string> split(const std::string& _input,
                                const std::string& delimiter) {
   std::vector<std::string> tokens;
@@ -41,8 +43,8 @@ void print(const TUNING_MODE mode, bool key = true) {
   // sum temps
   float sum = 0;
   for (const auto& temp : temps) sum += temp;
-  float average = sum / temps.size();
-  printf("motor temp: %f\n", average);
+  float average = units::to_fahrenheit(units::from_celsius(sum / temps.size()));
+  printf("motor temp: %f°F\n", average);
 }
 
 void tuningCLI() {
