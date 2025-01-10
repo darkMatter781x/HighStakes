@@ -6,6 +6,8 @@
 #include <cmath>
 #include <cstdio>
 
+#define POWER 127
+
 // TODO: use mutex for state changes
 
 std::string destToStr(Intake::DESTINATION dest) {
@@ -29,7 +31,8 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 }
 
 const Intake::State& Intake::getState() const { return m_state; }
-//const Intake::DESTINATION& Intake::getDestination() const { return dest; }
+
+// const Intake::DESTINATION& Intake::getDestination() const { return dest; }
 
 void Intake::BaseState::start(
     Intake& intake) { /* printf("starting state\n"); */ }
@@ -77,7 +80,7 @@ Intake::IntakingToMogo::IntakingToMogo(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
 void Intake::IntakingToKick::update(Intake& intake) {
-  intake.m_motors.move(127);
+  intake.m_motors.move(POWER);
   // if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
@@ -101,29 +104,27 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   }
 }
 
-void Intake::KickingRing::start(Intake& intake){
-  intake.m_motors.move(127);
+void Intake::KickingRing::start(Intake& intake) {
+  intake.m_motors.move(POWER);
   intake.m_kicker.extend();
 }
 
-void Intake::KickingRing::end(Intake &intake){
+void Intake::KickingRing::end(Intake& intake) {
   intake.m_kicker.retract();
   intake.numOfKickRings++;
   intake.numOfRings++;
-  
 }
- 
+
 void Intake::KickingRing::update(Intake& intake) {
   printFiltering(afterState);
 
   if (pros::millis() - startTime > intake.m_conf.KickingRing) {
     intake.setState(afterState);
   }
-} 
-
+}
 
 void Intake::IntakingToLB::update(Intake& intake) {
-  intake.m_motors.move(127);
+  intake.m_motors.move(POWER);
   // if (pros::millis() % 200 < 10) printf("intaking to lift\n");
   // printf("intaking to lift, %4.2f\n", getInchesTraveled(intake));
 }
@@ -165,7 +166,7 @@ void Intake::IntakingToMogo::update(Intake& intake) {
   sensed
    * previously. */
   static int startedNotSensingRing = -1;
-  intake.m_motors.move(127);
+  intake.m_motors.move(POWER);
   // Wait until no longer sensing ring to increment mogo rings.
   // Might need a filter to ensure rings aren't counted twice.
   bool sensedRing = intake.getSensedRing() == color;
@@ -178,7 +179,7 @@ void Intake::IntakingToMogo::update(Intake& intake) {
     printf("%ith ring scored on mogo!\n", intake.numOfMogoRings);
   } else if (sensedRing) startedNotSensingRing = -1;
 
-  // intake.m_motors.move(127);
+  // intake.m_motors.move(POWER);
   // // Wait until no longer sensing ring to increment mogo rings.
   // // Might need a filter to ensure rings aren't counted twice.
   // if (intake.getSensedRing() != color) {
@@ -202,7 +203,7 @@ void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::Filtering::update(Intake& intake) {
-  intake.m_motors.move(127);
+  intake.m_motors.move(POWER);
 
   if (pros::millis() % 200 < 10) printFiltering(*this);
 
@@ -244,7 +245,7 @@ void Intake::Filtering::end(Intake& intake) {
 
 void Intake::Idling::update(Intake& intake) { intake.m_motors.move(0); }
 
-void Intake::Outtaking::update(Intake& intake) { intake.m_motors.move(-127); }
+void Intake::Outtaking::update(Intake& intake) { intake.m_motors.move(-POWER); }
 
 void Intake::update() {
   const State prevState = m_state;
