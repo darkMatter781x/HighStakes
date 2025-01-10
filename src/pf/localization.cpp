@@ -35,6 +35,7 @@ Localization::Localization(const Config& config)
 }
 
 static Localization::PF::Data printParticles(Localization::PF::Data data) {
+  return data;
   size_t i = 0;
   printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
   for (; i < Localization::N; i++) {
@@ -57,25 +58,25 @@ void Localization::update() {
 
   m_odom->update();
 
-  // Only use distance sensors after match has started
-  // (Humans may be on the field before the match starts, interfering with the
-  // distance sensors)
-  if (!pros::competition::is_disabled()) {
-    lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
-    m_predictor.m_displacement = {displacement.x, displacement.y};
+  // // Only use distance sensors after match has started
+  // // (Humans may be on the field before the match starts, interfering with the
+  // // distance sensors)
+  // if (!pros::competition::is_disabled()) {
+  //   lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
+  //   m_predictor.m_displacement = {displacement.x, displacement.y};
 
-    PROFILE_SECTION("PF.predict", { m_pf.predict(m_predictor); })
+  //   PROFILE_SECTION("PF.predict", { m_pf.predict(m_predictor); })
 
-    PROFILE_SECTION("PF.update", { m_pf.update(m_sensors, m_resampler); })
+  //   PROFILE_SECTION("PF.update", { m_pf.update(m_sensors, m_resampler); })
 
-    const auto mean = m_pf.getMean();
+  //   const auto mean = m_pf.getMean();
 
-    m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
+  //   m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
 
-    // TODO:  Try denser telemetry. eg: send binary representation of floats
-    //        rather than strings.
-    // PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
-  }
+  //   // TODO:  Try denser telemetry. eg: send binary representation of floats
+  //   //        rather than strings.
+  //   // PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
+  // }
 
   m_prevPose = m_odom->getPose();
   m_mutex.give();
