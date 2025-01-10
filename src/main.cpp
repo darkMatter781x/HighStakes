@@ -42,6 +42,8 @@ void initialize() {
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0xFFFF00);
   bot.calibrate();
 
+  bot.intakeLift.extend();
+
   bot.setPose({-36, -36, dimensions::field::REFEREE}, 48);
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
