@@ -1,4 +1,4 @@
-#!/bin/env bash
+#!/bin/bash
 
 # This script is used to generate the compile_commands.json file
 # which is used by the clangd language server to provide intellisense.

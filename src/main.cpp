@@ -12,8 +12,8 @@ void screen() {
     // Only print if auton selection is complete
     if (bot.selector.isLocked()) {
       pros::lcd::print(0, "target\tang\t=err");
-      pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lift.getTargetAngle(),
-                       bot.lift.calcLiftAngle(), bot.lift.calcError());
+      pros::lcd::print(1, "%4.2f\t-%4.2f\t=%4.2f", bot.lady.getTargetAngle(),
+                       bot.lady.calcLBAngle(), bot.lady.calcError());
       pros::lcd::print(3, "x:\t%fin", bot.getPose().x);
       pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
       pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
