@@ -6,7 +6,7 @@
 #include "pf/sensors/v5laser.h"
 #include "pros/misc.h"
 #include "pf/obstacles.h"
-#include "subsystems/LadyBrown.h"
+#include "subsystems/ladybrown.h"
 #include <memory>
 
 lemlib::Drivetrain RobotConfig::makeDrivetrain() const {

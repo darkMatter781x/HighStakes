@@ -3,7 +3,7 @@
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "subsystems/intake.h"
-#include "subsystems/LadyBrown.h"
+#include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"

@@ -8,6 +8,7 @@
 #include "subsystems/intake.h"
 #include "lemlib/util.hpp"
 #include "auton.h"
+#include "subsystems/ladybrown.h"
 #include <optional>
 
 using namespace dimensions::all;
