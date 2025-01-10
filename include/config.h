@@ -17,7 +17,7 @@ struct RobotConfig {
         pros::MotorGroup left;
         pros::MotorGroup right;
         pros::MotorGroup intake;
-        pros::MotorGroup lift;
+        pros::MotorGroup LadyBrown;
       private:
         friend struct RobotConfig;
         static Motors motors;
@@ -25,7 +25,7 @@ struct RobotConfig {
 
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
-        pros::adi::Pneumatics ringKicker;
+        pros::adi::Pneumatics kicker;
         pros::adi::Pneumatics doinker;
         pros::adi::Pneumatics intakeLift;
       private:
@@ -36,7 +36,7 @@ struct RobotConfig {
     struct Sensors {
         pros::Rotation vert;
         pros::Rotation hori;
-        pros::Rotation lift;
+        pros::Rotation lb;
         pros::IMU imu;
         pros::Optical intake;
         pros::adi::Potentiometer autonSelector;

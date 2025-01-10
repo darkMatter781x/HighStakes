@@ -1,9 +1,16 @@
 #include "main.h"
 #include "pros/misc.h"
+#include "pros/rtos.hpp"
 #include "robot.h"
+#include "subsystems/intake.h"
+#include "subsystems/LadyBrown.h"
 #include "tuning.h"
 #include "dimensions.h"
 #include "auton.h"
+#include <climits>
+#include <cstdlib>
+#include <iostream>
+#include <variant>
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -13,12 +20,10 @@ constexpr axis_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
 constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 
 constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
-constexpr button_t INTAKE_FILTER_TO_LIFT = pros::E_CONTROLLER_DIGITAL_R2;
 constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 
-constexpr button_t LIFT_UP = pros::E_CONTROLLER_DIGITAL_UP;
-constexpr button_t LIFT_DOWN = pros::E_CONTROLLER_DIGITAL_DOWN;
+constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
 
 // Pneumatic controls
 constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
@@ -37,7 +42,7 @@ std::string destToStrOp(Intake::DESTINATION dest) {
   switch (dest) {
     case Intake::MOGO: return "MOGO";
     case Intake::KICK: return "KICK";
-    case Intake::LIFT: return "LIFT";
+    case Intake::LB: return "LIFT";
   }
 }
 
@@ -66,11 +71,11 @@ void skillsMacro() {
                  {.minSpeed = 64, .earlyExitRange = 5});
   // Deploy basket
   bot.intake.outtake();
-  bot.lift.goToMiddle();
+  // bot.lift.goToMiddle();
   pros::delay(400);
 
   // Reset lift and intake
-  bot.lift.goToBottom();
+  // bot.lift.goToBottom();
   bot.intake.stop();
 
   // Go to mogo
@@ -118,24 +123,26 @@ void opcontrol() {
         [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
     skillsMacro();
   }
-
+  int time_since_press = INT_MAX-1000;
   while (true) {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
     // Intake control
-    if (master.get_digital(map::INTAKE_FILTER_TO_LIFT)) {
-      // Selected color to lift
-      bot.intake.intakeTo(filterColor, Intake::LIFT);
-      bot.intake.intakeTo(!filterColor, Intake::KICK);
-    } else if (master.get_digital(map::INTAKE)) {
+    if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button
 
       // Intake current color to mogo, other color to kicker
-      bot.intake.intakeTo(filterColor, Intake::MOGO);
-      bot.intake.intakeTo(!filterColor, Intake::KICK);
+      if (bot.lady.getState() == LadyBrown::COLLECT){
+        bot.intake.intakeTo(filterColor, Intake::LB);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      } else{
+        bot.intake.intakeTo(filterColor, Intake::MOGO);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      }
     } else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
     else bot.intake.stop();
+
 
     // Mogo control
     if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
@@ -147,9 +154,23 @@ void opcontrol() {
     if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
-    if (master.get_digital_new_press(map::LIFT_UP)) bot.lift.goUp();
-    if (master.get_digital_new_press(map::LIFT_DOWN)) bot.lift.goDown();
-
+    if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) {
+      if (bot.lady.getState() == LadyBrown::COLLECT) {
+        time_since_press = pros::millis();
+        std::cout << time_since_press << "\n";
+        bot.lady.nextState();
+      } else {
+        bot.lady.nextState();
+      }
+    }
+    if (pros::millis() > time_since_press + 500) {
+      bot.lady.goToIDLE();
+      time_since_press = INT_MAX-1000;
+    }
+    if (bot.lady.getState() == LadyBrown::COLLECT && (std::holds_alternative<Intake::IntakingToKick>(bot.intake.getState()) || std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))){
+      bot.lady.goToIDLE();
+    } 
+    
     // Toggle filtering color
     if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
       filterColor = !filterColor;
@@ -161,7 +182,6 @@ void opcontrol() {
         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
       tuningCLI();
 #endif
-
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

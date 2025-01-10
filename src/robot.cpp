@@ -6,6 +6,7 @@
 #include "pf/sensors/v5laser.h"
 #include "pros/misc.h"
 #include "pf/obstacles.h"
+#include "subsystems/LadyBrown.h"
 #include <memory>
 
 lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
@@ -114,10 +115,10 @@ Robot::Robot(const RobotConfig& config)
                     &config.tunables.driveCurve),
     m_intakeSensor(config.sensors.intake),
     m_intake {config.motors.intake, m_intakeSensor,
-              config.pneumatics.ringKicker, Intake::Config::config},
+              config.pneumatics.kicker, Intake::Config::config},
     intake(m_intake),
-    m_lift {config.motors.lift, config.sensors.lift, Lift::Config::config},
-    lift(m_lift), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
+    m_lady {config.motors.LadyBrown, config.sensors.lb, LadyBrown::Config::config},
+    lady(m_lady), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
     m_localization(makeLocalization(config)), localization(m_localization),

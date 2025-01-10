@@ -6,7 +6,7 @@ Intake::Config Intake::Config::config = {
     .intakingToLiftInches = 4,
     .outtakingToLiftDuration = 1800,
     .intakingToKickDuration = 8,
-    .idlingToKickDuration = 350,
+    .KickingRing = 350,
     .chainRatio =
         1.0 /* rot */ / (18.0 /* teeth */ * 1.0 /* cm/tooth */ * INCHES_PER_CM),
 };

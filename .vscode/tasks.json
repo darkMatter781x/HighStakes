@@ -42,9 +42,9 @@
       "label": "Build Compile Commands",
       "type": "shell",
       "command": "./scripts/compile_commands.sh",
-      "runOptions": {
-        "runOn": "folderOpen"
-      },
+      // "runOptions": {
+      //   "runOn": "folderOpen"
+      // },
       "problemMatcher": []
     },
     {

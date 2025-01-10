@@ -1,6 +1,8 @@
 #include "subsystems/intake.h"
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
+#include "subsystems/ladybrown.h"
+#include "robot.h"
 #include <cmath>
 #include <cstdio>
 
@@ -10,7 +12,7 @@ std::string destToStr(Intake::DESTINATION dest) {
   switch (dest) {
     case Intake::MOGO: return "MOGO";
     case Intake::KICK: return "KICK";
-    case Intake::LIFT: return "LIFT";
+    case Intake::LB: return "LIFT";
   }
 }
 
@@ -27,6 +29,7 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 }
 
 const Intake::State& Intake::getState() const { return m_state; }
+//const Intake::DESTINATION& Intake::getDestination() const { return dest; }
 
 void Intake::BaseState::start(
     Intake& intake) { /* printf("starting state\n"); */ }
@@ -64,13 +67,10 @@ void Intake::FilteringState::end(Intake& intake) {
 Intake::IntakingToKick::IntakingToKick(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
-Intake::IdlingToKick::IdlingToKick(Filtering afterState, COLOR color)
+Intake::KickingRing::KickingRing(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
-Intake::IntakingToLift::IntakingToLift(Filtering afterState, COLOR color)
-  : FilteringState(afterState, color) {}
-
-Intake::OuttakingToLift::OuttakingToLift(Filtering afterState, COLOR color)
+Intake::IntakingToLB::IntakingToLB(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
 Intake::IntakingToMogo::IntakingToMogo(Filtering afterState, COLOR color)
@@ -82,7 +82,7 @@ void Intake::IntakingToKick::update(Intake& intake) {
   printFiltering(afterState);
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
     // printf("naturally switching to idle\n");
-    intake.setState(IdlingToKick {afterState, color});
+    intake.setState(KickingRing {afterState, color});
   }
 }
 
@@ -90,8 +90,8 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   FilteringState::switchDest(intake, dest);
   // printf("switch from intaking to kick to %s\n", destToStr(dest).c_str());
   printFiltering(afterState);
-  if (dest == LIFT) {
-    IntakingToLift newState(afterState, color);
+  if (dest == LB) {
+    IntakingToLB newState(afterState, color);
     newState.startTime = this->startTime;
     intake.setState(newState);
   } else if (dest == MOGO) {
@@ -101,38 +101,34 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   }
 }
 
-void Intake::IdlingToKick::update(Intake& intake) {
-  intake.m_motors.move(-127);
-  // printf("idling to kick\n");
+void Intake::KickingRing::start(Intake& intake){
+  intake.m_motors.move(127);
+  intake.m_kicker.extend();
+}
+
+void Intake::KickingRing::end(Intake &intake){
+  intake.m_kicker.retract();
+  intake.numOfKickRings++;
+  intake.numOfRings++;
+  
+}
+ 
+void Intake::KickingRing::update(Intake& intake) {
   printFiltering(afterState);
-  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
-  if (pros::millis() - startTime > intake.m_conf.idlingToKickDuration) {
-    // printf("naturally switching to filtering\n");
+
+  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
     intake.setState(afterState);
-    intake.numOfKickRings++;
-    intake.numOfRings++;
   }
-}
+} 
 
-void Intake::IdlingToKick::start(Intake& intake) {
-  Intake::FilteringState::start(intake);
-  // intake.m_kicker.set_value(true);
-}
 
-void Intake::IdlingToKick::end(Intake& intake) {
-  Intake::FilteringState::start(intake);
-  // intake.m_kicker.set_value(false);
-}
-
-void Intake::IntakingToLift::update(Intake& intake) {
+void Intake::IntakingToLB::update(Intake& intake) {
   intake.m_motors.move(127);
   // if (pros::millis() % 200 < 10) printf("intaking to lift\n");
   // printf("intaking to lift, %4.2f\n", getInchesTraveled(intake));
-  if (getInchesTraveled(intake) > intake.m_conf.intakingToLiftInches)
-    intake.setState(OuttakingToLift {afterState, color});
 }
 
-void Intake::OuttakingToLift::update(Intake& intake) {
+/*void Intake::OuttakingToLift::update(Intake& intake) {
   // If we quickly change the direction of the intake,
   // it will decrease consistency of the intaking to the lift.
   // So, we delay the change a bit.
@@ -149,7 +145,9 @@ void Intake::OuttakingToLift::update(Intake& intake) {
   }
 }
 
-void Intake::IntakingToLift::switchDest(Intake& intake, DESTINATION dest) {
+*/
+
+void Intake::IntakingToLB::switchDest(Intake& intake, DESTINATION dest) {
   FilteringState::switchDest(intake, dest);
   if (dest == KICK) {
     IntakingToKick newState(afterState, color);
@@ -196,8 +194,8 @@ void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
     IntakingToKick newState(afterState, color);
     newState.startTime = this->startTime;
     intake.setState(newState);
-  } else if (dest == LIFT) {
-    IntakingToLift newState(afterState, color);
+  } else if (dest == LB) {
+    IntakingToLB newState(afterState, color);
     newState.startTime = this->startTime;
     intake.setState(newState);
   }
@@ -221,7 +219,7 @@ void Intake::Filtering::update(Intake& intake) {
   switch (destination) {
     case MOGO: intake.setState(IntakingToMogo {*this, color}); break;
     case KICK: intake.setState(IntakingToKick {*this, color}); break;
-    case LIFT: intake.setState(IntakingToLift {*this, color}); break;
+    case LB: intake.setState(IntakingToLB {*this, color}); break;
   }
 }
 
