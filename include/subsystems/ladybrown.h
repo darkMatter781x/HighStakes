@@ -6,19 +6,21 @@
 #include "subsystems.h"
 
 class LadyBrown : Subsystem {
-
-    public: 
-        enum State {
-            /* Lowest state where the lady brown does not effect the hooks */
-            IDLE,
-            /* Height where the lady brown picks up the ring from the hooks */
-            COLLECT,
-            /* Height where the you are able to score onto the wall stake by driving onto the wall stake */
-            SCORE,
-            /* Height where the lady brown scores without extra force from the drivetrain*/
-            /* brakes motor in case of emergency */
-            EMERGENCY_STOP,
-        };
+  public:
+    enum State {
+      /* Lowest state where the lady brown does not effect the hooks */
+      IDLE,
+      /* Height where the lady brown picks up the ring from the hooks */
+      COLLECT,
+      /* Height where the you are able to score onto the wall stake by driving
+         onto the wall stake */
+      SCORE,
+      /* Height where the lady brown scores without extra force from the
+         drivetrain brakes motor in case of emergency */
+      EMERGENCY_STOP,
+      /** Coast to touch ladder (for auto) */
+      COAST
+    };
 
     struct Config {
         /* target angle of lady brown for State::IDLE */
@@ -51,10 +53,12 @@ class LadyBrown : Subsystem {
     float getTargetAngle() const;
     /* returns the current angle of the lady brown in decrees */
     float calcLBAngle() const;
-    /** @returns Error between current lady brown angle and target lady brown angle.  */
+    /** @returns Error between current lady brown angle and target lady brown
+     * angle.  */
     float calcError() const;
 
-    LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation, Config& config);
+    LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
+              Config& config);
 
     void update() override;
 
@@ -67,6 +71,6 @@ class LadyBrown : Subsystem {
     void goToSCORE();
     void goToIDLE_SCORE();
 
-    /* cycles the lady brown to the next state */  
-    void nextState();  
+    /* cycles the lady brown to the next state */
+    void nextState();
 };
