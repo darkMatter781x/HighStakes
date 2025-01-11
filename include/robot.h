@@ -40,9 +40,11 @@ class Robot : private lemlib::Chassis {
 
     LadyBrown& lady;
     Intake& intake;
-    //pros::adi::Pneumatics& kicker;
+    /** Extended is up/inactive. */
     pros::adi::Pneumatics& mogoClamp;
+    /** Extended is down/active. */
     pros::adi::Pneumatics& doinker;
+    /** Extended is up/inactive. */
     pros::adi::Pneumatics& intakeLift;
     pros::Controller& gamepad;
     AutonSelector& selector;
