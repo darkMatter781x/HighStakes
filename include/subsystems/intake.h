@@ -152,6 +152,8 @@ class Intake : public Subsystem {
     /** @brief Intake specified color of rings to dest. */
     void intakeTo(COLOR color, DESTINATION dest);
 
+    //std::optional<COLOR> getFilterColor();
+
     std::optional<COLOR> getSensedRing();
 
     void update() override;

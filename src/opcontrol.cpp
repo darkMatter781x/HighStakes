@@ -6,6 +6,7 @@
 #include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
+#include "leds/functions/functions.h"
 #include "auton.h"
 #include <climits>
 #include <cstdlib>
@@ -106,6 +107,7 @@ void skillsMacro() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
+
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -178,8 +180,9 @@ void opcontrol() {
     }
 
     // Toggle filtering color
-    if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE))
+    if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE)) {
       filterColor = !filterColor;
+    }
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));

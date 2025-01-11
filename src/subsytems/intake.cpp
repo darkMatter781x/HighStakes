@@ -31,6 +31,7 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 }
 
 const Intake::State& Intake::getState() const { return m_state; }
+//std::optional<COLOR> Intake::getFilterColor() { return  }
 
 // const Intake::DESTINATION& Intake::getDestination() const { return dest; }
 
