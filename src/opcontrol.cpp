@@ -1,3 +1,4 @@
+#include "lemlib/util.hpp"
 #include "main.h"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
@@ -129,7 +130,9 @@ void opcontrol() {
   }
   int time_since_press = INT_MAX - 1000;
   while (true) {
-    if (bot.lady.getState() == LadyBrown::COAST && bot.lady.calcError() < 10) {
+    if (bot.lady.getState() == LadyBrown::COAST &&
+        lemlib::angleError(bot.lady.calcLBAngle(), bot.lady.m_config.idle,
+                           false) < 10) {
       bot.lady.setState(LadyBrown::IDLE);
     }
 
