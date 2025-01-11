@@ -1,9 +1,9 @@
 #include "subsystems/ladybrown.h"
+#include "lemlib/chassis/chassis.hpp"
 #include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
 #include "pros/motors.h"
 #include "robot.h"
-#include <iostream>
 
 void LadyBrown::update() {
   switch (m_state) {
@@ -17,14 +17,11 @@ void LadyBrown::update() {
       m_motors.brake();
       return;
     }
-    default: {
-    }
+    default: break;
   }
   const float error = calcError();
   const float output = std::min(8720.0f, m_pid.update(error));
   bool shouldBrake = m_exitCondition.update(error);
-  // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
-  // output);
   if (shouldBrake) {
     // if error > smallError, then don't brake and reset exit condition
     if (std::abs(error) > m_config.controllerSettings.smallError)
@@ -71,7 +68,16 @@ float LadyBrown::calcLBAngle() const {
 }
 
 float LadyBrown::calcError() const {
-  return lemlib::angleError(getTargetAngle(), calcLBAngle(), false);
+  using AngDir = lemlib::AngularDirection;
+  // constexpr AngDir CCW = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE;
+
+  const float currAngle = calcLBAngle();
+  // // If past max angle, then only turn counter clockwise (towards idle)
+  // // This prevents the lady brown from turning through itself.
+  // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
+  const AngDir dir = AngDir::AUTO;
+
+  return lemlib::angleError(getTargetAngle(), currAngle, false, dir);
 }
 
 const LadyBrown::State& LadyBrown::getState() { return m_state; }

@@ -129,6 +129,10 @@ void opcontrol() {
   }
   int time_since_press = INT_MAX - 1000;
   while (true) {
+    if (bot.lady.getState() == LadyBrown::COAST && bot.lady.calcError() < 10) {
+      bot.lady.setState(LadyBrown::IDLE);
+    }
+
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 

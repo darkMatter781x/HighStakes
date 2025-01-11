@@ -36,7 +36,7 @@ class LadyBrown : Subsystem {
         /* default config */
         static Config config;
     };
-
+  private:
     State m_state;
     Config& m_config;
     pros::MotorGroup& m_motors;
@@ -45,10 +45,7 @@ class LadyBrown : Subsystem {
     lemlib::PID m_pid;
 
     lemlib::ExitCondition m_exitCondition;
-
-    double counter = 0;
-    double prevCounter;
-
+  public:
     /* returns the target lift angle in degrees based on m_state and m_config */
     float getTargetAngle() const;
     /* returns the current angle of the lady brown in decrees */
@@ -56,7 +53,6 @@ class LadyBrown : Subsystem {
     /** @returns Error between current lady brown angle and target lady brown
      * angle.  */
     float calcError() const;
-
     LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
               Config& config);
 
