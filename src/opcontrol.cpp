@@ -173,7 +173,7 @@ void opcontrol() {
         bot.lady.nextState();
       }
     }
-    if (pros::millis() > time_since_press + 500) {
+    if (pros::millis() > time_since_press + 750) {
       bot.lady.goToIDLE();
       time_since_press = INT_MAX - 1000;
     }
@@ -190,11 +190,11 @@ void opcontrol() {
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
-#ifdef TUNING
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-      tuningCLI();
-#endif
+// #ifdef TUNING
+//     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+//         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+//       tuningCLI();
+// #endif
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

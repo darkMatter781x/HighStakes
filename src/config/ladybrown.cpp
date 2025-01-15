@@ -3,8 +3,8 @@
 
 LadyBrown::Config LadyBrown::Config::config {
     .idle = 0,
-    .collect = 25,
-    .score = 132.00,
+    .collect = 38.5,
+    .score = 159.00,
     .controllerSettings =
-        lemlib::ControllerSettings {65, 5, 220, 0, 4, 100, 8, 100, 0},
+        lemlib::ControllerSettings {300, 3, 1600, 0, 4, 100, 8, 100, 0},
 };
