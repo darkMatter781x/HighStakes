@@ -6,7 +6,7 @@
 #include "subsystems/ladybrown.h"
 #include "tuning.h"
 #include "dimensions.h"
-#include "leds/functions/functions.h"
+#include "leds/functions.h"
 #include "auton.h"
 #include <climits>
 #include <cstdlib>
@@ -134,6 +134,11 @@ void opcontrol() {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
+    // LED control
+    if (bot.led.getState() == LEDs::FILTER_COLOR){
+      bot.led.displayFilterColor(filterColor);
+    }
+    
     // Intake control
     if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button

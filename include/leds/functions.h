@@ -3,8 +3,12 @@
 #include "leds/colors.h"
 #include "leds/power.h"
 #include "leds/strip.h"
+#include "pros/motor_group.hpp"
+#include "pros/motors.h"
+#include "config.h"
 #include "subsystems.h"
 #include "subsystems/intake.h"
+#include <string>
 
 class LEDs : Subsystem {
   private:
@@ -22,6 +26,8 @@ class LEDs : Subsystem {
       /* Lights up the Color of the ring color the robot is intaking */
       FILTER_COLOR,
     };
+
+    int motors[8] = {12, 14, 17, 13, 15, 16, 11, 18};
 
     State m_state;
     COLOR filterColorLED;
@@ -41,6 +47,7 @@ class LEDs : Subsystem {
     void autonMessage(HexRGB color);
 
     void setState(State state);
+    State getState();
 
     void setToMESSAGE();
     void setToDisconnect();

@@ -1,12 +1,14 @@
-#include "leds/functions/functions.h"
+#include "leds/functions.h"
 #include "leds/colors.h"
 #include "leds/power.h"
 #include "leds/strip.h"
 #include "config.h"
 
+#include "pros/adi.hpp"
 #include "pros/misc.hpp"
+#include "pros/motors.hpp"
 #include "subsystems/intake.h"
- 
+#include <iterator>
 
 void LEDs::displayFilterColor(COLOR color) {
   if (color == ALLIANCE::RED) {
@@ -28,23 +30,24 @@ void LEDs::displayFilterColor(COLOR color) {
   }
 }
 
-void LEDs::displayDISCONNECT(int port){
+void LEDs::displayDISCONNECT(int port) {}
 
-}
+void LEDs::setState(State state) { m_state = state; }
 
-void LEDs::setState(State state){
-    m_state = state;
-}
-
-int LEDs::getMotorDisconect(){
-    
-}
-
-void LEDs::update(){
-    if (pros::competition::is_autonomous()){
-        
-    } 
-    if (pros::competition::is_field_control()){
-        displayFilterColor(filterColorLED);
+int LEDs::getMotorDisconect() {
+  for (int i = 0; i < std::size(LEDs::motors); i++){
+    pros::Device device(LEDs::motors[i]);
+    if (!device.is_installed()){
+      return motors[i];
     }
+  }
+  return 0;
+}
+
+LEDs::State LEDs::getState() { return m_state; }
+
+void LEDs::update() {
+  if (LEDs::getMotorDisconect() != 0){
+    LEDs::setState(DISCONNECT);
+  }
 }
