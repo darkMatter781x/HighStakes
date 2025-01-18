@@ -119,8 +119,8 @@ Robot::Robot(const RobotConfig& config)
                                                      Intake::Config::config},
     intake(m_intake), m_lady {config.motors.LadyBrown, config.sensors.lb,
                               LadyBrown::Config::config},
-    m_led(config.leds.leftLift, config.leds.rightLift,
-          config.leds.leftUnderGlow, config.leds.rightUnderGlow),
+    m_led{config.leds.leftLift, config.leds.rightLift,
+          config.leds.leftUnderGlow, config.leds.rightUnderGlow},
     lady(m_lady), m_config(config), led(m_led),
     m_gamepad(pros::E_CONTROLLER_MASTER), gamepad(m_gamepad),
     selector(

@@ -47,6 +47,7 @@ void initialize() {
   bot.setPose({-36, -36, dimensions::field::REFEREE}, 48);
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
+
   // // LED Testing
   // LED Testing
   // pros::delay(1000);

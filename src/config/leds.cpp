@@ -2,8 +2,8 @@
 
 // 1, 3, 4, 6 adi ports work
 RobotConfig::LEDs RobotConfig::LEDs::leds = {
-    .leftLift = LedStrip::create({8, 'C'}, 33, 0.1) /* nullptr */,
-    .rightLift = LedStrip::create({8, 'H'}, 33, 0.1) /* nullptr */,
-    .leftUnderGlow = LedStrip::create({18, 'C'}, 45, 0.1) /* nullptr */,
-    .rightUnderGlow = LedStrip::create({18, 'A'}, 45, 0.1) /* nullptr */,
+    .leftLift = LedStrip::create({20, 'B'}, 33, 0.1) /* nullptr */,
+    .rightLift = LedStrip::create({20, 'B'}, 33, 0.1) /* nullptr */,
+    .leftUnderGlow = LedStrip::create({19, 'A'}, 45, 0.1) /* nullptr */,
+    .rightUnderGlow = LedStrip::create({20, 'A'}, 45, 0.1) /* nullptr */,
 };
