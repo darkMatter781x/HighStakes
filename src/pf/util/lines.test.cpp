@@ -54,13 +54,12 @@ TEST(Lines, Ray_distanceTo_MissParallel) {
   EXPECT_FALSE(dist.has_value());
 }
 
-TEST(Lines, Ray_distanceTo_HitColinear) {
+TEST(Lines, Ray_distanceTo_MissColinear) {
   auto segment = lines::Segment {.start = {5, -3}, .vec = {-12, 4}};
   auto ray =
       lines::Ray {.start = {3, -1}, .direction = segment.vec.normalized()};
   auto dist = ray.distanceTo(segment);
-  ASSERT_TRUE(dist.has_value());
-  EXPECT_FLOAT_EQ(dist.value(), 0);
+  ASSERT_FALSE(dist.has_value());
 }
 
 TEST(Lines, Ray_distanceTo_MissBarely) {

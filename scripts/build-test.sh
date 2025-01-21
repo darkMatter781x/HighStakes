@@ -7,4 +7,4 @@ set -e
 cmake -S . -B build -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 cmake --build build
 cd build
-ctest --output-on-failure
+ctest --rerun_failed --output-on-failure

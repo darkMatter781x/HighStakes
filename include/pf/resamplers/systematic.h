@@ -2,6 +2,7 @@
 
 #include "pf/resamplers/resampler.h"
 #include <functional>
+#include <iostream>
 
 namespace resamplers {
 
@@ -32,7 +33,7 @@ template <size_t N> class Systematic : public Resampler<N> {
         // If current weight is at desired position
         while (currSum > position) {
           // Then add it to the indices
-          (*indices)[i_i] = i_w;
+          indices->at(i_i) = i_w;
           ++i_i;
           // And move to next position
           position += 1.f / N;

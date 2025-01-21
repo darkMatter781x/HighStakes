@@ -34,6 +34,9 @@ struct Ray {
 
     /**
      * @brief Finds the distance to line segment
+     *
+     * @warning If the lines are colinear, returns std::nullopt.
+     *
      * @returns Distance to line segment if the lines intersect.
      * @returns std::nullopt if the lines do not intersect.
      */
