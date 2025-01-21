@@ -3,6 +3,7 @@
 #include "Eigen/Core"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/pose.hpp"
+#include "lemlib/util.hpp"
 #include "pf/sensors/sensor.h"
 #include "pf/util/lines.h"
 #include "pf/util/stats.h"
@@ -72,28 +73,20 @@ class Laser {
           const Vec2 startOffset = ray.start;
           const stats::NormPDF pdf {measurement.dist, measurement.stdDev};
 
-          ray.start = particles[0];
-
-          // TODO: Improve safety (ray might not intersect anything)
-          // Assume all particles will intersect the same line
-          auto seg = laser.obstacles[ray.findFirstIntersect(laser.obstacles)
-                                         .value_or(std::pair {0.f, 0u})
-                                         .second];
-
           for (size_t i = 0; i < particles.size(); i++) {
-            // TODO: make cleaner
-            ray.start = particles[i] + startOffset;
-            auto intersectOpt = ray.distanceTo(seg);
-            if (const auto intersect = intersectOpt) {
-              weights[i] *= pdf.eval(*intersect);
-            } else {
-              if (const auto intersect =
-                      ray.findFirstIntersect(laser.obstacles)) {
-                weights[i] *= pdf.eval(intersect->first);
-              } else weights[i] = 0;
-            }
+            constexpr float fieldRadius = 72;
+            const Vec2 rayStart = startOffset + particles[i];
+
+            const float dist = std::min(
+                (fieldRadius * lemlib::sgn(ray.direction.x()) - rayStart.x()) /
+                    (ray.direction.x()),
+                (fieldRadius * lemlib::sgn(ray.direction.y()) - rayStart.y()) /
+                    (ray.direction.y())
+            );
+
+            weights[i] *= pdf.eval(dist);
           }
-        };
+        }
 
         Sensor(Laser& laser) : laser(laser) {}
     };
