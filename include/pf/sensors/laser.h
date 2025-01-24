@@ -7,6 +7,8 @@
 #include "pf/sensors/sensor.h"
 #include "pf/util/lines.h"
 #include "pf/util/stats.h"
+#include <algorithm>
+#include "profiler/profiler.h"
 
 namespace sensors {
 
@@ -77,12 +79,10 @@ class Laser {
             constexpr float fieldRadius = 72;
             const Vec2 rayStart = startOffset + particles[i];
 
-            const float dist = std::min(
-                (fieldRadius * lemlib::sgn(ray.direction.x()) - rayStart.x()) /
-                    (ray.direction.x()),
-                (fieldRadius * lemlib::sgn(ray.direction.y()) - rayStart.y()) /
-                    (ray.direction.y())
-            );
+            const float dist =
+                ((fieldRadius * ray.direction.cwiseSign() - rayStart).array() /
+                 ray.direction.array())
+                    .minCoeff();
 
             weights[i] *= pdf.eval(dist);
           }

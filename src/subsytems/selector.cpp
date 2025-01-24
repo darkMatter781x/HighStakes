@@ -29,7 +29,9 @@ AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
   for (auto a : m_autons) { printf("\t%s,\n", a.label); }
   printf("end m_autons\n");
 
+  #ifndef VEXIDE_SIMULATION
   pros::lcd::initialize();
+  #endif
   // Register the brain screen button callbacks.
   pros::lcd::register_btn0_cb([] {
     printf("left pressed\n");

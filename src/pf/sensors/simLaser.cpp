@@ -12,9 +12,9 @@ std::optional<Laser::Measurement> SimLaser::sense() {
   auto intersect = ray.findFirstIntersect(obstacles);
   if (!intersect) return {{0, 3}};
   float dist = intersect.value().first;
-  printf("[TELEMETRY.PF.LASERS]:%i,%f,%f,%f,%f\n", m_id, ray.start.x(),
-         ray.start.y(), ray.start.x() + dist * ray.direction.x(),
-         ray.start.y() + dist * ray.direction.y());
+  // printf("[TELEMETRY.PF.LASERS]:%i,%f,%f,%f,%f\n", m_id, ray.start.x(),
+  //        ray.start.y(), ray.start.x() + dist * ray.direction.x(),
+  //        ray.start.y() + dist * ray.direction.y());
   const float theta = m_botTheta + m_theta;
   const float stdDev = dist * .05f;
   dist += stdDev * distNoiseLaser(stats::rng);

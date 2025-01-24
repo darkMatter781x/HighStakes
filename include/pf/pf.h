@@ -4,6 +4,7 @@
 #include <cfloat>
 #include <memory>
 #include <numeric>
+#include "profiler/profiler.h"
 #include "pros/rtos.hpp"
 #include "pf/resamplers/resampler.h"
 #include "sensors/sensor.h"
@@ -75,9 +76,13 @@ template <typename P, size_t N> class ParticleFilter {
     void update(std::vector<std::unique_ptr<Sensor>>& sensors,
                 Resampler& resampler) {
       m_mutex.take();
-      // Update weights
-      for (std::unique_ptr<Sensor>& sensor : sensors)
-        sensor->update(*m_particles, *m_weights);
+
+      PROFILE_SECTION("PF.updateWeights", {
+        // Update weights
+        for (std::unique_ptr<Sensor>& sensor : sensors)
+          sensor->update(*m_particles, *m_weights);
+      })
+      
       // Normalize weights
       normalizeWeights(*m_weights);
 
