@@ -165,18 +165,19 @@ void opcontrol() {
 
     // Lift control
     if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) {
-      if (bot.lady.getState() == LadyBrown::COLLECT) {
+      /*if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
         bot.lady.nextState();
       } else {
         bot.lady.nextState();
-      }
+      } */
+      bot.lady.nextState();
     }
-    if (pros::millis() > time_since_press + 750) {
+    /*if (pros::millis() > time_since_press + 750) {
       bot.lady.goToIDLE();
       time_since_press = INT_MAX - 1000;
-    }
+    } */
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||

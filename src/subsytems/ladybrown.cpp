@@ -64,7 +64,7 @@ float LadyBrown::getTargetAngle() const {
 float LadyBrown::calcLBAngle() const {
   // Prevent lift from moving if rotation sensor is not installed
   if (!m_rotation.is_installed()) return getTargetAngle();
-  return m_rotation.get_angle() / 100.0;
+  return m_rotation.get_position() / 100.0;
 }
 
 float LadyBrown::calcError() const {
@@ -75,8 +75,12 @@ float LadyBrown::calcError() const {
   // // If past max angle, then only turn counter clockwise (towards idle)
   // // This prevents the lady brown from turning through itself.
   // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
-  const AngDir dir = AngDir::AUTO;
-
+  AngDir dir = AngDir::AUTO;
+  if (m_state == LadyBrown::IDLE){
+    dir = AngDir::CW_CLOCKWISE;
+  } else {
+    dir = AngDir::CCW_COUNTERCLOCKWISE;
+  }
   return lemlib::angleError(getTargetAngle(), currAngle, false, dir);
 }
 
