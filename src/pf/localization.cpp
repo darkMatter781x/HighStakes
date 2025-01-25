@@ -1,7 +1,6 @@
 #include "pf/localization.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/util.hpp"
-#include "pf/sensors/v5laser.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "profiler/profiler.h"
@@ -14,8 +13,8 @@ float uniform_float_0_to_1() {
 }
 
 template <size_t N, size_t M>
-std::unique_ptr<std::array<Eigen::Vector<float, M>, N>> makeZeroArray() {
-  auto arr = std::make_unique<std::array<Eigen::Vector<float, M>, N>>();
+std::unique_ptr<Eigen::Array<Eigen::Vector<float, M>, N, 1>> makeZeroArray() {
+  auto arr = std::make_unique<Eigen::Array<Eigen::Vector<float, M>, N, 1>>();
   std::fill(arr->begin(), arr->end(), Eigen::Vector<float, M>::Zero());
   return arr;
 }
@@ -36,11 +35,18 @@ Localization::Localization(const Config& config)
 
 static Localization::PF::Data printParticles(Localization::PF::Data data) {
   return data;
-  size_t i = 0;
+  std::discrete_distribution<> dist(data.weights->begin(),
+                                    data.weights->end());
+
   printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
-  for (; i < Localization::N; i++) {
-    printf("%f,%f,%f;", (*data.particles)[i].x(), (*data.particles)[i].y(),
-           (*data.weights)[i]);
+  for (size_t i = 0; i < Localization::N; i++) {
+    int j = dist(stats::rng); // Sample an index
+    // if (j >= data.particles->size() || j < 0) {
+    //   printf("Index out of bounds: %d\n", j);
+    //   continue;
+    // }
+    printf("%f,%f,%f;", (*data.particles)[j].x(), (*data.particles)[j].y(),
+           (*data.weights)[j]);
   }
   printf("\n");
   return data;
@@ -75,7 +81,7 @@ void Localization::update() {
 
     // TODO:  Try denser telemetry. eg: send binary representation of floats
     //        rather than strings.
-    // PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
+    PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
   }
 
   m_prevPose = m_odom->getPose();
@@ -117,7 +123,7 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
 
   // Updates particles to be centered around the new pose
   m_pf.modify([&gaussian](auto data) {
-    gaussian.makeSampler().sampleMany(*(data.particles));
+    gaussian.makeSampler().sampleMany<N>(*(data.particles));
     return data;
   });
   if (isInitialized) m_pf.modify(printParticles);
@@ -126,7 +132,7 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
 
 void Localization::calibrate() { m_odom->calibrate(); }
 
-void Localization::OdomPredictor::predict(std::array<P, N>& particles) {
+void Localization::OdomPredictor::predict(Eigen::Array<P, N, 1>& particles) {
   auto noiseSampler =
       stats::MultivariateGaussian<2> {.mu = {0, 0}, .sigma = m_covar}
           .makeSampler();

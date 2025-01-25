@@ -65,7 +65,7 @@ template <size_t N> struct MultivariateGaussian {
          * @param result Where to store the samples
          */
         template <size_t M>
-        void sampleMany(std::array<Eigen::Vector<float, N>, M>& result) {
+        void sampleMany(Eigen::Array<Eigen::Vector<float, N>, M, 1>& result) {
           for (auto& sample : result) { sampleOnce(sample); }
         }
     };
@@ -82,7 +82,7 @@ template <size_t N> struct MultivariateGaussian {
      * @time ignoring N: O(M)
      */
     template <size_t M> static Eigen::Vector<float, N>
-    calcMuFromSamples(const std::array<Eigen::Vector<float, N>, M>& samples) {
+    calcMuFromSamples(const Eigen::Array<Eigen::Vector<float, N>, M, 1>& samples) {
       Eigen::Vector<float, N> mu = Eigen::Vector<float, N>::Zero();
       for (const auto& sample : samples) mu += sample / M;
       // mu /= M;
@@ -100,7 +100,7 @@ template <size_t N> struct MultivariateGaussian {
      * @time ignoring N: O(M)
      */
     template <size_t M> static MultivariateGaussian<N>
-    fromSamples(const std::array<Eigen::Vector<float, N>, M>& samples) {
+    fromSamples(const Eigen::Array<Eigen::Vector<float, N>, M, 1>& samples) {
       // TODO: investigate performance and numerical stability, improving it if
       // necessary
       Eigen::Vector<float, N> mu = calcMuFromSamples(samples);

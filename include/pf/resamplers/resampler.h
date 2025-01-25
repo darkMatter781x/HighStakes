@@ -1,7 +1,7 @@
 #pragma once
 
-#include <array>
 #include <memory>
+#include "Eigen/Core"
 
 namespace resamplers {
 
@@ -11,7 +11,7 @@ namespace resamplers {
  */
 template <size_t N> struct Resampler {
     /** @returns Whether resampling should be performed. */
-    virtual bool shouldResample(const std::array<float, N>& weights) {
+    virtual bool shouldResample(const Eigen::Array<float, N, 1>& weights) {
       float sumOfSquares = 0;
       for (const float& weight : weights) { sumOfSquares += weight * weight; }
       /** Effective N - Approximates number of particles meaningfully
@@ -21,8 +21,8 @@ template <size_t N> struct Resampler {
     }
 
     /** @brief Modifies indices array to contain selected indices. */
-    virtual std::unique_ptr<std::array<size_t, N>>
-    resample(const std::array<float, N>& weights,
-             std::unique_ptr<std::array<size_t, N>> indices) = 0;
+    virtual std::unique_ptr<Eigen::Array<size_t, N, 1>>
+    resample(const Eigen::Array<float, N, 1>& weights,
+             std::unique_ptr<Eigen::Array<size_t, N, 1>> indices) = 0;
 };
 } // namespace resamplers

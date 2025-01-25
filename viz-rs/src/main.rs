@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use itertools::Itertools as _;
 
 use rerun::{
-    external::{arrow2, re_types},
+    external::{arrow2::{self, io::print}, re_types},
     ComponentBatch, RecordingStream, RecordingStreamError,
 };
 
@@ -246,9 +246,7 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
         let micros: i64 = micros_str.parse()?;
         // println!("parse_particles: string after removing micros {rest}");
 
-        // let (points, confidences): (Vec<_>, Vec<_>) = iter.unzip();
         rec.set_time_nanos("capture", micros * 1000i64);
-
         rec.log(
             "particles",
             &RerunParticles::new(
@@ -310,8 +308,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
 
-    let child_process = run_real_on_brain()?;
-    // let child_process = run_sim_on_brain()?;
+    // let child_process = run_real_on_brain()?;
+    let child_process = run_sim_on_brain()?;
     // let child_process = run_simulator()?;
     let child_stdout = child_process
         .stdout

@@ -66,7 +66,7 @@ class Localization : Subsystem {
         /** @brief Represents change in position, according to LemLib odom. */
         P m_displacement;
         /** @brief Updates particles according to LemLib odom. */
-        void predict(std::array<P, N>& particles) override;
+        void predict(Eigen::Array<P, N, 1>& particles) override;
 
         OdomPredictor(Eigen::Matrix2f covar);
     } m_predictor;
