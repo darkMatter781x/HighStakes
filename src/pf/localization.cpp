@@ -1,10 +1,15 @@
 #include "pf/localization.h"
+#include "Eigen/src/Core/Array.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/util.hpp"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "profiler/profiler.h"
 #include "util/stats.h"
+#include <cstdint>
+#include <cstdio>
+#include <unistd.h>
+#include "../liblz4/lz4file.h"
 
 extern "C" void vexSystemExitRequest();
 
@@ -30,14 +35,83 @@ Localization::Localization(const Config& config)
         config.sensorFactory(SensorFactoryConfig {.botPose = m_odom->getPose(),
                                                   .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
-    m_prevPose(m_odom->getPose()), m_mutex() {
+    m_prevPose(m_odom->getPose()), m_mutex(), m_logFile(nullptr),
+    m_compressedLogFile(nullptr) {
   setPose({0, 0, 0}, 10, true, true);
+  m_logFile = fopen("/usd/localization.log", "w");
+  m_compressedLogFile = fopen("/usd/localization.log.lz4", "w");
   isInitialized = true;
 }
 
-static Localization::PF::Data printParticles(Localization::PF::Data data) {
-  // return data;
+template <typename T> static void serialize(FILE* file, T* data);
+
+template <typename T>
+static void sendTelemetry(FILE* file, char* topic, T* data) {
+  std::size_t a = sizeof(T);
+
+  fputs(topic, file);
+  fputs("\0", file);
+  fputs(reinterpret_cast<const char*>(sizeof(T)), file);
+  serialize(file, data);
+  fputs("\n", file);
+}
+
+// template <typename T, int N>
+// std::vector<char> compressData(const Eigen::Array<T, N, 1>& input) {
+//   // Calculate the maximum possible compressed size
+//   int maxCompressedSize = LZ4_compressBound(N * sizeof(T));
+
+//   // Allocate a buffer for the compressed data
+//   std::vector<char> compressedData(maxCompressedSize);
+
+//   // Compress the data
+//   int compressedSize = LZ4_compress_fast(
+//       reinterpret_cast<const char*>(input.data()), compressedData.data(),
+//       input.size(), maxCompressedSize, 1);
+
+//   if (compressedSize <= 0) { throw std::runtime_error("Compression failed!");
+//   }
+
+//   // Resize the buffer to the actual compressed size
+//   compressedData.resize(compressedSize);
+
+//   return compressedData;
+// }
+
+// template <> void
+// serialize<Localization::PF::Data>(FILE* file, Localization::PF::Data* data) {
+//   auto compressedParticleData = compressData(*data->particles);
+//   fwrite(compressedParticleData.data(), compressedParticleData.size(), 1,
+//   file);
+
+//   auto compressedWeightData = compressData(*data->weights);
+//   fwrite(compressedWeightData.data(), compressedWeightData.size(), 1, file);
+// }
+
+template <typename T, int N>
+void writeLZ4Data(LZ4_writeFile_t* lz4File, const Eigen::Array<T, N, 1>& data) {
+  size_t compressedSize =
+      LZ4F_write(lz4File, reinterpret_cast<const char*>(data.data()),
+                 sizeof(T) * data.size());
+  if (LZ4F_isError(compressedSize)) {
+    LZ4F_writeClose(lz4File);
+    throw std::runtime_error("Failed to compress and write data!");
+  }
+}
+
+static LZ4_writeFile_t* lz4File;
+
+Localization::PF::Data
+Localization::printParticles(Localization::PF::Data data) const {
   std::discrete_distribution<> dist(data.weights->begin(), data.weights->end());
+
+  if (lz4File == nullptr) {
+    LZ4F_errorCode_t maybeErr =
+        LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
+    if (LZ4F_isError(maybeErr)) {
+      throw std::runtime_error("Failed to initialize LZ4 compression context!");
+    }
+  }
 
   printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
   for (size_t i = 0; i < 25; i++) {
@@ -49,6 +123,18 @@ static Localization::PF::Data printParticles(Localization::PF::Data data) {
     printf("%f,%f,%f;", (*data.particles)[j].x(), (*data.particles)[j].y(),
            (*data.weights)[j]);
   }
+  const auto time = Eigen::Array<uint64_t, 1, 1> {pros::micros()};
+  writeLZ4Data(lz4File, time);
+  fwrite(&time, sizeof(time), 1, m_logFile);
+  writeLZ4Data(lz4File, *data.particles);
+  fwrite(&*data.particles, sizeof(*data.particles), 1, m_logFile);
+  writeLZ4Data(lz4File, *data.weights);
+  fwrite(&*data.weights, sizeof(*data.weights), 1, m_logFile);
+  // PI used as a delimiter cuz why not
+  // fputs("31415926", m_logFile);
+  // m_logFile << reinterpret_cast<const
+  // char*>(sizeof(Localization::PF::Data));
+
   printf("\n");
   return data;
 }
@@ -58,8 +144,12 @@ static Localization::PF::Data printParticles(Localization::PF::Data data) {
 void Localization::update() {
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
+
+  static bool done = false;
+  if (done) return;
+
   // TODO: Extract timing code to a Timer class
-  static size_t iteration = 0;  
+  static size_t iteration = 0;
   START_PROFILE("LL.update()") // Starts profiled section
   m_mutex.take();
 
@@ -82,7 +172,11 @@ void Localization::update() {
 
     // TODO:  Try denser telemetry. eg: send binary representation of floats
     //        rather than strings.
-    PROFILE_SECTION("PF.printParticles", { m_pf.modify(printParticles); })
+    PROFILE_SECTION("PF.printParticles", {
+      m_pf.modify([this](auto arg) -> auto {
+        return this->printParticles(std::move(arg));
+      });
+    })
   }
 
   m_prevPose = m_odom->getPose();
@@ -100,6 +194,10 @@ void Localization::update() {
     printf("[ProfSummary.End]\n");
 
     pros::delay(1000);
+    done = true;
+    LZ4F_writeClose(lz4File);
+    fclose(m_logFile);
+    fclose(m_compressedLogFile);
     vexSystemExitRequest();
   }
 #endif
@@ -127,7 +225,10 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
     gaussian.makeSampler().sampleMany<N>(*(data.particles));
     return data;
   });
-  if (isInitialized) m_pf.modify(printParticles);
+  if (isInitialized)
+    m_pf.modify([this](auto arg) -> auto {
+      return this->printParticles(std::move(arg));
+    });
   m_mutex.give();
 }
 
