@@ -71,7 +71,7 @@ static Localization makeRealLocalization(const RobotConfig& config) {
       .odom = makeRealOdom(config),
       .obstacles = getObstacles(),
       .sensorFactory = factory,
-      .covar = Eigen::Matrix2f::Identity() * .05,
+      .covar = Eigen::Matrix2f::Identity() * .025,
   }};
 }
 
@@ -115,10 +115,10 @@ Robot::Robot(const RobotConfig& config)
                     config.tunables.angularController, config.makeSensors(),
                     &config.tunables.driveCurve),
     m_intakeSensor(config.sensors.intake),
-    m_intake {config.motors.intake, m_intakeSensor,
-              config.pneumatics.kicker, Intake::Config::config},
-    intake(m_intake),
-    m_lady {config.motors.LadyBrown, config.sensors.lb, LadyBrown::Config::config},
+    m_intake {config.motors.intake, m_intakeSensor, config.pneumatics.kicker,
+              Intake::Config::config},
+    intake(m_intake), m_lady {config.motors.LadyBrown, config.sensors.lb,
+                              LadyBrown::Config::config},
     lady(m_lady), m_config(config), m_gamepad(pros::E_CONTROLLER_MASTER),
     gamepad(m_gamepad), selector(AutonSelector::getRef(
                             config.sensors.autonSelector, m_intakeSensor)),
