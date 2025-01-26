@@ -347,7 +347,7 @@ fn telemetry_from_binary_data<R: Read>(data: BufReader<R>) -> Vec<TelemetryEntry
             let vec: Vec<u8> = chunk
                 .try_collect()
                 .expect("could not collect chunk into vec");
-            println!("vec.len(): {}", vec.len());
+            // println!("vec.len(): {}", vec.len());
             if vec.len() != ENTRY_SIZE {
                 return None;
             }
