@@ -41,6 +41,10 @@ void LadyBrown::update() {
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 
+  if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30){
+    m_rotation.set_position(0);
+  }
+
   if (m_state == LadyBrown::SCORE) {
     if (calcLBAngle() > 160) {
       dir = AngDir::CCW_COUNTERCLOCKWISE;
@@ -48,7 +52,13 @@ void LadyBrown::update() {
       dir = AngDir::AUTO;
     }
   }
-  
+  if (m_state == LadyBrown::IDLE) {
+    if (calcLBAngle() < 290 && calcLBAngle() > 75) {
+      dir = AngDir::CW_CLOCKWISE;
+    } else {
+      dir = AngDir::AUTO;
+    }
+  }
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
@@ -65,6 +75,7 @@ float LadyBrown::getTargetAngle() const {
   switch (m_state) {
     case State::IDLE: return m_config.idle;
     case State::COLLECT: return m_config.collect;
+    case State::IDLE_SCORE: return m_config.idle_collect;
     case State::SCORE: return m_config.score;
     default: return NAN;
   }
@@ -98,6 +109,8 @@ void LadyBrown::goToIDLE() { setState(State::IDLE); }
 
 void LadyBrown::goToCOLLECT() { setState(State::COLLECT); }
 
+void LadyBrown::goToIDLE_SCORE() { setState(State::IDLE_SCORE); }
+
 void LadyBrown::goToSCORE() { setState(State::SCORE); }
 
 void LadyBrown::nextState() {
@@ -106,7 +119,8 @@ void LadyBrown::nextState() {
       dir = AngDir::AUTO;
       goToCOLLECT();
       break;
-    case State::COLLECT: goToSCORE(); break;
+    case State::COLLECT: goToIDLE_SCORE(); break;
+    case State::IDLE_SCORE: goToSCORE(); break;
     case State::SCORE: goToIDLE(); break;
     default: goToIDLE(); break;
   }

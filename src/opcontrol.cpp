@@ -168,14 +168,14 @@ void opcontrol() {
       if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
-        bot.intake.outtake();
+        //bot.intake.outtake();
         bot.lady.nextState();
       } else {
         bot.lady.nextState();
       } 
     }
     if (pros::millis() > time_since_press + 100) {
-      bot.intake.stop();
+      //bot.intake.stop();
     } 
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(

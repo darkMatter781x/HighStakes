@@ -105,27 +105,27 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::KickingRing::update(Intake& intake) {
-   intake.m_motors.move(-127);
-   printf("idling to kick\n");
+  printf("idling to kick\n");
   printFiltering(afterState);
-  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
+  if (pros::millis() % 200 < 10) printf("idling to kick\n");
   if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
      printf("naturally switching to filtering\n");
     intake.setState(afterState);
-    intake.numOfKickRings++;
-    intake.numOfRings++;
   }
 }
 
 void Intake::KickingRing::start(Intake& intake) {
   printf("idling to kick\n");
   Intake::FilteringState::start(intake);
+  intake.m_motors.move(-127);
   // intake.m_kicker.set_value(true);
 }
 
 void Intake::KickingRing::end(Intake& intake) {
   printf("idling to kick\n");
   Intake::FilteringState::start(intake);
+      intake.numOfKickRings++;
+    intake.numOfRings++;
   // intake.m_kicker.set_value(false);
 }
 
@@ -311,7 +311,8 @@ std::optional<COLOR> Intake::Sensor::getRing() const {
   if (m_optical.get_proximity() < 200) return std::nullopt;
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
   printf("hueRem: %f\n", hueRem);
-  if (std::abs(hueRem) < 60) return COLOR::RED;
+  if (std::abs(hueRem) < 60) return COLOR::RED; printf("red!");
+  printf("blue!");
   return COLOR::BLUE;
 }
 

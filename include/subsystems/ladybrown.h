@@ -12,6 +12,8 @@ class LadyBrown : Subsystem {
       IDLE,
       /* Height where the lady brown picks up the ring from the hooks */
       COLLECT,
+      /* Height where the robot is able to intake rings with a ring in the lady brown*/
+      IDLE_SCORE,
       /* Height where the you are able to score onto the wall stake by driving
          onto the wall stake */
       SCORE,
@@ -27,6 +29,8 @@ class LadyBrown : Subsystem {
         float idle;
         /* target angle of lady brown for State::COLLECT */
         float collect;
+        /*target angle of lady brown for State::IDLE_COLLECT*/
+        float idle_collect;
         /* target angle of lady brown for State::MOVE_SCORE */
         float score;
 
