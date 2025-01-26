@@ -11,7 +11,7 @@ std::optional<Laser::Measurement> V5Laser::sense() {
   const Length dist = dist_mm * mm;
   const int size = m_sensor.get_object_size();
   // Likely hitting non wall
-  if (size < 70) return std::nullopt;
+  if (size < 60) return std::nullopt;
   // printf("dist: %fmm\n", dist_mm);
   // printf("dist: %fin\n", dist);
   // printf("size: %i\n", size);
