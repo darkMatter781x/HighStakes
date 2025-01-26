@@ -8,6 +8,7 @@
 #include "resamplers/systematic.h"
 #include "pf/util/lines.h"
 #include "subsystems.h"
+#include <cstdio>
 #include <memory>
 
 /**
@@ -50,6 +51,8 @@ class Localization : Subsystem {
         Eigen::Matrix2f covar;
     };
   private:
+    FILE* m_logFile;
+    FILE* m_compressedLogFile;
     PF m_pf;
     std::shared_ptr<Odom> m_odom;
 
@@ -75,6 +78,8 @@ class Localization : Subsystem {
     SensorVector m_sensors;
 
     resamplers::Systematic<N> m_resampler;
+
+    Localization::PF::Data printParticles(Localization::PF::Data data) const;
   public:
     void update() override;
 

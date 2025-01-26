@@ -41,7 +41,7 @@ void LadyBrown::update() {
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 
-  if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30){
+  if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30) {
     m_rotation.set_position(0);
   }
 
@@ -93,7 +93,7 @@ float LadyBrown::calcError() const {
   // // If past max angle, then only turn counter clockwise (towards idle)
   // // This prevents the lady brown from turning through itself.
   // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
-  return lemlib::angleError(getTargetAngle(), currAngle, false, dir);
+  return getTargetAngle() - currAngle;
 }
 
 const LadyBrown::State& LadyBrown::getState() { return m_state; }

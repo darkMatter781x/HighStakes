@@ -14,8 +14,9 @@ EXTRA_INCDIR=$(ROOT)/include/packages
 
 WARNFLAGS+=
 EXTRA_C_BOTH_FLAGS=-D_PROS_INCLUDE_LIBLVGL_LLEMU_H -D_PROS_INCLUDE_LIBLVGL_LLEMU_HPP
-EXTRA_C_BOTH_FLAGS+=-Wno-deprecated-enum-enum-conversion 
 # EXTRA_C_BOTH_FLAGS+=-DENABLE_PROFILING
+
+EXTRA_CXXFLAGS+=-Wno-deprecated-enum-enum-conversion
 
 ifndef SIM
 
@@ -27,7 +28,7 @@ BINDIR=$(ROOT)/bin/bot
 else
 $(info COMPILING FOR SIM)
 
-USE_PACKAGE:=1
+USE_PACKAGE:=0
 # TODO: Measure performance impact of -Ofast vs -O3
 # TODO: Figure out potential safety concerns of -Ofast
 # TODO: Add flag for all targets

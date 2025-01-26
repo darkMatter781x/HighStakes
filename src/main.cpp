@@ -30,11 +30,6 @@ void screen() {
  */
 void initialize() {
   pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
-#ifdef VEXIDE_SIMULATION
-#else
-  pros::lcd::initialize();
-#endif
-  printf("Initialized!\n");
 
   // ensure robot is initialized
   Robot::get();
