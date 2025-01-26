@@ -5,7 +5,6 @@
 #include "subsystems/selector.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
-#include "subsystems/lift.h"
 #include "subsystems/ladybrown.h"
 #include "color.h"
 #include <memory>

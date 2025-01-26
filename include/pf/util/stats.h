@@ -25,7 +25,7 @@ class NormPDF {
     const float m_coeff;
   public:
     NormPDF(float mu, float sigma)
-      : m_mu(mu), m_sigma(sigma), m_coeff(1 / sqrt(2 * M_PI) * m_sigma) {};
+      : m_mu(mu), m_sigma(sigma), m_coeff(1 / (sqrt(2 * M_PI) * m_sigma)) {};
 
     inline float eval(float x) const {
       return m_coeff * exp(-.5 * pow((x - m_mu) / m_sigma, 2));
@@ -81,8 +81,8 @@ template <size_t N> struct MultivariateGaussian {
      *
      * @time ignoring N: O(M)
      */
-    template <size_t M> static Eigen::Vector<float, N>
-    calcMuFromSamples(const Eigen::Array<Eigen::Vector<float, N>, M, 1>& samples) {
+    template <size_t M> static Eigen::Vector<float, N> calcMuFromSamples(
+        const Eigen::Array<Eigen::Vector<float, N>, M, 1>& samples) {
       Eigen::Vector<float, N> mu = Eigen::Vector<float, N>::Zero();
       for (const auto& sample : samples) mu += sample / M;
       // mu /= M;

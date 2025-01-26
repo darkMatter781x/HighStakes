@@ -32,6 +32,12 @@ template <size_t N> class Systematic : public Resampler<N> {
 
         // If current weight is at desired position
         while (currSum > position) {
+          if (i_i >= N) {
+            printf("Systematic: Index out of bounds: %d\n", i_i);
+            printf("currSum: %f\n", currSum);
+            printf("position: %f\n", position);
+            break;
+          }
           // Then add it to the indices
           (*indices)[i_i] = i_w;
           ++i_i;

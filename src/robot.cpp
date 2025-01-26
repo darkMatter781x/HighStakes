@@ -66,6 +66,7 @@ static Localization makeRealLocalization(const RobotConfig& config) {
     }
     return sensors;
   };
+  printf("Make real localization\n");
   return {Localization::Config {
       .odom = makeRealOdom(config),
       .obstacles = getObstacles(),
