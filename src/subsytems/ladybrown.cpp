@@ -40,6 +40,15 @@ void LadyBrown::update() {
   }
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
+
+  if (m_state == LadyBrown::SCORE) {
+    if (calcLBAngle() > 160) {
+      dir = AngDir::CCW_COUNTERCLOCKWISE;
+    } else {
+      dir = AngDir::AUTO;
+    }
+  }
+  
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
@@ -68,19 +77,11 @@ float LadyBrown::calcLBAngle() const {
 }
 
 float LadyBrown::calcError() const {
-  using AngDir = lemlib::AngularDirection;
   // constexpr AngDir CCW = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE;
-
   const float currAngle = calcLBAngle();
   // // If past max angle, then only turn counter clockwise (towards idle)
   // // This prevents the lady brown from turning through itself.
   // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
-  AngDir dir = AngDir::AUTO;
-  if (m_state == LadyBrown::IDLE){
-    dir = AngDir::CW_CLOCKWISE;
-  } else {
-    dir = AngDir::CCW_COUNTERCLOCKWISE;
-  }
   return lemlib::angleError(getTargetAngle(), currAngle, false, dir);
 }
 
@@ -101,7 +102,10 @@ void LadyBrown::goToSCORE() { setState(State::SCORE); }
 
 void LadyBrown::nextState() {
   switch (m_state) {
-    case State::IDLE: goToCOLLECT(); break;
+    case State::IDLE:
+      dir = AngDir::AUTO;
+      goToCOLLECT();
+      break;
     case State::COLLECT: goToSCORE(); break;
     case State::SCORE: goToIDLE(); break;
     default: goToIDLE(); break;

@@ -46,6 +46,8 @@ class LadyBrown : Subsystem {
 
     lemlib::ExitCondition m_exitCondition;
   public:
+    using AngDir = lemlib::AngularDirection;
+    AngDir dir = AngDir::AUTO;
     /* returns the target lift angle in degrees based on m_state and m_config */
     float getTargetAngle() const;
     /* returns the current angle of the lady brown in decrees */

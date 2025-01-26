@@ -104,23 +104,29 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
   }
 }
 
+void Intake::KickingRing::update(Intake& intake) {
+   intake.m_motors.move(-127);
+   printf("idling to kick\n");
+  printFiltering(afterState);
+  // if (pros::millis() % 200 < 10) printf("idling to kick\n");
+  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
+     printf("naturally switching to filtering\n");
+    intake.setState(afterState);
+    intake.numOfKickRings++;
+    intake.numOfRings++;
+  }
+}
+
 void Intake::KickingRing::start(Intake& intake) {
-  intake.m_motors.move(POWER);
-  intake.m_kicker.extend();
+  printf("idling to kick\n");
+  Intake::FilteringState::start(intake);
+  // intake.m_kicker.set_value(true);
 }
 
 void Intake::KickingRing::end(Intake& intake) {
-  intake.m_kicker.retract();
-  intake.numOfKickRings++;
-  intake.numOfRings++;
-}
-
-void Intake::KickingRing::update(Intake& intake) {
-  printFiltering(afterState);
-
-  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
-    intake.setState(afterState);
-  }
+  printf("idling to kick\n");
+  Intake::FilteringState::start(intake);
+  // intake.m_kicker.set_value(false);
 }
 
 void Intake::IntakingToLB::update(Intake& intake) {
@@ -233,13 +239,13 @@ void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
 
 void Intake::Filtering::start(Intake& intake) {
   Intake::BaseState::start(intake);
-  // printf("starting filtering\n");
+   printf("starting filtering\n");
   // intake.m_optical.set_led_pwm(100);
 }
 
 void Intake::Filtering::end(Intake& intake) {
   Intake::BaseState::end(intake);
-  // printf("ending filtering state\n");
+   printf("ending filtering state\n");
   // intake.m_optical.set_led_pwm(0);
 }
 
@@ -304,7 +310,7 @@ std::optional<COLOR> Intake::Sensor::getRing() const {
 
   if (m_optical.get_proximity() < 200) return std::nullopt;
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
-  // printf("hueRem: %f\n", hueRem);
+  printf("hueRem: %f\n", hueRem);
   if (std::abs(hueRem) < 60) return COLOR::RED;
   return COLOR::BLUE;
 }
