@@ -2,16 +2,57 @@
 #include "Eigen/src/Core/Array.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/util.hpp"
+#include "pros/misc.h"
 #include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "profiler/profiler.h"
 #include "util/stats.h"
 #include <cstdint>
 #include <cstdio>
+#include <string>
 #include <unistd.h>
+#include <fstream>
 #include "../liblz4/lz4file.h"
 
 extern "C" void vexSystemExitRequest();
+extern "C" int32_t vexControllerGet(int id, int button);
+
+inline static bool isMasterControllerPowerPressed() {
+  return vexControllerGet(pros::controller_id_e_t::E_CONTROLLER_MASTER,
+                          pros::controller_digital_e_t::E_CONTROLLER_DIGITAL_A +
+                              1) == true;
+}
+
+/** @brief Function to read, increment, and update a value in a file */
+int incrementValueInFile(const std::string& filename) {
+  // Step 1: Open the file for reading
+  std::ifstream inFile(filename);
+  if (!inFile) {
+    std::cerr << "Error opening file for reading!" << std::endl;
+    return -1; // Return -1 to indicate an error
+  }
+
+  // Step 2: Read the value from the file
+  std::int64_t value;
+  inFile >> value;
+  inFile.close();
+
+  // Step 3: Increment the value
+  value++;
+
+  // Open the file for writing
+  std::ofstream outFile(filename);
+  if (!outFile) {
+    std::cerr << "Error opening file for writing!" << std::endl;
+    return -1; // Return -1 to indicate an error
+  }
+
+  // Write the incremented value back to the file
+  outFile << value;
+  outFile.close();
+
+  return value;
+}
 
 /** Uniform distribution for resampling */
 float uniform_float_0_to_1() {
@@ -38,55 +79,23 @@ Localization::Localization(const Config& config)
     m_prevPose(m_odom->getPose()), m_mutex(), m_logFile(nullptr),
     m_compressedLogFile(nullptr) {
   setPose({0, 0, 0}, 10, true, true);
-  m_logFile = fopen("/usd/localization.log", "w");
-  m_compressedLogFile = fopen("/usd/localization.log.lz4", "w");
+  std::int64_t index = incrementValueInFile("/usd/localization.index");
+  printf("localization index: %lli", index);
+  // if no errors incrementing value
+  if (index != -1) {
+    std::string logFileNameStr =
+        "/usd/localization." + std::to_string(index) + ".log";
+    const char* logFileName = logFileNameStr.c_str();
+    std::string compressedLogFileNameStr =
+        "/usd/localization." + std::to_string(index) + ".log.lz4";
+    const char* compressedLogFileName = compressedLogFileNameStr.c_str();
+
+    m_logFile = fopen(logFileName, "w");
+    m_compressedLogFile = fopen(compressedLogFileName, "w");
+  }
+
   isInitialized = true;
 }
-
-template <typename T> static void serialize(FILE* file, T* data);
-
-template <typename T>
-static void sendTelemetry(FILE* file, char* topic, T* data) {
-  std::size_t a = sizeof(T);
-
-  fputs(topic, file);
-  fputs("\0", file);
-  fputs(reinterpret_cast<const char*>(sizeof(T)), file);
-  serialize(file, data);
-  fputs("\n", file);
-}
-
-// template <typename T, int N>
-// std::vector<char> compressData(const Eigen::Array<T, N, 1>& input) {
-//   // Calculate the maximum possible compressed size
-//   int maxCompressedSize = LZ4_compressBound(N * sizeof(T));
-
-//   // Allocate a buffer for the compressed data
-//   std::vector<char> compressedData(maxCompressedSize);
-
-//   // Compress the data
-//   int compressedSize = LZ4_compress_fast(
-//       reinterpret_cast<const char*>(input.data()), compressedData.data(),
-//       input.size(), maxCompressedSize, 1);
-
-//   if (compressedSize <= 0) { throw std::runtime_error("Compression failed!");
-//   }
-
-//   // Resize the buffer to the actual compressed size
-//   compressedData.resize(compressedSize);
-
-//   return compressedData;
-// }
-
-// template <> void
-// serialize<Localization::PF::Data>(FILE* file, Localization::PF::Data* data) {
-//   auto compressedParticleData = compressData(*data->particles);
-//   fwrite(compressedParticleData.data(), compressedParticleData.size(), 1,
-//   file);
-
-//   auto compressedWeightData = compressData(*data->weights);
-//   fwrite(compressedWeightData.data(), compressedWeightData.size(), 1, file);
-// }
 
 template <typename T, int N>
 void writeLZ4Data(LZ4_writeFile_t* lz4File, const Eigen::Array<T, N, 1>& data) {
@@ -103,39 +112,39 @@ static LZ4_writeFile_t* lz4File;
 
 Localization::PF::Data
 Localization::printParticles(Localization::PF::Data data) const {
-  std::discrete_distribution<> dist(data.weights->begin(), data.weights->end());
-
-  if (lz4File == nullptr) {
-    LZ4F_errorCode_t maybeErr =
-        LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
-    if (LZ4F_isError(maybeErr)) {
-      throw std::runtime_error("Failed to initialize LZ4 compression context!");
+  // Print live telemetry
+  if (false) {
+    printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
+    std::discrete_distribution<> dist(data.weights->begin(),
+                                      data.weights->end());
+    for (size_t i = 0; i < 25; i++) {
+      int j = dist(stats::rng); // Sample an index
+      printf("%f,%f,%f;", (*data.particles)[j].x(), (*data.particles)[j].y(),
+             (*data.weights)[j]);
     }
+    printf("\n");
   }
 
-  printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
-  for (size_t i = 0; i < 25; i++) {
-    int j = dist(stats::rng); // Sample an index
-    // if (j >= data.particles->size() || j < 0) {
-    //   printf("Index out of bounds: %d\n", j);
-    //   continue;
-    // }
-    printf("%f,%f,%f;", (*data.particles)[j].x(), (*data.particles)[j].y(),
-           (*data.weights)[j]);
-  }
-  const auto time = Eigen::Array<uint64_t, 1, 1> {pros::micros()};
-  writeLZ4Data(lz4File, time);
-  fwrite(&time, sizeof(time), 1, m_logFile);
-  writeLZ4Data(lz4File, *data.particles);
-  fwrite(&*data.particles, sizeof(*data.particles), 1, m_logFile);
-  writeLZ4Data(lz4File, *data.weights);
-  fwrite(&*data.weights, sizeof(*data.weights), 1, m_logFile);
-  // PI used as a delimiter cuz why not
-  // fputs("31415926", m_logFile);
-  // m_logFile << reinterpret_cast<const
-  // char*>(sizeof(Localization::PF::Data));
+  // sd card is attached
+  if (m_logFile != NULL) {
+    if (lz4File == nullptr) {
+      LZ4F_errorCode_t maybeErr =
+          LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
+      if (LZ4F_isError(maybeErr)) {
+        throw std::runtime_error(
+            "Failed to initialize LZ4 compression context!");
+      }
+    }
 
-  printf("\n");
+    const auto time = Eigen::Array<uint64_t, 1, 1> {pros::micros()};
+    writeLZ4Data(lz4File, time);
+    // fwrite(&time, sizeof(time), 1, m_logFile);
+    writeLZ4Data(lz4File, *data.particles);
+    // fwrite(&*data.particles, sizeof(*data.particles), 1, m_logFile);
+    writeLZ4Data(lz4File, *data.weights);
+    // fwrite(&*data.weights, sizeof(*data.weights), 1, m_logFile);
+  }
+
   return data;
 }
 
@@ -187,23 +196,27 @@ void Localization::update() {
   iteration++;
 #ifdef ENABLE_PROFILING
   Profiler::get().printReport();
-  if (iteration == 1000) {
+#endif
+
+  if (isMasterControllerPowerPressed()) {
     printf("[ProfSummary.Start]\n"); // Used by time script to identify which
                                      // data to put in log file
+#ifdef ENABLE_PROFILING
     Profiler::get().printReport(false, (char*)"");
+#endif
     printf("[ProfSummary.End]\n");
 
     pros::delay(1000);
     done = true;
-    LZ4F_writeClose(lz4File);
-    fclose(m_logFile);
-    fclose(m_compressedLogFile);
-    vexSystemExitRequest();
-  }
-#endif
 
-  // printf("[TELEMETRY.PF.CALC_POSE]:%f,%f,%f\n", m_odom->getPose().x,
-  //        m_odom->getPose().y, m_odom->getPose().theta);
+    // If sd card is attached
+    if (m_logFile != NULL) {
+      LZ4F_writeClose(lz4File);
+      fclose(m_logFile);
+      fclose(m_compressedLogFile);
+    }
+    // vexSystemExitRequest();
+  }
 }
 
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
@@ -235,14 +248,18 @@ void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
 void Localization::calibrate() { m_odom->calibrate(); }
 
 void Localization::OdomPredictor::predict(Eigen::Array<P, N, 1>& particles) {
+  // const auto rotated_covar = covar. ;
   auto noiseSampler =
       stats::MultivariateGaussian<2> {.mu = {0, 0}, .sigma = m_covar}
           .makeSampler();
 
   Eigen::Vector<float, 2> noise;
+  constexpr float fieldRadius = 140.25 / 2;
   for (auto& particle : particles) {
     noiseSampler.sampleOnce(noise);
     particle += m_displacement + noise;
+    particle = {std::max(std::min(fieldRadius, particle.x()), -fieldRadius),
+                std::max(std::min(fieldRadius, particle.y()), -fieldRadius)};
   }
 }
 
