@@ -87,10 +87,10 @@ class Laser {
           auto& measurement = *measurement_opt;
           const lines::Ray ray = laser.toRay({0, 0});
 
-          constexpr float fieldRadius = 72;
+          constexpr float fieldRadius = 140.25 / 2;
           const float mu = measurement.dist;
           const float sigma = measurement.stdDev;
-          const float pdfCoeff = 1 / sqrt(2 * M_PI) * sigma;
+          const float pdfCoeff = 1 / (sqrt(2 * M_PI) * sigma);
 
           Eigen::Array<Eigen::Array<float, 2, 1>, N, 1> bothDirDists =
               (((fieldRadius * ray.direction.cwiseSign()) -
@@ -102,8 +102,8 @@ class Laser {
           Eigen::Array<float, N, 1> yDists = bothDirDists.unaryExpr(&getY);
           auto pdfXs = xDists.min(yDists);
 
-          weights *= pdfCoeff *
-                     Eigen::exp(-.5 * Eigen::pow((pdfXs - mu) / sigma, 2));
+          weights *=
+              pdfCoeff * Eigen::exp(-.5 * Eigen::pow((pdfXs - mu) / sigma, 2));
         }
 
         Sensor(Laser& laser) : laser(laser) {}

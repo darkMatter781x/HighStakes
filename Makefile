@@ -27,13 +27,13 @@ BINDIR=$(ROOT)/bin/bot
 else
 $(info COMPILING FOR SIM)
 
-USE_PACKAGE:=0
+USE_PACKAGE:=1
 # TODO: Measure performance impact of -Ofast vs -O3
 # TODO: Figure out potential safety concerns of -Ofast
 # TODO: Add flag for all targets
 EXTRA_C_BOTH_FLAGS+=-Ofast -lto
 
-EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION -DENABLE_PROFILING
+EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION
 BINDIR=$(ROOT)/bin/sim
 endif
 

@@ -13,6 +13,8 @@ lines::Ray Laser::toRay(const Vec2& robotPos) const {
   // // printf("theta: %4.2f\n", theta);
   // // printf("hypot: %4.2f\n", hypot);
   // // printf("start: %4.2f,\t%4.2f\n", start.x(), start.y());
+  // if (m_id == 0) printf("toRay().theta: %f\n", theta);
+
   return {robotPos + Vec2(hypot * Vec2 {cos(theta), sin(theta)}),
           {cos(theta), sin(theta)}};
 };

@@ -8,7 +8,7 @@ use anyhow::anyhow;
 use itertools::Itertools as _;
 
 use rerun::{
-    external::{arrow2::{self, io::print}, re_types},
+    external::{arrow2, re_types},
     ComponentBatch, RecordingStream, RecordingStreamError,
 };
 
@@ -72,30 +72,34 @@ impl MessageHandler {
     }
 }
 
+#[allow(dead_code)]
 /// Runs simulated sensor program on v5 brain
 fn run_sim_on_brain() -> Result<Child, std::io::Error> {
     Command::new("sh")
-        .arg("-c")
-        .arg("v5 run --file ../bin/sim/monolith.bin -s 7 -i question-mark")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .spawn()
+    .arg("-c")
+    .arg("v5 run --file ../bin/sim/monolith.bin -s 7 -i question-mark")
+    .stdout(Stdio::piped())
+    .stderr(Stdio::inherit())
+    .spawn()
 }
+
+#[allow(dead_code)]
 /// Runs real sensor program on v5 brain
 fn run_real_on_brain() -> Result<Child, std::io::Error> {
     Command::new("sh")
-        .arg("-c")
-        .arg("pros ut --slot 6 --after run")
-        .stdout(Stdio::piped())
-        .stderr(Stdio::inherit())
-        .spawn()
+    .arg("-c")
+    .arg("pros u --slot 6 --after run && v5 t")
+    .stdout(Stdio::piped())
+    .stderr(Stdio::inherit())
+    .spawn()
 }
 
+#[allow(dead_code)]
 /// Runs program in v5 sim
 fn run_simulator() -> Result<Child, std::io::Error> {
     Command::new("sh")
-        .arg("-c")
-        .arg("simulator monolith ../bin/sim/monolith.bin")
+    .arg("-c")
+    .arg("simulator monolith ../bin/sim/monolith.bin")
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .spawn()
@@ -118,7 +122,7 @@ fn handle_stdout(
             Err(err) => return Err(Box::new(err)),
         };
     }
-    Ok(())
+    return Ok(())
 }
 
 struct Particle {
@@ -273,6 +277,7 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
     }
 }
 
+#[allow(dead_code)]
 fn add_background(rec: &RecordingStream) -> Result<(), RecordingStreamError> {
     let image = include_bytes!("../h2h.png");
 
@@ -308,8 +313,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
 
-    // let child_process = run_real_on_brain()?;
-    let child_process = run_sim_on_brain()?;
+    let child_process = run_real_on_brain()?;
+    // let child_process = run_sim_on_brain()?;
     // let child_process = run_simulator()?;
     let child_stdout = child_process
         .stdout

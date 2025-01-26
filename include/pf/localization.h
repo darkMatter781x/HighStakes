@@ -19,7 +19,7 @@ class Localization : Subsystem {
     pros::Mutex m_mutex;
   public:
     // Number of particles
-    static constexpr size_t N = 500;
+    static constexpr size_t N = 1000;
     /** Particle type */
     typedef Eigen::Vector2f P;
     /** Particle filter type */

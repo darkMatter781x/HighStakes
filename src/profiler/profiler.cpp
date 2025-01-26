@@ -58,13 +58,15 @@ void Profiler::printReport(bool printHeader, char* prefix) {
   for (const auto& s : m_sections) {
     const auto report = s->report();
 
-    if (++i % 2 == 0) printf("\x1b[2m");
-    else printf("\x1b[22m");
+    // if (i % 2 == 0) printf("\x1b[2m");
+    // else printf("\x1b[22m");
 
-    printf("%s%s:\t%2.4f±%2.4f\n", prefix, report.name, report.mu.convert(msec),
+    printf("%s%s:\t%2.4f±%2.4f", prefix, report.name, report.mu.convert(msec),
            report.sigma.convert(msec));
+    // printf("\x1b[0m\n");
+    printf("\n");
+    ++i;
   }
-  printf("\x1b[0m");
 };
 
 #endif

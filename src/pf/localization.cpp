@@ -6,6 +6,8 @@
 #include "profiler/profiler.h"
 #include "util/stats.h"
 
+extern "C" void vexSystemExitRequest();
+
 /** Uniform distribution for resampling */
 float uniform_float_0_to_1() {
   static std::uniform_real_distribution<float> dist {0, 1};
@@ -34,12 +36,11 @@ Localization::Localization(const Config& config)
 }
 
 static Localization::PF::Data printParticles(Localization::PF::Data data) {
-  return data;
-  std::discrete_distribution<> dist(data.weights->begin(),
-                                    data.weights->end());
+  // return data;
+  std::discrete_distribution<> dist(data.weights->begin(), data.weights->end());
 
   printf("[TELEMETRY.PF.PARTICLES]:%llu;", pros::micros());
-  for (size_t i = 0; i < Localization::N; i++) {
+  for (size_t i = 0; i < 25; i++) {
     int j = dist(stats::rng); // Sample an index
     // if (j >= data.particles->size() || j < 0) {
     //   printf("Index out of bounds: %d\n", j);
@@ -58,7 +59,7 @@ void Localization::update() {
   // Don't update if the odom hasn't been calibrated
   if (!m_odom->hasCalibrated()) return;
   // TODO: Extract timing code to a Timer class
-  static size_t iteration = 0;
+  static size_t iteration = 0;  
   START_PROFILE("LL.update()") // Starts profiled section
   m_mutex.take();
 
@@ -99,7 +100,7 @@ void Localization::update() {
     printf("[ProfSummary.End]\n");
 
     pros::delay(1000);
-    std::abort();
+    vexSystemExitRequest();
   }
 #endif
 

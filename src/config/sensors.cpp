@@ -3,8 +3,9 @@
 #include "pros/distance.hpp"
 #include <cmath>
 
-pros::Distance laserA {2};
-pros::Distance laserB {3};
+pros::Distance laserFront {2};
+pros::Distance laserLeft {3};
+pros::Distance laserRight {4};
 
 RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .vert {21},
@@ -16,12 +17,16 @@ RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .lasers =
         {
             {
-                .pose {4.35, 7, M_PI_2},
-                .sensor {laserB},
+                .pose {4, 6.5, 0},
+                .sensor {laserFront},
             },
             {
-                .pose {-5.8, 2, M_PI},
-                .sensor {laserA},
+                .pose {-5.8, 2, M_PI_2},
+                .sensor {laserLeft},
+            },
+            {
+                .pose {5.8, 2, -M_PI_2},
+                .sensor {laserRight},
             },
         },
 };

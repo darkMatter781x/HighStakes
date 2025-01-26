@@ -94,8 +94,13 @@ template <typename P, size_t N> class ParticleFilter {
         // Get indices of particles to keep
         m_indices = resampler.resample(*m_weights, std::move(m_indices));
         // Perform the actual resampling
-        for (size_t i = 0; i < N; i++)
+        for (size_t i = 0; i < N; i++) {
+          if ((*m_indices)[i] >= N) {
+            printf("Index out of bounds: %d\n", (*m_indices)[i]);
+            continue;
+          }
           (*m_newParticles)[i] = (*m_particles)[(*m_indices)[i]];
+        }
         m_particles.swap(m_newParticles);
         // Reset weights
         std::fill(m_weights->begin(), m_weights->end(), 1.f / N);
