@@ -11,6 +11,7 @@
 #include <climits>
 #include <cstdlib>
 #include <iostream>
+#include <cstdio>
 #include <variant>
 
 namespace controller_mapping {
