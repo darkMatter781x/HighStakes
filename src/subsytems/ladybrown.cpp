@@ -41,11 +41,11 @@ void LadyBrown::update() {
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 
-  if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30) {
-    m_rotation.set_position(0);
-  }
+  // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30) {
+  //   m_rotation.set_position(0);
+  // }
 
-  if (m_state == LadyBrown::SCORE) {
+  /*if (m_state == LadyBrown::SCORE) {
     if (calcLBAngle() > 160) {
       dir = AngDir::CCW_COUNTERCLOCKWISE;
     } else {
@@ -58,7 +58,7 @@ void LadyBrown::update() {
     } else {
       dir = AngDir::AUTO;
     }
-  }
+  } */
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
@@ -69,7 +69,11 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
           m_config.controllerSettings.kD,
           m_config.controllerSettings.windupRange, true),
     m_exitCondition(m_config.controllerSettings.smallError,
-                    m_config.controllerSettings.smallErrorTimeout) {}
+                    m_config.controllerSettings.smallErrorTimeout) {
+  if (calcLBAngle() < 10 || calcLBAngle() > 350) {
+    m_rotation.set_position(0);
+  }
+}
 
 float LadyBrown::getTargetAngle() const {
   switch (m_state) {
