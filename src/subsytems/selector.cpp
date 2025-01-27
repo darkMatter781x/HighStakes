@@ -9,9 +9,8 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::negativeRush,
-      auton::autons::positiveRush,
-      auton::autons::skills,
+      auton::autons::safeAWP,      auton::autons::negativeRush,
+      auton::autons::positiveRush, auton::autons::skills,
       auton::autons::doNothing,
   };
 }
@@ -29,9 +28,9 @@ AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
   for (auto a : m_autons) { printf("\t%s,\n", a.label); }
   printf("end m_autons\n");
 
-  #ifndef VEXIDE_SIMULATION
+#ifndef VEXIDE_SIMULATION
   pros::lcd::initialize();
-  #endif
+#endif
   // Register the brain screen button callbacks.
   pros::lcd::register_btn0_cb([] {
     printf("left pressed\n");

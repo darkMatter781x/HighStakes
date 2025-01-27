@@ -154,7 +154,7 @@ impl RerunParticles {
     pub fn new<T: IntoIterator<Item = Particle>>(particles: T) -> Self {
         let (coords, weights): (Vec<_>, Vec<_>) = particles
             .into_iter()
-            .map(|p| ((p.x, p.y), p.weight))
+            .map(|p| ((p.x, -p.y), p.weight))
             .unzip();
         let max = weights
             .clone()
@@ -355,11 +355,12 @@ fn telemetry_from_binary_data<R: Read>(data: BufReader<R>) -> Vec<TelemetryEntry
                 .as_slice()
                 .try_into()
                 .expect("slice with incorrect length");
-            Some(unsafe { std::mem::transmute::<&[u8; ENTRY_SIZE], &TelemetryEntry>(slice) }.clone())
+            Some(
+                unsafe { std::mem::transmute::<&[u8; ENTRY_SIZE], &TelemetryEntry>(slice) }.clone(),
+            )
         })
         .collect()
 }
-
 
 fn parse_telemetry_log_file(rec: &RecordingStream, filename: &str) -> anyhow::Result<()> {
     let decoder = lz4_flex::frame::FrameDecoder::new(std::fs::File::open(filename)?);
@@ -398,14 +399,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     add_field_grid(&rec)?;
     // add_background(&rec)?;
-    
+
     if let Some(log_file) = args.log_file {
         parse_telemetry_log_file(&rec, &log_file)?;
-    } else{
+    } else {
         let handler = &mut MessageHandler::new();
-        
+
         handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
-        
+
         let child_process = run_real_on_brain()?;
         // let child_process = run_sim_on_brain()?;
         // let child_process = run_simulator()?;

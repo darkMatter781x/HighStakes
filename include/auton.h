@@ -6,6 +6,7 @@
 #include <climits>
 #include <optional>
 #include "color.h"
+
 namespace auton {
 struct Auton {
     char* label;
@@ -16,11 +17,12 @@ struct Auton {
 };
 
 namespace autons {
-  extern Auton negativeRush;
-  extern Auton positiveRush;
-  extern Auton skills;
-  extern Auton doNothing;
-}
+extern Auton negativeRush;
+extern Auton positiveRush;
+extern Auton safeAWP;
+extern Auton skills;
+extern Auton doNothing;
+} // namespace autons
 
 namespace util {
 const float DEFAULT_SLEW = 15;
