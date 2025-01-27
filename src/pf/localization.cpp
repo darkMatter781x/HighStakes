@@ -167,7 +167,7 @@ void Localization::update() {
   // Only use distance sensors after match has started
   // (Humans may be on the field before the match starts, interfering with the
   // distance sensors)
-  if (!pros::competition::is_disabled()) {
+  // if (!pros::competition::is_disabled()) {
     lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
     m_predictor.m_displacement = {displacement.x, displacement.y};
 
@@ -186,7 +186,7 @@ void Localization::update() {
         return this->printParticles(std::move(arg));
       });
     })
-  }
+  // }
 
   m_prevPose = m_odom->getPose();
   m_mutex.give();
