@@ -1,4 +1,5 @@
 #include "pf/sensors/laser.h"
+#include "Eigen/src/Geometry/Rotation2D.h"
 #include <cmath>
 
 using namespace sensors;
@@ -7,7 +8,8 @@ size_t Laser::lastUsedId = 0;
 
 lines::Ray Laser::toRay(const Vec2& robotPos) const {
   const float theta = m_botTheta + m_theta;
-  const float hypot = m_pos.norm();
+  const Eigen::Rotation2Df rot(m_botTheta);
+
   // const Vec2 start = ;
   // // printf("m_pos: %4.2f,\t%4.2f\n", m_pos.x(), m_pos.y());
   // // printf("theta: %4.2f\n", theta);
@@ -15,8 +17,7 @@ lines::Ray Laser::toRay(const Vec2& robotPos) const {
   // // printf("start: %4.2f,\t%4.2f\n", start.x(), start.y());
   // if (m_id == 0) printf("toRay().theta: %f\n", theta);
 
-  return {robotPos + Vec2(hypot * Vec2 {cos(theta), sin(theta)}),
-          {cos(theta), sin(theta)}};
+  return {robotPos + rot * m_pos, {cos(theta), sin(theta)}};
 };
 
 Laser::Laser(const Config config)
