@@ -51,7 +51,6 @@ class Localization : Subsystem {
         Eigen::Matrix2f covar;
     };
   private:
-    FILE* m_logFile;
     FILE* m_compressedLogFile;
     PF m_pf;
     std::shared_ptr<Odom> m_odom;
@@ -99,6 +98,9 @@ class Localization : Subsystem {
      * @brief Calibrates the odometry sensors, and enables the particle filter.
      */
     void calibrate();
+
+    /** @brief Whether particle filter is being used or not */
+    bool enabled = true;
 
     /**
      * @brief Construct a new Localizer object

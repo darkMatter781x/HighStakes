@@ -3,12 +3,12 @@
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/util.hpp"
 #include "pros/misc.h"
-#include "pros/misc.hpp"
 #include "pros/rtos.hpp"
 #include "profiler/profiler.h"
 #include "util/stats.h"
 #include <cstdint>
 #include <cstdio>
+#include <ostream>
 #include <string>
 #include <unistd.h>
 #include <fstream>
@@ -48,7 +48,7 @@ int incrementValueInFile(const std::string& filename) {
   }
 
   // Write the incremented value back to the file
-  outFile << value;
+  outFile << value << std::endl;
   outFile.close();
 
   return value;
@@ -76,8 +76,7 @@ Localization::Localization(const Config& config)
         config.sensorFactory(SensorFactoryConfig {.botPose = m_odom->getPose(),
                                                   .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
-    m_prevPose(m_odom->getPose()), m_mutex(), m_logFile(nullptr),
-    m_compressedLogFile(nullptr) {
+    m_prevPose(m_odom->getPose()), m_mutex(), m_compressedLogFile(nullptr) {
   setPose({0, 0, 0}, 10, true, true);
   std::int64_t index = incrementValueInFile("/usd/localization.index");
   printf("localization index: %lli", index);
@@ -90,7 +89,6 @@ Localization::Localization(const Config& config)
         "/usd/localization." + std::to_string(index) + ".log.lz4";
     const char* compressedLogFileName = compressedLogFileNameStr.c_str();
 
-    m_logFile = fopen(logFileName, "w");
     m_compressedLogFile = fopen(compressedLogFileName, "w");
   }
 
@@ -126,7 +124,7 @@ Localization::printParticles(Localization::PF::Data data) const {
   }
 
   // sd card is attached
-  if (m_logFile != NULL) {
+  if (m_compressedLogFile != NULL) {
     if (lz4File == nullptr) {
       LZ4F_errorCode_t maybeErr =
           LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
@@ -167,7 +165,7 @@ void Localization::update() {
   // Only use distance sensors after match has started
   // (Humans may be on the field before the match starts, interfering with the
   // distance sensors)
-  // if (!pros::competition::is_disabled()) {
+  if (this->enabled) {
     lemlib::Pose displacement = m_odom->getPose() - m_prevPose;
     m_predictor.m_displacement = {displacement.x, displacement.y};
 
@@ -186,7 +184,7 @@ void Localization::update() {
         return this->printParticles(std::move(arg));
       });
     })
-  // }
+  }
 
   m_prevPose = m_odom->getPose();
   m_mutex.give();
@@ -210,9 +208,8 @@ void Localization::update() {
     done = true;
 
     // If sd card is attached
-    if (m_logFile != NULL) {
+    if (m_compressedLogFile != NULL) {
       LZ4F_writeClose(lz4File);
-      fclose(m_logFile);
       fclose(m_compressedLogFile);
     }
     // vexSystemExitRequest();

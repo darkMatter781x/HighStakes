@@ -344,20 +344,20 @@ fn telemetry_from_binary_data<R: Read>(data: BufReader<R>) -> Vec<TelemetryEntry
         .chunks(ENTRY_SIZE)
         .into_iter()
         .filter_map(|chunk| {
-            let vec: Vec<u8> = chunk
-                .try_collect()
-                .expect("could not collect chunk into vec");
-            // println!("vec.len(): {}", vec.len());
-            if vec.len() != ENTRY_SIZE {
-                return None;
-            }
-            let slice: &[u8; ENTRY_SIZE] = vec
-                .as_slice()
-                .try_into()
-                .expect("slice with incorrect length");
-            Some(
-                unsafe { std::mem::transmute::<&[u8; ENTRY_SIZE], &TelemetryEntry>(slice) }.clone(),
-            )
+            chunk.try_collect().ok().and_then(|v: Vec<u8>| {
+                println!("vec.len(): {}", v.len());
+                if v.len() != ENTRY_SIZE {
+                    return None;
+                }
+                let slice: &[u8; ENTRY_SIZE] = v
+                    .as_slice()
+                    .try_into()
+                    .expect("slice with incorrect length");
+                Some(
+                    unsafe { std::mem::transmute::<&[u8; ENTRY_SIZE], &TelemetryEntry>(slice) }
+                        .clone(),
+                )
+            })
         })
         .collect()
 }
