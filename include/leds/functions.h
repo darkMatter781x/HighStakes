@@ -53,5 +53,5 @@ class LEDs : Subsystem {
     void setToDisconnect();
     void setToFilter_Color();
 
-    int getMotorDisconect();
+    int getMotorDisconnect();
 };

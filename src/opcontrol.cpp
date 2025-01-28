@@ -136,7 +136,7 @@ void opcontrol() {
 
     // LED control
     if (bot.led.getState() == LEDs::FILTER_COLOR){
-      // bot.led.displayFilterColor(filterColor);
+      bot.led.displayFilterColor(filterColor);
     }
     
     // Intake control
