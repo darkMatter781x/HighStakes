@@ -41,7 +41,8 @@ void LadyBrown::update() {
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
 
-  // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() < 30) {
+  // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() <
+  // 30) {
   //   m_rotation.set_position(0);
   // }
 
@@ -70,15 +71,14 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
           m_config.controllerSettings.windupRange, true),
     m_exitCondition(m_config.controllerSettings.smallError,
                     m_config.controllerSettings.smallErrorTimeout) {
-  if (calcLBAngle() < 10 || calcLBAngle() > 350) {
-    m_rotation.set_position(0);
-  }
+  if (calcLBAngle() < 10 || calcLBAngle() > 350) { m_rotation.set_position(0); }
 }
 
 float LadyBrown::getTargetAngle() const {
   switch (m_state) {
     case State::IDLE: return m_config.idle;
     case State::COLLECT: return m_config.collect;
+    case State::COLLECT_2: return m_config.collect2;
     case State::IDLE_SCORE: return m_config.idle_collect;
     case State::SCORE: return m_config.score;
     default: return NAN;
@@ -109,23 +109,26 @@ void LadyBrown::setState(State state) {
 
 void LadyBrown::emergencyStop() { setState(State::EMERGENCY_STOP); }
 
-void LadyBrown::goToIDLE() { setState(State::IDLE); }
+void LadyBrown::goToIdle() { setState(State::IDLE); }
 
-void LadyBrown::goToCOLLECT() { setState(State::COLLECT); }
+void LadyBrown::collect() { setState(State::COLLECT); }
 
-void LadyBrown::goToIDLE_SCORE() { setState(State::IDLE_SCORE); }
+void LadyBrown::collectSecond() { setState(State::COLLECT_2); }
 
-void LadyBrown::goToSCORE() { setState(State::SCORE); }
+void LadyBrown::goToIdleScore() { setState(State::IDLE_SCORE); }
+
+void LadyBrown::score() { setState(State::SCORE); }
 
 void LadyBrown::nextState() {
   switch (m_state) {
     case State::IDLE:
       dir = AngDir::AUTO;
-      goToCOLLECT();
+      collect();
       break;
-    case State::COLLECT: goToIDLE_SCORE(); break;
-    case State::IDLE_SCORE: goToSCORE(); break;
-    case State::SCORE: goToIDLE(); break;
-    default: goToIDLE(); break;
+    case State::COLLECT: collectSecond(); break;
+    case State::COLLECT_2: goToIdleScore(); break;
+    case State::IDLE_SCORE: score(); break;
+    case State::SCORE: goToIdle(); break;
+    default: goToIdle(); break;
   }
 }
