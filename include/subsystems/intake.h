@@ -123,7 +123,7 @@ class Intake : public Subsystem {
     struct Config {
         float intakingToLiftInches;
         size_t outtakingToLiftDuration;
-        size_t intakingToKickDuration;
+        float intakingToKickDuration;
         size_t KickingRing;
 
         /**
