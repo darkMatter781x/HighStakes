@@ -67,8 +67,10 @@ int LEDs::getMotorDisconnect() {
   for (int i = 0; i < std::size(LEDs::motors); i++){
     pros::Device device(LEDs::motors[i]);
     if (device.is_installed() == false){
+      printf("not nerd\n");
       return motors[i];
     }
+    printf("nerd\n");
   }
   return 0;
 }
@@ -83,8 +85,7 @@ LEDs::LEDs(std::shared_ptr<LedStrip> leftLift,
 LEDs::State LEDs::getState() { return m_state; }
 
 void LEDs::update() {
-  /*
-  printf("yey\n");
+  /*printf("yey\n");
   if (LEDs::getMotorDisconnect() != 0){
     printf("disconnect\n");
     LEDs::setState(DISCONNECT);
@@ -94,8 +95,8 @@ void LEDs::update() {
   } else if (pros::competition::is_connected()){
     printf("filter color\n");
     LEDs::setState(FILTER_COLOR);
-  }
-  */
+  } */
+  
   LEDs::setState(FILTER_COLOR);
   
 }

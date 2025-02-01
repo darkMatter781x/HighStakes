@@ -138,6 +138,9 @@ void opcontrol() {
     if (bot.led.getState() == LEDs::FILTER_COLOR){
       bot.led.displayFilterColor(filterColor);
     }
+    if (bot.led.getState() == LEDs::DISCONNECT){
+      bot.led.displayDISCONNECT(bot.led.getMotorDisconnect());
+    }
     
     // Intake control
     if (master.get_digital(map::INTAKE)) {
