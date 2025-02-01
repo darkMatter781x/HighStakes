@@ -182,7 +182,7 @@ void opcontrol() {
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||
          std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))) {
-      bot.lady.goToIDLE();
+      bot.lady.goToIdle();
     }
 
     // Toggle filtering color
