@@ -73,6 +73,9 @@ void safeAWPFunc(ALLIANCE alliance) {
                       .forwards = false,
                       .maxSpeed = 64,
                   });
+  bot.waitUntilDone();
+
+  // Back up towards ally stake  
   bot.moveToPoint(bot.getPose().withX(-TILE * 2.5 - 2), 1000,
                   {.forwards = false, .maxSpeed = 72});
   bot.waitUntilDone();
@@ -87,16 +90,20 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Dont get intake stuck
   bot.intake.outtake();
 
-  // Enable MCL during scoring on ally stack
-  bot.localization.enabled = false;
+  // Enable MCL after scoring on ally stack
+  bot.localization.enabled = true;
 
   // === Intake top ring of stack next to ally stake
 
+  const Pose negMogo = {-TILE, TILE};
+
   // Intake stack
   bot.intakeLift.retract();
-  bot.moveToPose({-TILE * 1.5, TILE * .5, 45}, 2500, {.maxSpeed = 72});
+  bot.moveToPoint(
+      negMogo + Pose::fromPolar(-(DRIVE_LENGTH / 2 + 9), BLUE_STATION - 30),
+      2500, {.maxSpeed = 72});
 
-  // Give intake time unstuck
+  // Give intake time to unstuck
   pros::delay(50);
   bot.intake.intakeBothTo(Intake::MOGO);
 
@@ -117,11 +124,9 @@ void safeAWPFunc(ALLIANCE alliance) {
 
   // === Clamp mogo on negative side
 
-  const Pose negMogo = {-TILE, TILE};
-
   // Turn towards mogo
   bot.turnToPoint(negMogo, 500,
-                  {.forwards = false, .minSpeed = 72, .earlyExitRange = 30});
+                  {.forwards = false, .minSpeed = 72, .earlyExitRange = 45});
 
   // Make it more precise
   bot.lateralLargeExit.range = 0.4;
@@ -136,6 +141,8 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Clamp mogo once
   bot.waitUntilDone();
   bot.mogoClamp.retract();
+  // Reset mogo ring counter
+  bot.intake.numOfMogoRings = 0;
 
   // Give robot time to clamp
   pros::delay(250);
@@ -149,8 +156,7 @@ void safeAWPFunc(ALLIANCE alliance) {
   const Pose negSafeStack = {-TILE, TILE * 2};
 
   // Turn towards stack
-  bot.swingToPoint(negSafeStack, lemlib::DriveSide::LEFT, 500,
-                   {.minSpeed = 72, .earlyExitRange = 30});
+  bot.turnToPoint(negSafeStack, 500, {.minSpeed = 72, .earlyExitRange = 30});
   bot.waitUntilDone();
 
   // Score on mogo
@@ -164,11 +170,15 @@ void safeAWPFunc(ALLIANCE alliance) {
 
   bot.moveToPose({-TILE * 2.5, -TILE * 2.5, REFEREE}, 2500,
                  {.forwards = false, .minSpeed = 64, .earlyExitRange = 5});
-  bot.waitUntilDone();
 
-  // Release mogo
-  bot.intake.outtake();
+  // Wait until ring is intaked to release mogo
+  waitUntil([] { return bot.intake.numOfMogoRings >= 2 || !bot.isInMotion(); });
+
+  // Release mogo to make sure mogo hitting rings doesn't stop us
   bot.mogoClamp.extend();
+  bot.intake.outtake();
+
+  bot.waitUntilDone();
 
   // === Clamp mogo on positive side
 
@@ -207,7 +217,7 @@ void safeAWPFunc(ALLIANCE alliance) {
   // === Touch ladder
 
   // Raise lady brown to touch ladder
-  bot.lady.goToIDLE_SCORE();
+  bot.lady.goToIdleScore();
 
   // Go to ladder
   bot.moveToPose({-TILE * .5, -TILE * .5, AUDIENCE + 45}, 2000,
@@ -220,7 +230,7 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Drop lady at last second
   waitUntil(
       [startTime] { return (pros::millis() * msec - startTime) > 14.8 * sec; });
-  bot.lady.goToIDLE();
+  bot.lady.goToIdle();
   pros::delay(100);
   bot.lady.setState(LadyBrown::COAST);
 }
