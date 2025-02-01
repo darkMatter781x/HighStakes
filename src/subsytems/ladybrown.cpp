@@ -1,11 +1,22 @@
 #include "subsystems/ladybrown.h"
-#include "lemlib/chassis/chassis.hpp"
-#include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
-#include "pros/motors.h"
+#include "pros/rtos.hpp"
 #include "robot.h"
 
 void LadyBrown::update() {
+  static size_t startTime = pros::millis();
+
+  // Initialize rotation sensor with proper position
+  if (pros::millis() - startTime < 100) {
+    // If rotation is something like 350, then set it to 10
+    int currCentidegree = m_rotation.get_position();
+    printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
+    if (currCentidegree > 180 * 100) {
+      printf("setting position\n");
+      m_rotation.set_position((currCentidegree - (360 * 100)));
+    }
+  }
+
   switch (m_state) {
     case State::EMERGENCY_STOP: {
       m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
@@ -70,8 +81,7 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
           m_config.controllerSettings.kD,
           m_config.controllerSettings.windupRange, true),
     m_exitCondition(m_config.controllerSettings.smallError,
-                    m_config.controllerSettings.smallErrorTimeout) {
-}
+                    m_config.controllerSettings.smallErrorTimeout) {}
 
 float LadyBrown::getTargetAngle() const {
   switch (m_state) {
