@@ -71,7 +71,6 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
           m_config.controllerSettings.windupRange, true),
     m_exitCondition(m_config.controllerSettings.smallError,
                     m_config.controllerSettings.smallErrorTimeout) {
-  if (calcLBAngle() < 10 || calcLBAngle() > 350) { m_rotation.set_position(0); }
 }
 
 float LadyBrown::getTargetAngle() const {
