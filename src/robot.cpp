@@ -1,13 +1,9 @@
 #include "robot.h"
+#include "pf/obstacles.h"
 #include "pf/odom/lemlib.h"
 #include "pf/odom/sim.h"
-#include "pf/localization.h"
 #include "pf/sensors/simLaser.h"
 #include "pf/sensors/v5laser.h"
-#include "pros/misc.h"
-#include "pf/obstacles.h"
-#include "subsystems/ladybrown.h"
-#include <memory>
 
 lemlib::Drivetrain RobotConfig::makeDrivetrain() const {
   return {&this->motors.left,
@@ -124,7 +120,7 @@ Robot::Robot(const RobotConfig& config)
                             config.sensors.autonSelector, m_intakeSensor)),
     m_localization(makeLocalization(config)), localization(m_localization),
     intakeLift(config.pneumatics.intakeLift),
-    mogoClamp(config.pneumatics.mogoClamp), doinker(config.pneumatics.doinker) {
-}
+    mogoClamp(config.pneumatics.mogoClamp), doinker(config.pneumatics.doinker),
+    m_transform(std::make_shared<auton::AllianceTransform>(COLOR::RED)) {}
 
 Robot Robot::instance {RobotConfig::config};

@@ -1,11 +1,7 @@
-#include "lemlib/chassis/chassis.hpp"
-#include "lemlib/pose.hpp"
-#include "pros/rtos.hpp"
-#include "robot.h"
+#include "auton/autons.h"
+#include "auton/util.h"
 #include "dimensions.h"
-#include "subsystems/intake.h"
-#include "auton.h"
-#include "subsystems/ladybrown.h"
+#include "robot.h"
 #include "units/units.hpp"
 
 using lemlib::Pose;
@@ -75,7 +71,7 @@ void safeAWPFunc(ALLIANCE alliance) {
                   });
   bot.waitUntilDone();
 
-  // Back up towards ally stake  
+  // Back up towards ally stake
   bot.moveToPoint(bot.getPose().withX(-TILE * 2.5 - 2), 1000,
                   {.forwards = false, .maxSpeed = 72});
   bot.waitUntilDone();

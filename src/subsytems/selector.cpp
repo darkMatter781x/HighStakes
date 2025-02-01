@@ -1,6 +1,4 @@
 #include "subsystems/selector.h"
-#include "auton.h"
-#include "liblvgl/llemu.hpp"
 #include "pros/llemu.hpp"
 #include "robot.h"
 #include <algorithm>
@@ -9,8 +7,8 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::safeAWP,      auton::autons::negativeRush,
-      auton::autons::positiveRush, auton::autons::skills,
+      auton::autons::skills,       auton::autons::safeAWP,
+      auton::autons::negativeRush, auton::autons::positiveRush,
       auton::autons::doNothing,
   };
 }

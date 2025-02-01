@@ -1,9 +1,8 @@
-#include "auton.h"
+#include "auton/util.h"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "lemlib/util.hpp"
 #include <cmath>
-#include <math.h>
 
 namespace auton::util {
 

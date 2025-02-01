@@ -1,8 +1,6 @@
 #include "subsystems/intake.h"
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
-#include "subsystems/ladybrown.h"
-#include "robot.h"
 #include <cmath>
 #include <cstdio>
 

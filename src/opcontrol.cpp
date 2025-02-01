@@ -1,18 +1,10 @@
 #include "lemlib/util.hpp"
-#include "main.h"
 #include "pros/misc.h"
-#include "pros/rtos.hpp"
-#include "robot.h"
+#include <string>
 #include "subsystems/intake.h"
-#include "subsystems/ladybrown.h"
-#include "tuning.h"
 #include "dimensions.h"
-#include "auton.h"
-#include <climits>
-#include <cstdlib>
-#include <iostream>
-#include <cstdio>
-#include <variant>
+#include "auton/util.h"
+#include "robot.h"
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -169,15 +161,15 @@ void opcontrol() {
       if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
-        //bot.intake.outtake();
+        // bot.intake.outtake();
         bot.lady.nextState();
       } else {
         bot.lady.nextState();
-      } 
+      }
     }
     if (pros::millis() > time_since_press + 100) {
-      //bot.intake.stop();
-    } 
+      // bot.intake.stop();
+    }
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||
@@ -191,11 +183,11 @@ void opcontrol() {
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
-// #ifdef TUNING
-//     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-//         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-//       tuningCLI();
-// #endif
+    // #ifdef TUNING
+    //     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+    //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+    //       tuningCLI();
+    // #endif
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

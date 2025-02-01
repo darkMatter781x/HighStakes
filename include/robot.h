@@ -7,6 +7,7 @@
 #include "subsystems/intake.h"
 #include "subsystems/ladybrown.h"
 #include "color.h"
+#include "auton/transform.h"
 #include <memory>
 
 /**
@@ -29,6 +30,7 @@ class Robot : private lemlib::Chassis {
     Localization m_localization;
 
     ALLIANCE m_alliance;
+    std::shared_ptr<auton::Transformation> m_transform;
   public:
     /**
      * @brief Gets the robot instance.
@@ -49,7 +51,11 @@ class Robot : private lemlib::Chassis {
     AutonSelector& selector;
     Localization& localization;
 
+    void setTransform(std::shared_ptr<auton::Transformation> transform);
+    /** @brief Sets the transformation to an AllianceTransform with the
+     * specified alliance. */
     void setAlliance(ALLIANCE alliance);
+
     ALLIANCE getAlliance() const;
     COLOR getColor() const;
 
@@ -73,8 +79,8 @@ class Robot : private lemlib::Chassis {
 
     void calibrate();
 
-    void setPose(lemlib::Pose pose, float stdDev = .5, bool radians = false);
-    lemlib::Pose getPose(bool radians = false);
+    void setPose(lemlib::Pose pose, float stdDev = .5);
+    lemlib::Pose getPose();
 
     void turnToPoint(lemlib::Pose target, int timeout,
                      lemlib::TurnToPointParams params = {}, bool async = true);

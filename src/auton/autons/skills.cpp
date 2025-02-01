@@ -1,14 +1,7 @@
-#include "color.h"
-#include "lemlib/chassis/chassis.hpp"
-#include "lemlib/exitcondition.hpp"
-#include "lemlib/pose.hpp"
-#include "main.h"
-#include "pros/rtos.hpp"
-#include "robot.h"
+#include "auton/autons.h"
+#include "auton/util.h"
 #include "dimensions.h"
-#include "subsystems/intake.h"
-#include "lemlib/util.hpp"
-#include "auton.h"
+#include "robot.h"
 
 using namespace dimensions::all;
 using namespace DIR;
