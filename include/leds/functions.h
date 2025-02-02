@@ -1,5 +1,6 @@
 #pragma once
 
+#include "color.h"
 #include "leds/colors.h"
 #include "leds/power.h"
 #include "leds/strip.h"
@@ -25,6 +26,8 @@ class LEDs : Subsystem {
       DISCONNECT,
       /* Lights up the Color of the ring color the robot is intaking */
       FILTER_COLOR,
+      /* Turns off the LEDs*/
+      OFF
     };
 
     int motors[8] = {12, 14, 17, 13, 15, 16, 11, 18};
@@ -41,10 +44,11 @@ class LEDs : Subsystem {
 
     /* displays the current color that the intake is not filtering */
     void displayFilterColor(COLOR color);
+    //void rightDisplayFilterColor(COLOR color);
     /* displays motor disconnect */
     void displayDISCONNECT(int port);
     /* displays autonomus messages */
-    void autonMessage(HexRGB color);
+    void autonMessage(HexRGB color, int time, int startTime);
 
     void setState(State state);
     State getState();
@@ -52,6 +56,8 @@ class LEDs : Subsystem {
     void setToMESSAGE();
     void setToDisconnect();
     void setToFilter_Color();
+
+    void makeStripsLight(HexRGB hex);
 
     int getMotorDisconnect();
 };

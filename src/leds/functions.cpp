@@ -1,4 +1,5 @@
 #include "leds/functions.h"
+#include "color.h"
 #include "leds/colors.h"
 #include "leds/power.h"
 #include "leds/strip.h"
@@ -7,29 +8,30 @@
 #include "pros/adi.hpp"
 #include "pros/misc.hpp"
 #include "pros/motors.hpp"
+#include "pros/rtos.hpp"
 #include "subsystems/intake.h"
+#include <climits>
 #include <iostream>
 #include <concepts>
 #include <iterator>
 #include <string>
 
+void LEDs::makeStripsLight(HexRGB hex){
+  if (pros::millis()%100 > 50){
+    leftUnderGlow->buf().setAll(hex);
+  } else {
+    rightUnderGlow->buf().setAll(hex);
+  }
+}
+
+//int startTime = INT_MAX;
 void LEDs::displayFilterColor(COLOR color) {
   if (color == ALLIANCE::RED) {
-    leftLift->buf().setAll(0xFF0000);
-    rightLift->buf().setAll(0xFF0000);
-    leftUnderGlow->buf().setAll(0xFF0000);
-    rightUnderGlow->buf().setAll(0xFF0000);
-
+    makeStripsLight(0xFF0000);
   } else if (color == ALLIANCE::BLUE) {
-    leftLift->buf().setAll(0x0000FF);
-    rightLift->buf().setAll(0x0000FF);
-    leftUnderGlow->buf().setAll(0x0000FF);
-    rightUnderGlow->buf().setAll(0x0000FF);
+    makeStripsLight(0x0000FF);
   } else {
-    leftLift->buf().setAll(0xFFFFFF);
-    rightLift->buf().setAll(0xFFFFFF);
-    leftUnderGlow->buf().setAll(0xFFFFFF);
-    rightUnderGlow->buf().setAll(0xFFFFFF);
+    makeStripsLight(0xFFFFFF);
   }
 }
 
@@ -58,6 +60,16 @@ void LEDs::displayDISCONNECT(int port) {
     rightUnderGlow->buf().setAll(0x000000);
     leftLift->buf().setAll(0xFF0000);
     rightLift->buf().setAll(0xFF0000);
+  }
+}
+
+void LEDs::autonMessage(HexRGB color, int time,  int startTime){
+  if (m_state == MESSAGE){
+    if (pros::millis() < startTime + time){
+      makeStripsLight(color);
+    } else{
+      makeStripsLight(0x000000);
+    }
   }
 }
 
@@ -96,7 +108,10 @@ void LEDs::update() {
     printf("filter color\n");
     LEDs::setState(FILTER_COLOR);
   } */
-  
-  LEDs::setState(FILTER_COLOR);
+  if (pros::competition::is_autonomous()){
+    LEDs::setState(MESSAGE);
+  } else if(pros::competition::is_connected()){
+    LEDs::setState(FILTER_COLOR);
+  }
   
 }

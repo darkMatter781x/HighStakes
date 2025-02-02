@@ -109,7 +109,6 @@ void skillsMacro() {
  * operator control task will be stopped. Re-enabling the robot will restart the
  * task, not resume it from where it left off.
  */
-
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
 
@@ -132,6 +131,7 @@ void opcontrol() {
     skillsMacro();
   }
   int time_since_press = INT_MAX - 1000;
+  int startTime = INT_MAX - 1000;
   while (true) {
     if (bot.lady.getState() == LadyBrown::COAST &&
         lemlib::angleError(bot.lady.calcLBAngle(), bot.lady.m_config.idle,
@@ -143,13 +143,22 @@ void opcontrol() {
              master.get_analog(map::RIGHT_DRIVE));
 
     // LED control
-    if (bot.led.getState() == LEDs::FILTER_COLOR){
+
+    if (bot.led.getState() == LEDs::FILTER_COLOR) {
       bot.led.displayFilterColor(filterColor);
+      //startTime = pros::millis();
+      /*printf("change color\n");
+      if (pros::millis() > startTime + 100) {
+        printf("other strip\n");
+        bot.led.rightDisplayFilterColor(filterColor);
+      } */
+      //pros::delay(100);
+      //bot.led.rightDisplayFilterColor(filterColor);
     }
-    if (bot.led.getState() == LEDs::DISCONNECT){
+    if (bot.led.getState() == LEDs::DISCONNECT) {
       bot.led.displayDISCONNECT(bot.led.getMotorDisconnect());
     }
-    
+
     // Intake control
     if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button
@@ -179,15 +188,15 @@ void opcontrol() {
       if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
-        //bot.intake.outtake();
+        // bot.intake.outtake();
         bot.lady.nextState();
       } else {
         bot.lady.nextState();
-      } 
+      }
     }
     if (pros::millis() > time_since_press + 100) {
-      //bot.intake.stop();
-    } 
+      // bot.intake.stop();
+    }
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||
@@ -202,11 +211,11 @@ void opcontrol() {
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
-// #ifdef TUNING
-//     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-//         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-//       tuningCLI();
-// #endif
+    // #ifdef TUNING
+    //     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+    //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+    //       tuningCLI();
+    // #endif
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }
