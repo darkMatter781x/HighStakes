@@ -36,7 +36,7 @@ SignTransform::transformAngDir(lemlib::AngularDirection original) {
 }
 
 float SignTransform::transformHeading(float oldHeading) {
-  if (needsTransform()) return dimensions::field::DIR::BLUE - oldHeading;
+  if (needsTransform()) return dimensions::field::DIR::STANDS - oldHeading;
   else return oldHeading;
 }
 
