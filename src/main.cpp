@@ -17,6 +17,8 @@ void screen() {
       pros::lcd::print(3, "x:\t%fin", bot.getPose().x);
       pros::lcd::print(4, "y:\t%fin", bot.getPose().y);
       pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
+      pros::lcd::print(6, "intake:\t%1.3frpm",
+                       bot.m_config.motors.intake.get_actual_velocity());
     }
     pros::delay(50);
   }
