@@ -8,6 +8,7 @@
 #include "resamplers/systematic.h"
 #include "pf/util/lines.h"
 #include "subsystems.h"
+#include <cstdio>
 #include <memory>
 
 /**
@@ -19,7 +20,7 @@ class Localization : Subsystem {
     pros::Mutex m_mutex;
   public:
     // Number of particles
-    static constexpr size_t N = 500;
+    static constexpr size_t N = 1000;
     /** Particle type */
     typedef Eigen::Vector2f P;
     /** Particle filter type */
@@ -50,6 +51,7 @@ class Localization : Subsystem {
         Eigen::Matrix2f covar;
     };
   private:
+    FILE* m_compressedLogFile;
     PF m_pf;
     std::shared_ptr<Odom> m_odom;
 
@@ -66,7 +68,7 @@ class Localization : Subsystem {
         /** @brief Represents change in position, according to LemLib odom. */
         P m_displacement;
         /** @brief Updates particles according to LemLib odom. */
-        void predict(std::array<P, N>& particles) override;
+        void predict(Eigen::Array<P, N, 1>& particles) override;
 
         OdomPredictor(Eigen::Matrix2f covar);
     } m_predictor;
@@ -75,6 +77,8 @@ class Localization : Subsystem {
     SensorVector m_sensors;
 
     resamplers::Systematic<N> m_resampler;
+
+    Localization::PF::Data printParticles(Localization::PF::Data data) const;
   public:
     void update() override;
 
@@ -94,6 +98,9 @@ class Localization : Subsystem {
      * @brief Calibrates the odometry sensors, and enables the particle filter.
      */
     void calibrate();
+
+    /** @brief Whether particle filter is being used or not */
+    bool enabled = true;
 
     /**
      * @brief Construct a new Localizer object

@@ -29,11 +29,7 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-#ifdef VEXIDE_SIMULATION
   pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
-#else
-  pros::lcd::initialize();
-#endif
 
   // ensure robot is initialized
   Robot::get();
@@ -43,11 +39,12 @@ void initialize() {
   bot.calibrate();
 
   bot.intakeLift.extend();
-
+  bot.setAlliance(ALLIANCE::RED);
   bot.setPose({-36, -36, dimensions::field::REFEREE}, 48);
   pros::delay(250);
   RobotConfig::LEDs::leds.leftUnderGlow->buf().setAll(0x00FF00);
 
+  printf("Initialized!\n");
   // // LED Testing
   // LED Testing
   // pros::delay(1000);

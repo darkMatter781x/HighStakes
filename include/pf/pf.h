@@ -1,9 +1,9 @@
 #pragma once
 
-#include <array>
 #include <cfloat>
 #include <memory>
 #include <numeric>
+#include "profiler/profiler.h"
 #include "pros/rtos.hpp"
 #include "pf/resamplers/resampler.h"
 #include "sensors/sensor.h"
@@ -21,21 +21,21 @@ template <typename P, size_t N> class ParticleFilter {
      */
     pros::Mutex m_mutex;
 
-    std::unique_ptr<std::array<P, N>> m_particles;
+    std::unique_ptr<Eigen::Array<P, N, 1>> m_particles;
     /** @brief Weights corresponding to the particles. */
-    std::unique_ptr<std::array<float, N>> m_weights;
+    std::unique_ptr<Eigen::Array<float, N, 1>> m_weights;
 
     /**
      * @brief Used to allocate memory once for resampling. Is not shared
      * between calls to the particle filter.
      */
-    std::unique_ptr<std::array<size_t, N>> m_indices;
+    std::unique_ptr<Eigen::Array<size_t, N, 1>> m_indices;
 
     /**
      * @brief Used to allocate memory once for resampling. Is not shared
      * between calls to the particle filter.
      */
-    std::unique_ptr<std::array<P, N>> m_newParticles;
+    std::unique_ptr<Eigen::Array<P, N, 1>> m_newParticles;
   public:
     using Resampler = resamplers::Resampler<N>;
     using Sensor = sensors::Sensor<P, N>;
@@ -46,14 +46,14 @@ template <typename P, size_t N> class ParticleFilter {
          * @brief Modifies particles param according to system model and
          * incorporates noise.
          */
-        virtual void predict(std::array<P, N>& particles) = 0;
+        virtual void predict(Eigen::Array<P, N, 1>& particles) = 0;
     };
 
     /**
      * @brief Utility for normalizing weights
      * @time O(N)
      */
-    static void normalizeWeights(std::array<float, N>& weights) {
+    static void normalizeWeights(Eigen::Array<float, N, 1>& weights) {
       float sum = std::reduce(weights.begin(), weights.end());
       // TODO: Investigate if this is necessary/correct
       // Avoid round of to 0
@@ -75,9 +75,13 @@ template <typename P, size_t N> class ParticleFilter {
     void update(std::vector<std::unique_ptr<Sensor>>& sensors,
                 Resampler& resampler) {
       m_mutex.take();
-      // Update weights
-      for (std::unique_ptr<Sensor>& sensor : sensors)
-        sensor->update(*m_particles, *m_weights);
+
+      PROFILE_SECTION("PF.updateWeights", {
+        // Update weights
+        for (std::unique_ptr<Sensor>& sensor : sensors)
+          sensor->update(*m_particles, *m_weights);
+      })
+      
       // Normalize weights
       normalizeWeights(*m_weights);
 
@@ -90,8 +94,13 @@ template <typename P, size_t N> class ParticleFilter {
         // Get indices of particles to keep
         m_indices = resampler.resample(*m_weights, std::move(m_indices));
         // Perform the actual resampling
-        for (size_t i = 0; i < N; i++)
+        for (size_t i = 0; i < N; i++) {
+          if ((*m_indices)[i] >= N) {
+            printf("Index out of bounds: %d\n", (*m_indices)[i]);
+            continue;
+          }
           (*m_newParticles)[i] = (*m_particles)[(*m_indices)[i]];
+        }
         m_particles.swap(m_newParticles);
         // Reset weights
         std::fill(m_weights->begin(), m_weights->end(), 1.f / N);
@@ -114,8 +123,8 @@ template <typename P, size_t N> class ParticleFilter {
     }
 
     struct Data {
-        std::unique_ptr<std::array<P, N>> particles;
-        std::unique_ptr<std::array<float, N>> weights;
+        std::unique_ptr<Eigen::Array<P, N, 1>> particles;
+        std::unique_ptr<Eigen::Array<float, N, 1>> weights;
     };
 
     /**
@@ -135,18 +144,18 @@ template <typename P, size_t N> class ParticleFilter {
     }
 
     /** @brief Sets the PF's weights */
-    void setWeights(const std::array<float, N>& weights) {
+    void setWeights(const Eigen::Array<float, N, 1>& weights) {
       m_mutex.take();
       m_weights = weights;
       m_mutex.give();
     }
 
     /** Create a particle filter. */
-    ParticleFilter(std::unique_ptr<std::array<P, N>> particles)
+    ParticleFilter(std::unique_ptr<Eigen::Array<P, N, 1>> particles)
       : m_particles(std::move(particles)),
-        m_weights(std::make_unique<std::array<float, N>>()),
-        m_indices(std::make_unique<std::array<size_t, N>>()),
-        m_newParticles(std::make_unique<std::array<P, N>>()) {
+        m_weights(std::make_unique<Eigen::Array<float, N, 1>>()),
+        m_indices(std::make_unique<Eigen::Array<size_t, N, 1>>()),
+        m_newParticles(std::make_unique<Eigen::Array<P, N, 1>>()) {
       std::fill((*m_weights).begin(), (*m_weights).end(), 1. / N);
     }
 };

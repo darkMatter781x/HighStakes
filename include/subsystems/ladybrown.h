@@ -12,6 +12,10 @@ class LadyBrown : Subsystem {
       IDLE,
       /* Height where the lady brown picks up the ring from the hooks */
       COLLECT,
+      /* Height where the lady brown picks up the second ring from the hooks */
+      COLLECT_2,
+      /* Height where the robot is able to intake rings with a ring in the lady brown*/
+      IDLE_SCORE,
       /* Height where the you are able to score onto the wall stake by driving
          onto the wall stake */
       SCORE,
@@ -27,6 +31,10 @@ class LadyBrown : Subsystem {
         float idle;
         /* target angle of lady brown for State::COLLECT */
         float collect;
+        /* target angle of lady brown for State::COLLECT_2 */
+        float collect2;
+        /*target angle of lady brown for State::IDLE_COLLECT*/
+        float idle_collect;
         /* target angle of lady brown for State::MOVE_SCORE */
         float score;
 
@@ -36,7 +44,7 @@ class LadyBrown : Subsystem {
         /* default config */
         static Config config;
     };
-
+  // private:
     State m_state;
     Config& m_config;
     pros::MotorGroup& m_motors;
@@ -45,10 +53,9 @@ class LadyBrown : Subsystem {
     lemlib::PID m_pid;
 
     lemlib::ExitCondition m_exitCondition;
-
-    double counter = 0;
-    double prevCounter;
-
+  public:
+    using AngDir = lemlib::AngularDirection;
+    AngDir dir = AngDir::AUTO;
     /* returns the target lift angle in degrees based on m_state and m_config */
     float getTargetAngle() const;
     /* returns the current angle of the lady brown in decrees */
@@ -56,7 +63,6 @@ class LadyBrown : Subsystem {
     /** @returns Error between current lady brown angle and target lady brown
      * angle.  */
     float calcError() const;
-
     LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
               Config& config);
 
@@ -66,10 +72,11 @@ class LadyBrown : Subsystem {
     void setState(State state);
 
     void emergencyStop();
-    void goToIDLE();
-    void goToCOLLECT();
-    void goToSCORE();
-    void goToIDLE_SCORE();
+    void goToIdle();
+    void collect();
+    void collectSecond();
+    void score();
+    void goToIdleScore();
 
     /* cycles the lady brown to the next state */
     void nextState();

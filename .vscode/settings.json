@@ -3,10 +3,12 @@
     "covar",
     "DOINKER",
     "Eigen",
+    "intaked",
     "lemlib",
     "MOGO",
     "multipliable",
     "Plotly",
+    "repr",
     "Resampler",
     "resamplers",
     "VEXIDE"

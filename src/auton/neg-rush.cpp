@@ -1,15 +1,10 @@
-#include "lemlib/chassis/chassis.hpp"
-#include "lemlib/exitcondition.hpp"
 #include "lemlib/pose.hpp"
-#include "main.h"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "dimensions.h"
 #include "subsystems/intake.h"
-#include "lemlib/util.hpp"
 #include "auton.h"
 #include "subsystems/ladybrown.h"
-#include <optional>
 
 using namespace dimensions::all;
 using namespace DIR;
@@ -59,10 +54,12 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Intake safe stack
-  bot.moveToPoint({-TILE - 1, TILE * 2}, 3000, {.maxSpeed = 64});
+  bot.moveToPoint({-TILE - 1, TILE * 2 - 1}, 3000);
+  bot.waitUntilDone();
+  pros::delay(500);
 
   // Intake 1st ring on line
-  bot.moveToPose({-DRIVE_LENGTH / 2 - 2, TILE * 2 - 1, BLUE_STATION}, 2000);
+  bot.moveToPose({-DRIVE_LENGTH / 2 - 2, TILE * 2 - 4, BLUE_STATION}, 2000);
 
   // Back away from line
   bot.waitUntilDone();
@@ -73,12 +70,13 @@ void negativeRushFunc(ALLIANCE alliance) {
   // Intake 2nd ring on line
   bot.moveToPose({-DRIVE_LENGTH / 2 - 2, TILE * 2 + 5, BLUE_STATION}, 2000);
 
-  // Back away and touch bar
+  // Back away
   bot.waitUntilDone();
-  tank(-32, -32, 300); // Back away straight
+  tank(-32, -32, 450); // Back away straight
+  // Go to bar
   bot.moveToPose(
       lemlib::Pose {-TILE / 2, TILE / 2, RED_STATION + 45} +
-          lemlib::Pose::fromPolar(DRIVE_LENGTH / 2 - 7, RED_STATION + 45),
+          lemlib::Pose::fromPolar(DRIVE_LENGTH / 2 - 11, RED_STATION + 45),
       2000, {.forwards = false});
 
   // Move lady brown to prepare to touch bar
@@ -91,4 +89,20 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.lady.setState(LadyBrown::IDLE);
   pros::delay(500);
   bot.lady.setState(LadyBrown::COAST);
+
+  // // Go backwards to line up for filling goal
+  // bot.moveToPoint(
+  //     {
+  //         -TILE * 2,
+  //         TILE * 2,
+  //     },
+  //     1000, {.forwards = false, .maxSpeed = 64});
+  // const lemlib::Pose allyWallStack {-TILE * 2, 0};
+  // bot.turnToPoint(allyWallStack, 1000);
+  //
+  // // Push over ally wall stack
+  // bot.moveToPoint(allyWallStack, 1000, {.maxSpeed = 64});
+  // bot.waitUntil(10);
+  // bot.intake.stop();
+  // bot.waitUntilDone();
 }

@@ -61,39 +61,50 @@ class Laser {
      */
     template <size_t N> struct Sensor
       : public sensors::Sensor<Eigen::Vector2f, N> {
+      private:
+        static Eigen::Array<float, 2, 1> toEigenArray(Vec2 vec) {
+          return vec.array();
+        }
+
+        static float minCoeff(Eigen::Array<float, 2, 1> arr) {
+          return arr.minCoeff();
+        }
+
+        static float getX(Eigen::Array<float, 2, 1> arr) {
+          return arr.coeff(0);
+        }
+
+        static float getY(Eigen::Array<float, 2, 1> arr) {
+          return arr.coeff(1);
+        }
+      public:
         Laser& laser;
 
-        void update(const std::array<Vec2, N>& particles,
-                    std::array<float, N>& weights) override {
+        void update(const Eigen::Array<Vec2, N, 1>& particles,
+                    Eigen::Array<float, N, 1>& weights) override {
           auto measurement_opt = laser.sense();
           if (!measurement_opt) return;
           auto& measurement = *measurement_opt;
-          lines::Ray ray = laser.toRay({0, 0});
-          const Vec2 startOffset = ray.start;
-          const stats::NormPDF pdf {measurement.dist, measurement.stdDev};
+          const lines::Ray ray = laser.toRay({0, 0});
 
-          ray.start = particles[0];
+          constexpr float fieldRadius = 140.25 / 2;
+          const float mu = measurement.dist;
+          const float sigma = measurement.stdDev;
+          const float pdfCoeff = 1 / (sqrt(2 * M_PI) * sigma);
 
-          // TODO: Improve safety (ray might not intersect anything)
-          // Assume all particles will intersect the same line
-          auto seg = laser.obstacles[ray.findFirstIntersect(laser.obstacles)
-                                         .value_or(std::pair {0.f, 0u})
-                                         .second];
+          Eigen::Array<Eigen::Array<float, 2, 1>, N, 1> bothDirDists =
+              (((fieldRadius * ray.direction.cwiseSign()) -
+                (ray.start + particles))
+                   .unaryExpr(&toEigenArray) /
+               ray.direction.array());
 
-          for (size_t i = 0; i < particles.size(); i++) {
-            // TODO: make cleaner
-            ray.start = particles[i] + startOffset;
-            auto intersectOpt = ray.distanceTo(seg);
-            if (const auto intersect = intersectOpt) {
-              weights[i] *= pdf.eval(*intersect);
-            } else {
-              if (const auto intersect =
-                      ray.findFirstIntersect(laser.obstacles)) {
-                weights[i] *= pdf.eval(intersect->first);
-              } else weights[i] = 0;
-            }
-          }
-        };
+          Eigen::Array<float, N, 1> xDists = bothDirDists.unaryExpr(&getX);
+          Eigen::Array<float, N, 1> yDists = bothDirDists.unaryExpr(&getY);
+          auto pdfXs = xDists.min(yDists);
+
+          weights *=
+              pdfCoeff * Eigen::exp(-.5 * Eigen::pow((pdfXs - mu) / sigma, 2));
+        }
 
         Sensor(Laser& laser) : laser(laser) {}
     };

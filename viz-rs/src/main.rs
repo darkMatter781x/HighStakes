@@ -1,5 +1,5 @@
 use std::{
-    io::{BufRead, BufReader},
+    io::{BufRead, BufReader, Read},
     process::{Child, ChildStdout, Command, Stdio},
 };
 
@@ -72,6 +72,7 @@ impl MessageHandler {
     }
 }
 
+#[allow(dead_code)]
 /// Runs simulated sensor program on v5 brain
 fn run_sim_on_brain() -> Result<Child, std::io::Error> {
     Command::new("sh")
@@ -81,21 +82,34 @@ fn run_sim_on_brain() -> Result<Child, std::io::Error> {
         .stderr(Stdio::inherit())
         .spawn()
 }
+
+#[allow(dead_code)]
 /// Runs real sensor program on v5 brain
 fn run_real_on_brain() -> Result<Child, std::io::Error> {
     Command::new("sh")
         .arg("-c")
-        .arg("pros ut --slot 6 --after run")
+        .arg("pros u --slot 6 --after run && v5 t")
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .spawn()
 }
 
+#[allow(dead_code)]
 /// Runs program in v5 sim
 fn run_simulator() -> Result<Child, std::io::Error> {
     Command::new("sh")
         .arg("-c")
         .arg("simulator monolith ../bin/sim/monolith.bin")
+        .stdout(Stdio::piped())
+        .stderr(Stdio::inherit())
+        .spawn()
+}
+
+#[allow(dead_code)]
+/// Runs program in v5 sim
+fn from_file_contents() -> Result<Child, std::io::Error> {
+    Command::new("cat")
+        .arg("../localization.log")
         .stdout(Stdio::piped())
         .stderr(Stdio::inherit())
         .spawn()
@@ -118,7 +132,7 @@ fn handle_stdout(
             Err(err) => return Err(Box::new(err)),
         };
     }
-    Ok(())
+    return Ok(());
 }
 
 struct Particle {
@@ -140,7 +154,7 @@ impl RerunParticles {
     pub fn new<T: IntoIterator<Item = Particle>>(particles: T) -> Self {
         let (coords, weights): (Vec<_>, Vec<_>) = particles
             .into_iter()
-            .map(|p| ((p.x, p.y), p.weight))
+            .map(|p| ((p.x, -p.y), p.weight))
             .unzip();
         let max = weights
             .clone()
@@ -246,9 +260,7 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
         let micros: i64 = micros_str.parse()?;
         // println!("parse_particles: string after removing micros {rest}");
 
-        // let (points, confidences): (Vec<_>, Vec<_>) = iter.unzip();
         rec.set_time_nanos("capture", micros * 1000i64);
-
         rec.log(
             "particles",
             &RerunParticles::new(
@@ -275,6 +287,7 @@ fn parse_particles(rec: &RecordingStream, raw_str: &str) {
     }
 }
 
+#[allow(dead_code)]
 fn add_background(rec: &RecordingStream) -> Result<(), RecordingStreamError> {
     let image = include_bytes!("../h2h.png");
 
@@ -299,24 +312,109 @@ fn add_field_grid(rec: &RecordingStream) -> Result<(), RecordingStreamError> {
     Ok(())
 }
 
+const PARTICLE_N: usize = 1000;
+
+#[repr(C)]
+#[derive(Clone)]
+struct TelemetryPoint {
+    x: f32,
+    y: f32,
+}
+
+#[repr(C)]
+#[derive(Clone)]
+struct TelemetryParticles([TelemetryPoint; PARTICLE_N]);
+
+#[repr(C)]
+#[derive(Clone)]
+struct TelemetryWeights([f32; PARTICLE_N]);
+
+#[repr(C)]
+#[derive(Clone)]
+struct TelemetryEntry {
+    micros: i64,
+    particles: TelemetryParticles,
+    weights: TelemetryWeights,
+}
+
+fn telemetry_from_binary_data<R: Read>(data: BufReader<R>) -> Vec<TelemetryEntry> {
+    const ENTRY_SIZE: usize = std::mem::size_of::<TelemetryEntry>();
+
+    data.bytes()
+        .chunks(ENTRY_SIZE)
+        .into_iter()
+        .filter_map(|chunk| {
+            chunk.try_collect().ok().and_then(|v: Vec<u8>| {
+                println!("vec.len(): {}", v.len());
+                if v.len() != ENTRY_SIZE {
+                    return None;
+                }
+                let slice: &[u8; ENTRY_SIZE] = v
+                    .as_slice()
+                    .try_into()
+                    .expect("slice with incorrect length");
+                Some(
+                    unsafe { std::mem::transmute::<&[u8; ENTRY_SIZE], &TelemetryEntry>(slice) }
+                        .clone(),
+                )
+            })
+        })
+        .collect()
+}
+
+fn parse_telemetry_log_file(rec: &RecordingStream, filename: &str) -> anyhow::Result<()> {
+    let decoder = lz4_flex::frame::FrameDecoder::new(std::fs::File::open(filename)?);
+    let telem = telemetry_from_binary_data(BufReader::new(decoder));
+    // particles_from_binary_data(&data)
+    for entry in &telem {
+        rec.set_time_seconds("capture", entry.micros as f64 / 1_000_000f64);
+        rec.log(
+            "particles",
+            &RerunParticles::new(entry.particles.0.iter().zip(entry.weights.0.iter()).map(
+                |(p, w)| Particle {
+                    x: p.x,
+                    y: p.y,
+                    weight: *w,
+                },
+            )),
+        )?;
+    }
+    Ok(())
+}
+
+use clap::Parser;
+
+#[derive(Parser, Debug)]
+#[command(version, about, long_about = None)]
+struct Args {
+    // #[arg(short, long)]
+    log_file: Option<String>,
+}
+
 fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let args = Args::parse();
+
     println!("{}", rerun::default_server_addr());
     let rec = rerun::RecordingStreamBuilder::new("781xMCL").connect_tcp()?;
 
     add_field_grid(&rec)?;
     // add_background(&rec)?;
 
-    let handler = &mut MessageHandler::new();
+    if let Some(log_file) = args.log_file {
+        parse_telemetry_log_file(&rec, &log_file)?;
+    } else {
+        let handler = &mut MessageHandler::new();
 
-    handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
+        handler.sub("TELEMETRY.PF.PARTICLES", move |s| parse_particles(&rec, s));
 
-    let child_process = run_real_on_brain()?;
-    // let child_process = run_sim_on_brain()?;
-    // let child_process = run_simulator()?;
-    let child_stdout = child_process
-        .stdout
-        .expect("child process's stdout was not available!?");
-    handle_stdout(child_stdout, handler)?;
-
+        let child_process = run_real_on_brain()?;
+        // let child_process = run_sim_on_brain()?;
+        // let child_process = run_simulator()?;
+        // let child_process = from_file_contents()?;
+        let child_stdout = child_process
+            .stdout
+            .expect("child process's stdout was not available!?");
+        handle_stdout(child_stdout, handler)?;
+    }
     Ok(())
 }

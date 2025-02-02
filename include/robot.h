@@ -6,7 +6,6 @@
 #include "subsystems/selector.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "subsystems/intake.h"
-#include "subsystems/lift.h"
 #include "subsystems/ladybrown.h"
 #include "color.h"
 #include <memory>
@@ -46,7 +45,9 @@ class Robot : private lemlib::Chassis {
 
     // pros::adi::Pneumatics& kicker;
     pros::adi::Pneumatics& mogoClamp;
+    /** Extended is down/active. */
     pros::adi::Pneumatics& doinker;
+    /** Extended is up/inactive. */
     pros::adi::Pneumatics& intakeLift;
     pros::Controller& gamepad;
     AutonSelector& selector;

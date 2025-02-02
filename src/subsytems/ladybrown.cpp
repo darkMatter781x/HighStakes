@@ -1,9 +1,9 @@
 #include "subsystems/ladybrown.h"
+#include "lemlib/chassis/chassis.hpp"
 #include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
 #include "pros/motors.h"
 #include "robot.h"
-#include <iostream>
 
 void LadyBrown::update() {
   switch (m_state) {
@@ -17,14 +17,11 @@ void LadyBrown::update() {
       m_motors.brake();
       return;
     }
-    default: {
-    }
+    default: break;
   }
   const float error = calcError();
   const float output = std::min(8720.0f, m_pid.update(error));
   bool shouldBrake = m_exitCondition.update(error);
-  // if (pros::millis() % 200 < 10) printf("lift: %4.2f\t%4.2f\n", error,
-  // output);
   if (shouldBrake) {
     // if error > smallError, then don't brake and reset exit condition
     if (std::abs(error) > m_config.controllerSettings.smallError)
@@ -43,6 +40,26 @@ void LadyBrown::update() {
   }
   if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
   m_motors.move_voltage(output);
+
+  // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() <
+  // 30) {
+  //   m_rotation.set_position(0);
+  // }
+
+  /*if (m_state == LadyBrown::SCORE) {
+    if (calcLBAngle() > 160) {
+      dir = AngDir::CCW_COUNTERCLOCKWISE;
+    } else {
+      dir = AngDir::AUTO;
+    }
+  }
+  if (m_state == LadyBrown::IDLE) {
+    if (calcLBAngle() < 290 && calcLBAngle() > 75) {
+      dir = AngDir::CW_CLOCKWISE;
+    } else {
+      dir = AngDir::AUTO;
+    }
+  } */
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
@@ -53,12 +70,15 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
           m_config.controllerSettings.kD,
           m_config.controllerSettings.windupRange, true),
     m_exitCondition(m_config.controllerSettings.smallError,
-                    m_config.controllerSettings.smallErrorTimeout) {}
+                    m_config.controllerSettings.smallErrorTimeout) {
+}
 
 float LadyBrown::getTargetAngle() const {
   switch (m_state) {
     case State::IDLE: return m_config.idle;
     case State::COLLECT: return m_config.collect;
+    case State::COLLECT_2: return m_config.collect2;
+    case State::IDLE_SCORE: return m_config.idle_collect;
     case State::SCORE: return m_config.score;
     default: return NAN;
   }
@@ -67,11 +87,16 @@ float LadyBrown::getTargetAngle() const {
 float LadyBrown::calcLBAngle() const {
   // Prevent lift from moving if rotation sensor is not installed
   if (!m_rotation.is_installed()) return getTargetAngle();
-  return m_rotation.get_angle() / 100.0;
+  return m_rotation.get_position() / 100.0;
 }
 
 float LadyBrown::calcError() const {
-  return lemlib::angleError(getTargetAngle(), calcLBAngle(), false);
+  // constexpr AngDir CCW = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE;
+  const float currAngle = calcLBAngle();
+  // // If past max angle, then only turn counter clockwise (towards idle)
+  // // This prevents the lady brown from turning through itself.
+  // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
+  return getTargetAngle() - currAngle;
 }
 
 const LadyBrown::State& LadyBrown::getState() { return m_state; }
@@ -83,17 +108,26 @@ void LadyBrown::setState(State state) {
 
 void LadyBrown::emergencyStop() { setState(State::EMERGENCY_STOP); }
 
-void LadyBrown::goToIDLE() { setState(State::IDLE); }
+void LadyBrown::goToIdle() { setState(State::IDLE); }
 
-void LadyBrown::goToCOLLECT() { setState(State::COLLECT); }
+void LadyBrown::collect() { setState(State::COLLECT); }
 
-void LadyBrown::goToSCORE() { setState(State::SCORE); }
+void LadyBrown::collectSecond() { setState(State::COLLECT_2); }
+
+void LadyBrown::goToIdleScore() { setState(State::IDLE_SCORE); }
+
+void LadyBrown::score() { setState(State::SCORE); }
 
 void LadyBrown::nextState() {
   switch (m_state) {
-    case State::IDLE: goToCOLLECT(); break;
-    case State::COLLECT: goToSCORE(); break;
-    case State::SCORE: goToIDLE(); break;
-    default: goToIDLE(); break;
+    case State::IDLE:
+      dir = AngDir::AUTO;
+      collect();
+      break;
+    case State::COLLECT: collectSecond(); break;
+    case State::COLLECT_2: goToIdleScore(); break;
+    case State::IDLE_SCORE: score(); break;
+    case State::SCORE: goToIdle(); break;
+    default: goToIdle(); break;
   }
 }

@@ -39,19 +39,19 @@ namespace test {
  * @endcode
  */
 void test_multivariate_gaussian() {
-  stats::MultivariateGaussian<2> gaussian {.mu = Eigen::Vector2f {7, 5},
-                                           .sigma = Eigen::Matrix2f {}};
-  gaussian.sigma << 2, -3, -3, 11;
-  auto& result = *new std::array<Eigen::Vector2f, 500>();
-  gaussian.makeSampler().sampleMany(result);
+  // stats::MultivariateGaussian<2> gaussian {.mu = Eigen::Vector2f {7, 5},
+  //                                          .sigma = Eigen::Matrix2f {}};
+  // gaussian.sigma << 2, -3, -3, 11;
+  // auto& result = *new Eigen::Array<Eigen::Vector2f, 500, 1>();
+  // gaussian.makeSampler().sampleMany(result);
 
-  printf("\n[");
-  for (auto& sample : result) printf("[%f,%f],", sample.x(), sample.y());
-  printf("]\n");
+  // printf("\n[");
+  // for (auto& sample : result) printf("[%f,%f],", sample.x(), sample.y());
+  // printf("]\n");
 
-  const auto resultingGaussian =
-      stats::MultivariateGaussian<2>::fromSamples(result);
-  std::cout << "\nmean:\n" << resultingGaussian.mu << std::endl;
-  std::cout << "\ncovar:\n" << resultingGaussian.sigma << std::endl;
+  // const auto resultingGaussian =
+  //     stats::MultivariateGaussian<2>::fromSamples(result);
+  // std::cout << "\nmean:\n" << resultingGaussian.mu << std::endl;
+  // std::cout << "\ncovar:\n" << resultingGaussian.sigma << std::endl;
 }
 } // namespace test

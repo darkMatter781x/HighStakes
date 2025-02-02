@@ -1,3 +1,4 @@
+#include "lemlib/util.hpp"
 #include "main.h"
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
@@ -11,6 +12,7 @@
 #include <climits>
 #include <cstdlib>
 #include <iostream>
+#include <cstdio>
 #include <variant>
 
 namespace controller_mapping {
@@ -131,6 +133,12 @@ void opcontrol() {
   }
   int time_since_press = INT_MAX - 1000;
   while (true) {
+    if (bot.lady.getState() == LadyBrown::COAST &&
+        lemlib::angleError(bot.lady.calcLBAngle(), bot.lady.m_config.idle,
+                           false) < 10) {
+      bot.lady.setState(LadyBrown::IDLE);
+    }
+
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
@@ -171,20 +179,20 @@ void opcontrol() {
       if (bot.lady.getState() == LadyBrown::COLLECT) {
         time_since_press = pros::millis();
         std::cout << time_since_press << "\n";
+        //bot.intake.outtake();
         bot.lady.nextState();
       } else {
         bot.lady.nextState();
-      }
+      } 
     }
-    if (pros::millis() > time_since_press + 500) {
-      bot.lady.goToIDLE();
-      time_since_press = INT_MAX - 1000;
-    }
+    if (pros::millis() > time_since_press + 100) {
+      //bot.intake.stop();
+    } 
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||
          std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))) {
-      bot.lady.goToIDLE();
+      bot.lady.goToIdle();
     }
 
     // Toggle filtering color
@@ -194,11 +202,11 @@ void opcontrol() {
     auto intakeState = bot.intake.getState();
     master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
                  std::visit(intakeStateToStr, intakeState));
-#ifdef TUNING
-    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-      tuningCLI();
-#endif
+// #ifdef TUNING
+//     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+//         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+//       tuningCLI();
+// #endif
     pros::delay(20); // Run every 20ms (refresh rate of the controller)
   }
 }

@@ -31,7 +31,9 @@ constexpr float BLUE = long_headings::BLUE_STATION;
 } // namespace short_headings
 namespace DIR = short_headings;
 
-constexpr float TILE = 24;
+constexpr float FIELD_LENGTH = 140.25;
+
+constexpr float TILE = FIELD_LENGTH / 6;
 
 /** x axis goes from red driver station to the blue driver station */
 constexpr float MAX_X = TILE * 3;

@@ -1,5 +1,6 @@
 #include "subsystems/selector.h"
 #include "auton.h"
+#include "liblvgl/llemu.hpp"
 #include "pros/llemu.hpp"
 #include "robot.h"
 #include <algorithm>
@@ -8,9 +9,8 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::positiveRush,
-      auton::autons::negativeRush,
-      auton::autons::skills,
+      auton::autons::safeAWP,      auton::autons::negativeRush,
+      auton::autons::positiveRush, auton::autons::skills,
       auton::autons::doNothing,
   };
 }
@@ -28,11 +28,23 @@ AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
   for (auto a : m_autons) { printf("\t%s,\n", a.label); }
   printf("end m_autons\n");
 
+#ifndef VEXIDE_SIMULATION
+  pros::lcd::initialize();
+#endif
   // Register the brain screen button callbacks.
-  pros::lcd::register_btn0_cb([] { AutonSelector::getPtr()->decrement(); });
-  pros::lcd::register_btn1_cb(
-      [] { AutonSelector::getPtr()->toggleAlliance(true); });
-  pros::lcd::register_btn2_cb([] { AutonSelector::getPtr()->increment(); });
+  pros::lcd::register_btn0_cb([] {
+    printf("left pressed\n");
+    AutonSelector::getPtr()->decrement();
+  });
+  pros::lcd::register_btn1_cb([] {
+    printf("center pressed\n");
+    AutonSelector::getPtr()->toggleAlliance(true);
+  });
+  pros::lcd::register_btn2_cb([] {
+    printf("right pressed\n");
+    AutonSelector::getPtr()->increment();
+  });
+  printf("added button callbacks!\n");
 }
 
 void AutonSelector::increment() {
@@ -180,6 +192,4 @@ void AutonSelector::display() const {
   // TODO
 }
 
-bool AutonSelector::isLocked() const {
-  return m_locked.has_value();
-}
+bool AutonSelector::isLocked() const { return m_locked.has_value(); }

@@ -12,8 +12,9 @@ template <size_t N> class Systematic : public Resampler<N> {
     /** @brief Returns random number between 0 and 1 */
     std::function<float()> m_random;
   public:
-    std::unique_ptr<std::array<size_t, N>> resample(const std::array<float, N>& weights,
-                  std::unique_ptr<std::array<size_t, N>> indices) override{
+    std::unique_ptr<Eigen::Array<size_t, N, 1>>
+    resample(const Eigen::Array<float, N, 1>& weights,
+             std::unique_ptr<Eigen::Array<size_t, N, 1>> indices) override {
       float offset = m_random() / N;
 
       /** Current sum. */
@@ -31,6 +32,12 @@ template <size_t N> class Systematic : public Resampler<N> {
 
         // If current weight is at desired position
         while (currSum > position) {
+          if (i_i >= N) {
+            printf("Systematic: Index out of bounds: %d\n", i_i);
+            printf("currSum: %f\n", currSum);
+            printf("position: %f\n", position);
+            break;
+          }
           // Then add it to the indices
           (*indices)[i_i] = i_w;
           ++i_i;
