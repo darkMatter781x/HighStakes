@@ -31,7 +31,7 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
+  // pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
 
   // ensure robot is initialized
   Robot::get();
