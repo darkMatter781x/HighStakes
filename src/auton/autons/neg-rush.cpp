@@ -2,10 +2,8 @@
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "dimensions.h"
-#include "subsystems/intake.h"
-#include "auton.h"
-#include "subsystems/ladybrown.h"
-#include "leds/functions.h"
+#include "auton/autons.h"
+#include "auton/util.h"
 
 using namespace dimensions::all;
 using namespace DIR;
@@ -34,7 +32,6 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Drop intake
   bot.intakeLift.retract();
-  bot.led.autonMessage(0xFF0000, 1000, pros::millis());
 
   // Go to mogo
   const lemlib::Pose mogo {-TILE, TILE, RED_STATION + 30};
@@ -47,7 +44,6 @@ void negativeRushFunc(ALLIANCE alliance) {
   waitUntilDistToPose(mogo, 9, 0, true);
   // Clamp
   bot.mogoClamp.retract();
-  bot.led.autonMessage(0x00FF00, 1000, pros::millis());
 
   bot.waitUntilDone();
   pros::delay(500);

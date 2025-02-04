@@ -5,8 +5,8 @@ constexpr double INCHES_PER_CM = 0.3937008;
 Intake::Config Intake::Config::config = {
     .intakingToLiftInches = 4,
     .outtakingToLiftDuration = 1800,
-    .intakingToKickDuration = 50,
-    .KickingRing = 350,
+    .intakingToKickDuration = 2.3,
+    .KickingRing = 200,
     .chainRatio =
         1.0 /* rot */ / (18.0 /* teeth */ * 1.0 /* cm/tooth */ * INCHES_PER_CM),
 };

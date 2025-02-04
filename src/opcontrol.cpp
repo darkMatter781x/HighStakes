@@ -1,19 +1,12 @@
 #include "lemlib/util.hpp"
-#include "main.h"
 #include "pros/misc.h"
-#include "pros/rtos.hpp"
-#include "robot.h"
+#include <string>
 #include "subsystems/intake.h"
-#include "subsystems/ladybrown.h"
-#include "tuning.h"
 #include "dimensions.h"
 #include "leds/functions.h"
-#include "auton.h"
-#include <climits>
-#include <cstdlib>
-#include <iostream>
-#include <cstdio>
-#include <variant>
+#include "auton/util.h"
+#include "robot.h"
+#include "main.h"
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -49,52 +42,7 @@ std::string destToStrOp(Intake::DESTINATION dest) {
   }
 }
 
-void skillsMacro() {
-  using namespace dimensions::all;
-  using namespace DIR;
-  using lemlib::Pose;
-  using namespace auton::util;
-
-  bot.setPose({-TILE * 2 - 13.25, 0, BLUE_STATION});
-
-  // Score preload on alliance stake
-  bot.intake.intakeBothTo(Intake::MOGO);
-  pros::delay(220);
-  bot.intake.stop();
-
-  // Reset count of rings in mogo (dont include preload)
-  bot.intake.numOfMogoRings = 0;
-
-  // Wait until ring is scored
-  pros::delay(200);
-
-  const Pose grabMogo1 = {-TILE * 2, -TILE + DRIVE_LENGTH / 2, REF};
-  // Get out of alliance stake, and face mogo
-  bot.moveToPose(grabMogo1 + Pose {0, 40}, 500,
-                 {.minSpeed = 64, .earlyExitRange = 5});
-  // Deploy basket
-  bot.intake.outtake();
-  // bot.lift.goToMiddle();
-  pros::delay(400);
-
-  // Reset lift and intake
-  // bot.lift.goToBottom();
-  bot.intake.stop();
-
-  // Go to mogo
-  bot.moveToPose(grabMogo1, 1500, {.forwards = false, .lead = .7});
-  // Once near mogo, use more consistent moveToPoint
-  waitUntilDistToPose(grabMogo1, 12, 0, true);
-  bot.cancelMotion();
-  bot.moveToPoint(grabMogo1, 1000, {.forwards = false});
-
-  // Once next to mogo, grab it
-  waitUntil([grabMogo1] {
-    return bot.getPose().y < grabMogo1.y + 3 || !bot.isInMotion();
-  });
-  bot.mogoClamp.extend();
-  bot.waitUntilDone();
-}
+void skillsMacro() {}
 
 /**
  * Runs the operator control code. This function will be started in its own task
@@ -111,7 +59,6 @@ void skillsMacro() {
  */
 void opcontrol() {
   pros::Controller master(pros::E_CONTROLLER_MASTER);
-
   // Drop intake automatically
   bot.intakeLift.retract();
 

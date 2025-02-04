@@ -1,30 +1,11 @@
 #pragma once
 
 #include "lemlib/pose.hpp"
-#include <functional>
-#include <cmath>
 #include <climits>
-#include <optional>
-#include "color.h"
+#include <cmath>
+#include <functional>
 
-namespace auton {
-struct Auton {
-    char* label;
-    std::function<void(ALLIANCE)> run;
-    std::optional<char*> labelForController;
-    /** Displayed less prominently than label on brain */
-    char* description;
-};
-
-namespace autons {
-extern Auton negativeRush;
-extern Auton positiveRush;
-extern Auton safeAWP;
-extern Auton skills;
-extern Auton doNothing;
-} // namespace autons
-
-namespace util {
+namespace auton::util {
 const float DEFAULT_SLEW = 15;
 
 /**
@@ -81,5 +62,4 @@ void waitUntil(std::function<bool()> condition, int timeConditionIsTrue = 0,
 constexpr float trigAngleToHeading(float angle) {
   return -(angle * 180 / M_PI) + 90;
 }
-} // namespace util
-} // namespace auton
+} // namespace auton::util
