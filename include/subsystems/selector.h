@@ -1,12 +1,9 @@
 #pragma once
 
-#include "intake.h"
+#include "auton/autons.h"
 #include "pros/adi.hpp"
 #include "subsystems.h"
-#include <functional>
-#include <optional>
-#include "color.h"
-#include "auton.h"
+#include "subsystems/intake.h"
 
 class AutonSelector : Subsystem {
   private:

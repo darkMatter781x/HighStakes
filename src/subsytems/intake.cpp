@@ -1,8 +1,6 @@
 #include "subsystems/intake.h"
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
-#include "subsystems/ladybrown.h"
-#include "robot.h"
 #include <cmath>
 #include <cstdio>
 
@@ -19,8 +17,8 @@ std::string destToStr(Intake::DESTINATION dest) {
 }
 
 void printFiltering(Intake::Filtering& filter) {
-   printf("filtering:\tr:\t%s\tb:\t%s\n", destToStr(filter.red).c_str(),
-          destToStr(filter.blue).c_str());
+  //  printf("filtering:\tr:\t%s\tb:\t%s\n", destToStr(filter.red).c_str(),
+  //         destToStr(filter.blue).c_str());
 }
 
 Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
@@ -55,7 +53,7 @@ float Intake::FilteringState::getInchesTraveled(const Intake& intake) const {
 
 void Intake::FilteringState::start(Intake& intake) {
   Intake::BaseState::start(intake);
-   printf("starting filtering state\n");
+  printf("starting filtering state\n");
   startTime = pros::millis();
   startPosition = intake.m_motors.get_position();
   // intake.m_optical.set_led_pwm(100);
@@ -80,11 +78,11 @@ Intake::IntakingToMogo::IntakingToMogo(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
 void Intake::IntakingToKick::update(Intake& intake) {
-  intake.m_motors.move(127);
-   if (pros::millis() % 200 < 10) printf("intaking to kick\n");
+  intake.m_motors.move(POWER);
+  if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
-     printf("naturally switching to idle\n");
+    printf("naturally switching to idle\n");
     intake.setState(KickingRing {afterState, color});
   }  
 }
@@ -108,9 +106,9 @@ void Intake::KickingRing::update(Intake& intake) {
   intake.m_motors.move(-127);
   printf("kick\n");
   printFiltering(afterState);
-  //if (pros::millis() % 200 < 10) printf("idling to kick\n");
-  if (pros::millis() - startTime > intake.m_conf.KickingRing) {
-     printf("naturally switching to filtering\n");
+  if (pros::millis() % 200 < 10) printf("idling to kick\n");
+  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
+    printf("naturally switching to filtering\n");
     intake.setState(afterState);
     intake.numOfKickRings++;
     intake.numOfRings++;
@@ -245,15 +243,15 @@ void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
 void Intake::Filtering::start(Intake& intake) {
   printf("nerd\n");
   Intake::BaseState::start(intake);
-   printf("starting filtering\n");
-  //intake.m_sensor.set_led_pwm(100);
+  printf("starting filtering\n");
+  // intake.m_sensor.set_led_pwm(100);
 }
 
 void Intake::Filtering::end(Intake& intake) {
   printf("nerd\n");
   Intake::BaseState::end(intake);
-   printf("ending filtering state\n");
-  //intake.m_sensor.set_led_pwm(0);
+  printf("ending filtering state\n");
+  // intake.m_sensor.set_led_pwm(0);
 }
 
 void Intake::Idling::update(Intake& intake) { intake.m_motors.move(0); }
@@ -319,10 +317,15 @@ std::optional<COLOR> Intake::Sensor::getRing() const {
 
   if (m_optical.get_proximity() < 200) return std::nullopt;
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
-  printf("hueRem: %f\n", hueRem);
-  if (std::abs(hueRem) < 60) return COLOR::RED; printf("red!");
-  printf("blue!");
-  return COLOR::BLUE;
+  // printf("hueRem: %f\n", hueRem);
+  
+  if (std::abs(hueRem) < 60) {
+    // printf("red!");
+    return COLOR::RED;
+  } else {
+    // printf("blue!");
+    return COLOR::BLUE;
+  }
 }
 
 std::optional<COLOR> Intake::getSensedRing() { return m_sensor.getRing(); }

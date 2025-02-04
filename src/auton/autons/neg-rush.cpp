@@ -2,9 +2,8 @@
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "dimensions.h"
-#include "subsystems/intake.h"
-#include "auton.h"
-#include "subsystems/ladybrown.h"
+#include "auton/autons.h"
+#include "auton/util.h"
 
 using namespace dimensions::all;
 using namespace DIR;

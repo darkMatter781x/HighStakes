@@ -102,7 +102,7 @@ void writeLZ4Data(LZ4_writeFile_t* lz4File, const Eigen::Array<T, N, 1>& data) {
                  sizeof(T) * data.size());
   if (LZ4F_isError(compressedSize)) {
     LZ4F_writeClose(lz4File);
-    throw std::runtime_error("Failed to compress and write data!");
+    std::cerr << "Failed to compress and write data!" << std::endl;
   }
 }
 
@@ -129,8 +129,7 @@ Localization::printParticles(Localization::PF::Data data) const {
       LZ4F_errorCode_t maybeErr =
           LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
       if (LZ4F_isError(maybeErr)) {
-        throw std::runtime_error(
-            "Failed to initialize LZ4 compression context!");
+        std::cerr << "Failed to initialize LZ4 compression context!" << std::endl;
       }
     }
 
