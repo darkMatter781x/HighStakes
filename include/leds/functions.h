@@ -9,6 +9,7 @@
 #include "config.h"
 #include "subsystems.h"
 #include "subsystems/intake.h"
+#include <climits>
 #include <string>
 
 class LEDs : Subsystem {
@@ -34,6 +35,10 @@ class LEDs : Subsystem {
 
     State m_state;
     COLOR filterColorLED;
+
+    int time;
+    int startTime = INT_MAX;
+    HexRGB color;
 
     void update() override;
 
