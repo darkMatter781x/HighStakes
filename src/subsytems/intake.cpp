@@ -108,7 +108,7 @@ void Intake::KickingRing::update(Intake& intake) {
   printf("kick\n");
   printFiltering(afterState);
   if (pros::millis() % 200 < 10) printf("idling to kick\n");
-  if (pros::millis() - startTime > intake.m_conf.intakingToKickDuration) {
+  if (pros::millis() - startTime > intake.m_conf.outtakingToLiftDuration) {
     printf("naturally switching to filtering\n");
     intake.setState(afterState);
     intake.numOfKickRings++;
