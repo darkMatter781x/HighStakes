@@ -113,7 +113,8 @@ void safePositiveFunc(ALLIANCE alliance) {
   bot.moveToPoint(allyStackTarget, 1500, {.maxSpeed = 72});
 
   // Wait until red ring is sensed
-  waitUntil([&] { return bot.intake.getSensedRing() == COLOR::RED; }, 0, 2000);
+  waitUntil([&] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
+            2000);
 
   // Outtake just in case blue ring is at bottom of intake
   bot.intake.outtake();
