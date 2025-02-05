@@ -268,11 +268,12 @@ void fillThirdMogo() {
   // === Intake 1 ring from negative corner
 
   // Go around mogo with blue ring
-  bot.moveToPose({TILE * 2 - DRIVE_WIDTH / 2 - 3, TILE, REFEREE}, 800,
+  bot.moveToPose({TILE * 2 - DRIVE_WIDTH / 2 - 3, TILE + 3, REFEREE}, 800,
                  {.minSpeed = 96, .earlyExitRange = 6});
   // Go to 2nd ring (1st and only of corner)
   const Pose ring2 {TILE * 2.5, TILE * 2};
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, REFEREE + 30) + ring2,
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, REFEREE) + ring2 +
+                     Pose {2, 0},
                  2000, {.lead = 0.5});
 
   const Pose centerRing {0, 0};
@@ -336,12 +337,10 @@ void fillThirdMogo() {
 
   bot.waitUntilDone();
 
-  // === Score final 2 rings
+  // === Score 1 final ring
 
-  bot.moveToPose({TILE * 2 - 2, -TILE * 2, AUDIENCE}, 2000,
-                 {.minSpeed = 48, .earlyExitRange = 6});
-  bot.moveToPose({TILE * 2 - 2, -TILE * 2.5, AUDIENCE}, 700,
-                 {.maxSpeed = 64, .minSpeed = 32, .earlyExitRange = 6});
+  bot.moveToPose({TILE * 2 - 2, -TILE * 2.5, REFEREE}, 2000,
+                 {.minSpeed = 32, .earlyExitRange = 6});
 
   // === Deposit mogo
 
@@ -351,19 +350,26 @@ void fillThirdMogo() {
   // Face corner
   const Pose depositMogoCorner {MAX_X, MIN_Y};
   bot.swingToPoint(depositMogoCorner, lemlib::DriveSide::LEFT, 500,
-                   {.forwards = false, .minSpeed = 127, .earlyExitRange = 30});
+                   {.forwards = false,
+                    .direction = AngDir::CCW_COUNTERCLOCKWISE,
+                    .minSpeed = 48,
+                    .earlyExitRange = 30});
 
-  // Go to corner
-  const Pose depositMogoTarget =
-      depositMogoCorner.withTheta(REFEREE - 45) +
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 5, REFEREE - 45);
-  bot.moveToPose(depositMogoTarget, 2000, {.forwards = false, .minSpeed = 72});
+  // Once ring is in mogo go into corner
+  waitUntil([] { return bot.intake.numOfMogoRings >= 5; }, 0, 1000);
 
-  // Once in corner, release mogo
+  // Once facing corner, release mogo
   bot.waitUntilDone();
   bot.mogoClamp.extend();
   // Prevent mogo from being held by hooks
   bot.intake.outtake();
+
+  // Go to corner
+  const Pose depositMogoTarget =
+      depositMogoCorner.withTheta(REFEREE - 45) +
+      Pose::fromPolar(DRIVE_LENGTH / 2 + 3, REFEREE - 45);
+  bot.moveToPose(depositMogoTarget, 2000, {.forwards = false, .minSpeed = 72});
+  bot.waitUntilDone();
 }
 
 /** @brief assumed to be starting in blue positive corner (+x,-y) */
@@ -432,7 +438,7 @@ void pushBlueRingMogo() {
 
   // Go around other mogo
   bot.moveToPose({TILE * 1.5, -TILE, RED_STATION + 45}, 1500,
-                 {.minSpeed = 72, .earlyExitRange = 6});
+                 {.forwards = false, .minSpeed = 72, .earlyExitRange = 6});
 
   // === Push mogo into corner
   const Pose mogo {TILE * 2.5, TILE * 2};
@@ -486,7 +492,7 @@ void skillsFunc(ALLIANCE _alliance) {
   const Pose mogo1 = {-TILE * 2, -TILE, REF};
 
   // Get out of alliance stake
-  bot.moveToPoint(bot.getPose().withX(mogo1.x-1) + Pose {-TRACK_WIDTH / 2, 0},
+  bot.moveToPoint(bot.getPose().withX(mogo1.x - 1) + Pose {-TRACK_WIDTH / 2, 0},
                   1000, {.earlyExitRange = 2});
   // Face mogo
   bot.swingToPoint(mogo1, lemlib::DriveSide::LEFT, 500,
