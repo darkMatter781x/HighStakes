@@ -92,7 +92,7 @@ float LedStrip::getCurrent() const {
     // if (pros::millis() % 100 < 10) printf("current calc: cache hit!\n");
     return m_prevCurrent.second;
   }
-  printf("current calc: cache miss!\n");
+  // printf("current calc: cache miss!\n");
 
   float current = 0;
   for (auto pixel : buf().getBuffer()) {

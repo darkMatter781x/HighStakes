@@ -40,26 +40,26 @@ void LEDs::displayFilterColor(COLOR color) {
 void LEDs::displayDISCONNECT(int port) {
   if (getMotorDisconnect() == 12 || getMotorDisconnect() == 14 ||
       getMotorDisconnect() == 17) {
-    printf("l drive\n");
+    // printf("l drive\n");
     leftUnderGlow->buf().setAll(0xFF0000);
     rightUnderGlow->buf().setAll(0x000000);
     leftLift->buf().setAll(0x000000);
     rightLift->buf().setAll(0x000000);
   } else if (getMotorDisconnect() == 13 || getMotorDisconnect() == 15 ||
              getMotorDisconnect() == 16) {
-    printf("r drive\n");
+    // printf("r drive\n");
     leftUnderGlow->buf().setAll(0x000000);
     rightUnderGlow->buf().setAll(0xFF0000);
     leftLift->buf().setAll(0x000000);
     rightLift->buf().setAll(0x000000);
   } else if (getMotorDisconnect() == 11) {
-    printf("intake \n");
+    // printf("intake \n");
     leftUnderGlow->buf().setAll(0x000000);
     rightUnderGlow->buf().setAll(0x000000);
     leftLift->buf().setAll(0xFF0000);
     rightLift->buf().setAll(0x000000);
   } else {
-    printf("lb\n");
+    // printf("lb\n");
     leftUnderGlow->buf().setAll(0x000000);
     rightUnderGlow->buf().setAll(0x000000);
     leftLift->buf().setAll(0xFF0000);
@@ -80,10 +80,10 @@ int LEDs::getMotorDisconnect() {
   for (int i = 0; i < std::size(LEDs::motors); i++) {
     pros::Device device(LEDs::motors[i]);
     if (device.is_installed() == false) {
-      printf("not nerd\n");
+      // printf("not nerd\n");
       return motors[i];
     }
-    printf("nerd\n");
+    // printf("nerd\n");
   }
   return 0;
 }
