@@ -7,6 +7,7 @@
 #include "pros/motor_group.hpp"
 #include "pros/motors.h"
 #include "config.h"
+#include "pros/rtos.hpp"
 #include "subsystems.h"
 #include "subsystems/intake.h"
 #include <climits>
@@ -53,7 +54,7 @@ class LEDs : Subsystem {
     /* displays motor disconnect */
     void displayDISCONNECT(int port);
     /* displays autonomus messages */
-    void autonMessage(HexRGB color, int time, int startTime);
+    void autonMessage(HexRGB color, int time, int startTime = pros::millis());
 
     void setState(State state);
     State getState();
