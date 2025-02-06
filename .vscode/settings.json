@@ -13,7 +13,8 @@
     "repr",
     "Resampler",
     "resamplers",
-    "VEXIDE"
+    "VEXIDE",
+    "yoink"
   ],
   "cmake.configureSettings": {
     "gtest_build_samples": "ON"
