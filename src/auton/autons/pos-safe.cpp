@@ -1,8 +1,7 @@
 #include "auton/autons.h"
 #include "auton/util.h"
 #include "dimensions.h"
-#include "fmt/core.h"
-#include "lemlib/timer.hpp"
+#include "lemlib/util.hpp"
 #include "robot.h"
 #include "units/units.hpp"
 
@@ -18,8 +17,9 @@ auton::Auton auton::autons::safePositive = {
     .label = (char*)"Positive Safe",
     .run = safePositiveFunc,
     .labelForController = (char*)"pos safe",
-    .description = (char*)"Start on negative side of alliance wall stake, facing towards referee."
-    "ally-1, mogo-2, touch ladder",
+    .description = (char*)"Start on negative side of alliance wall stake, "
+                          "facing towards referee."
+                          "ally-1, mogo-2, touch ladder",
 };
 
 // Autonomous for positive rush (side of the field with positive corners)
@@ -101,8 +101,7 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   // Give intake time to unstuck
   pros::delay(50);
-  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.intake.intakeBothTo(Intake::MOGO);
 
   // Wait for a bit after intaking first ring
   waitUntilDistToPose(allyStackTarget, 5, 0, true);
@@ -190,10 +189,19 @@ void safePositiveFunc(ALLIANCE alliance) {
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
+  // Adjust odometry
+  bot.setPose(bot.getPose() + Pose {-5, 0}, 1);
+
   // Turn towards stack
   bot.swingToPoint(posSafeStack, lemlib::DriveSide::LEFT, 500);
+  bot.waitUntilDone();
+
   // Go towards positive safe stack and intake it
-  bot.moveToPoint(posSafeStack, 2000);
+  bot.moveToPose(Pose::fromPolar(
+                     -DRIVE_LENGTH / 2 + 8,
+                     90 - lemlib::radToDeg(bot.getPose().angle(posSafeStack))) +
+                     posSafeStack,
+                 2000);
   bot.waitUntilDone();
 
   // === Touch ladder

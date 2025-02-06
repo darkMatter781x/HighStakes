@@ -2,10 +2,8 @@
 #include "auton/transform.h"
 #include "auton/util.h"
 #include "dimensions.h"
-#include "lemlib/chassis/chassis.hpp"
 #include "lemlib/util.hpp"
 #include "robot.h"
-#include "subsystems/ladybrown.h"
 
 using namespace dimensions::all;
 using namespace DIR;
@@ -119,9 +117,11 @@ void redQuadrant(SignTransform::SIGN sign) {
       0, 2000);
   printf("First LB ring sensed?: %i\n", firstLBRingSensed);
 
-  // Intake longer to push into the LB
+  // Pulse intake to push into the LB
+  bot.intake.stop();
+  pros::delay(50);
   bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
-  pros::delay(200);
+  pros::delay(150);
   // Stop intake to prevent intake from cooking itself
   bot.intake.stop();
 
@@ -267,12 +267,12 @@ void fillThirdMogo() {
 
   // === Intake 1 ring from negative corner
 
-  // Go around mogo with blue ring
-  bot.moveToPose({TILE * 2 - DRIVE_WIDTH / 2 - 3, TILE + 3, REFEREE}, 800,
-                 {.minSpeed = 96, .earlyExitRange = 6});
+  // // Go around mogo with blue ring
+  // bot.moveToPose({TILE * 2 - DRIVE_WIDTH / 2 - 3, TILE + 3, REFEREE}, 800,
+  //                {.minSpeed = 96, .earlyExitRange = 6});
   // Go to 2nd ring (1st and only of corner)
-  const Pose ring2 {TILE * 2.5, TILE * 2};
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, REFEREE) + ring2 +
+  const Pose ring2 {TILE * 2, TILE * 2};
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, REFEREE + 45) + ring2 +
                      Pose {2, 0},
                  2000, {.lead = 0.5});
 
@@ -319,19 +319,21 @@ void fillThirdMogo() {
       [&numOfRingsBeforeCenter] {
         return bot.intake.numOfMogoRings >= numOfRingsBeforeCenter + 1;
       },
-      1000);
+      0, 750);
 
   // === Intake 4th ring
 
   // Go to 4th ring
   bot.moveToPoint(ring4, 2000, {.minSpeed = 72, .earlyExitRange = 6});
 
-  // When under ladder stop intake
-  bot.waitUntil(9);
+  // When going under ladder stop intake
+  bot.led.autonMessage(0x00FF00, 500);
+  // Once near 4th ring, intake it
   bot.intake.stop();
 
   // Once near 4th ring, intake it
   waitUntilDistToPose(ring4, 9, 0, true);
+  bot.led.autonMessage(0xFF00FF, 500);
   bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
   bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
 
@@ -339,14 +341,13 @@ void fillThirdMogo() {
 
   // === Score 1 final ring
 
-  bot.moveToPose({TILE * 2 - 2, -TILE * 2.5, REFEREE}, 2000,
+  bot.moveToPose({TILE * 2 - 2, -TILE * 2.5, BLUE_STATION}, 2000,
                  {.minSpeed = 32, .earlyExitRange = 6});
+  // Wait until rings are in mogo, before depositing mogo
+  waitUntil([] { return bot.intake.numOfMogoRings >= 5; }, 0, 1000);
 
   // === Deposit mogo
 
-  // Go further forward
-  // bot.moveToPoint(bot.getPose().withY(MIN_Y + DRIVE_WIDTH + 3), 750,
-  //                 {.minSpeed = 72, .earlyExitRange = 6});
   // Face corner
   const Pose depositMogoCorner {MAX_X, MIN_Y};
   bot.swingToPoint(depositMogoCorner, lemlib::DriveSide::LEFT, 500,
@@ -354,9 +355,6 @@ void fillThirdMogo() {
                     .direction = AngDir::CCW_COUNTERCLOCKWISE,
                     .minSpeed = 48,
                     .earlyExitRange = 30});
-
-  // Once ring is in mogo go into corner
-  waitUntil([] { return bot.intake.numOfMogoRings >= 5; }, 0, 1000);
 
   // Once facing corner, release mogo
   bot.waitUntilDone();
@@ -368,7 +366,13 @@ void fillThirdMogo() {
   const Pose depositMogoTarget =
       depositMogoCorner.withTheta(REFEREE - 45) +
       Pose::fromPolar(DRIVE_LENGTH / 2 + 3, REFEREE - 45);
-  bot.moveToPose(depositMogoTarget, 2000, {.forwards = false, .minSpeed = 72});
+  bot.moveToPose(depositMogoTarget, 2000,
+                 {
+                     .forwards = false,
+                     .lead = .5,
+                     .minSpeed = 48,
+                 });
+
   bot.waitUntilDone();
 }
 
@@ -432,13 +436,16 @@ void scoreOnBlueStake() {
 void pushBlueRingMogo() {
   // === Go around rings and mogo
 
-  // Go around rings and turn around
-  bot.moveToPose({TILE, -TILE * 2.5, RED_STATION}, 1000,
-                 {.minSpeed = 72, .earlyExitRange = 6});
+  // // Go around rings and turn around
+  // bot.moveToPose({TILE, -TILE * 2.5, RED_STATION}, 1000,
+  //                {.minSpeed = 72, .earlyExitRange = 6});
+
+  // waitUntil([] { return bot.getPose().x < TILE * 1.6 && bot.isInMotion(); });
+  // bot.cancelMotion();
 
   // Go around other mogo
   bot.moveToPose({TILE * 1.5, -TILE, RED_STATION + 45}, 1500,
-                 {.forwards = false, .minSpeed = 72, .earlyExitRange = 6});
+                 {.minSpeed = 72, .earlyExitRange = 6});
 
   // === Push mogo into corner
   const Pose mogo {TILE * 2.5, TILE * 2};
