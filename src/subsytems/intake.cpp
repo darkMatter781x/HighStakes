@@ -29,7 +29,8 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 }
 
 const Intake::State& Intake::getState() const { return m_state; }
-//std::optional<COLOR> Intake::getFilterColor() { return  }
+
+// std::optional<COLOR> Intake::getFilterColor() { return  }
 
 // const Intake::DESTINATION& Intake::getDestination() const { return dest; }
 
@@ -85,7 +86,7 @@ void Intake::IntakingToKick::update(Intake& intake) {
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
     printf("naturally switching to idle\n");
     intake.setState(KickingRing {afterState, color});
-  }  
+  }
 }
 
 void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
@@ -168,7 +169,6 @@ void Intake::IntakingToLB::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::IntakingToMogo::update(Intake& intake) {
-  printf("nerd\n");
   /** Timestamp of when ring started to not be sensed. -1 means ring was
   sensed
    * previously. */
@@ -197,7 +197,6 @@ void Intake::IntakingToMogo::update(Intake& intake) {
 }
 
 void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
-  printf("nerd\n");
   FilteringState::switchDest(intake, dest);
   if (dest == KICK) {
     IntakingToKick newState(afterState, color);
@@ -211,7 +210,6 @@ void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::Filtering::update(Intake& intake) {
-  printf("nerd\n");
   intake.m_motors.move(POWER);
 
   if (pros::millis() % 200 < 10) printFiltering(*this);
@@ -234,7 +232,6 @@ void Intake::Filtering::update(Intake& intake) {
 }
 
 void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
-  printf("nerd\n");
   switch (color) {
     case COLOR::RED: red = dest; break;
     case COLOR::BLUE: blue = dest; break;
@@ -242,14 +239,12 @@ void Intake::Filtering::setDest(COLOR color, DESTINATION dest) {
 }
 
 void Intake::Filtering::start(Intake& intake) {
-  printf("nerd\n");
   Intake::BaseState::start(intake);
   printf("starting filtering\n");
   // intake.m_sensor.set_led_pwm(100);
 }
 
 void Intake::Filtering::end(Intake& intake) {
-  printf("nerd\n");
   Intake::BaseState::end(intake);
   printf("ending filtering state\n");
   // intake.m_sensor.set_led_pwm(0);
@@ -269,7 +264,6 @@ void Intake::update() {
 }
 
 void Intake::setState(State newState) {
-  printf("nerd\n");
   if (newState.index() == m_state.index()) return;
   std::visit([this](BaseState& state) { state.end(*this); }, m_state);
   m_state = newState;
@@ -287,7 +281,6 @@ template <class... Ts> struct overloads : Ts... {
 template <class... Ts> overloads(Ts...) -> overloads<Ts...>;
 
 void Intake::intakeTo(COLOR color, DESTINATION dest) {
-  printf("nerd\n");
   // todo: does this get built for every call to this function? (performance?)
   auto visitor = overloads(
       [this, dest, color](FilteringState& state) {
@@ -323,7 +316,7 @@ std::optional<COLOR> Intake::Sensor::getRing() const {
   if (m_optical.get_proximity() < 200) return std::nullopt;
   const float hueRem = std::remainder(m_optical.get_hue(), 360);
   // printf("hueRem: %f\n", hueRem);
-  
+
   if (std::abs(hueRem) < 60) {
     // printf("red!");
     return COLOR::RED;
