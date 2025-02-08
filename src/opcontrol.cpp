@@ -1,8 +1,8 @@
 #include "lemlib/util.hpp"
 #include "pros/misc.h"
 #include <string>
+#include "pros/rtos.hpp"
 #include "subsystems/intake.h"
-#include "dimensions.h"
 #include "leds/functions.h"
 #include "auton/util.h"
 #include "robot.h"
@@ -89,22 +89,24 @@ void opcontrol() {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
+    // TODO: Move this responsibility to led code
     // LED control
 
-    if (bot.led.getState() == LEDs::FILTER_COLOR) {
+    if (/* bot.led.getState() == LEDs::FILTER_COLOR */ true) {
+      if (pros::millis() % 100 < 10)printf("%s\n", filterColor == COLOR::RED ? "RED" : "BLUE");
       bot.led.displayFilterColor(filterColor);
-      //startTime = pros::millis();
+      // startTime = pros::millis();
       /*printf("change color\n");
       if (pros::millis() > startTime + 100) {
         printf("other strip\n");
         bot.led.rightDisplayFilterColor(filterColor);
       } */
-      //pros::delay(100);
-      //bot.led.rightDisplayFilterColor(filterColor);
+      // pros::delay(100);
+      // bot.led.rightDisplayFilterColor(filterColor);
     }
-    if (bot.led.getState() == LEDs::DISCONNECT) {
-      bot.led.displayDISCONNECT(bot.led.getMotorDisconnect());
-    }
+    // if (bot.led.getState() == LEDs::DISCONNECT) {
+    //   bot.led.displayDISCONNECT(bot.led.getMotorDisconnect());
+    // }
 
     // Intake control
     if (master.get_digital(map::INTAKE)) {

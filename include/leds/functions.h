@@ -34,7 +34,7 @@ class LEDs : Subsystem {
 
     int motors[8] = {12, 14, 17, 13, 15, 16, 11, 18};
 
-    State m_state;
+    State m_state = FILTER_COLOR;
     COLOR filterColorLED;
 
     int time;

@@ -1,22 +1,19 @@
 #include "leds/functions.h"
 #include "color.h"
 #include "leds/colors.h"
-#include "leds/power.h"
 #include "leds/strip.h"
 #include "config.h"
 #include "subsystems/selector.h"
 #include "robot.h"
 
-#include "pros/adi.hpp"
 #include "pros/misc.hpp"
-#include "pros/motors.hpp"
 #include "pros/rtos.hpp"
-#include "subsystems/intake.h"
 #include <climits>
-#include <iostream>
-#include <concepts>
 #include <iterator>
 #include <string>
+
+#define RED_HEX 0xFF000F
+#define BLUE_HEX 0x0FFFFF
 
 void LEDs::makeStripsLight(HexRGB hex) {
   if (pros::millis() % 50 > 25) {
@@ -26,14 +23,11 @@ void LEDs::makeStripsLight(HexRGB hex) {
   }
 }
 
-// int startTime = INT_MAX;
 void LEDs::displayFilterColor(COLOR color) {
-  if (color == ALLIANCE::RED) {
-    makeStripsLight(0xFF000F);
-  } else if (color == ALLIANCE::BLUE) {
-    makeStripsLight(0x0FFFFF);
-  } else {
-    makeStripsLight(0xFFFFFF);
+  switch (color) {
+    case ALLIANCE::RED: makeStripsLight(RED_HEX); break;
+    case ALLIANCE::BLUE: makeStripsLight(BLUE_HEX); break;
+    default: makeStripsLight(0xFFFFFF); break;
   }
 }
 
@@ -97,31 +91,69 @@ LEDs::LEDs(std::shared_ptr<LedStrip> leftLift,
 
 LEDs::State LEDs::getState() { return m_state; }
 
-void LEDs::update() {
-  /*printf("yey\n");
-  if (LEDs::getMotorDisconnect() != 0){
-    printf("disconnect\n");
-    LEDs::setState(DISCONNECT);
-  } else if (pros::competition::is_autonomous()){
-    printf("auton\n");
-    LEDs::setState(MESSAGE);
-  } else if (pros::competition::is_connected()){
-    printf("filter color\n");
-    LEDs::setState(FILTER_COLOR);
-  } */
-  if (pros::competition::is_autonomous() && m_state == FILTER_COLOR){
-    displayFilterColor(bot.selector.getAlliance());
-  }
-  if (pros::competition::is_disabled()){
-    setState(FILTER_COLOR);
-  }
+// TODO: deduplicate this with the one in intake.cpp
+template <class... Ts> struct overloads : Ts... {
+    using Ts::operator()...;
+};
+template <class... Ts> overloads(Ts...) -> overloads<Ts...>;
 
-  if (m_state == MESSAGE && pros::millis() > time + startTime){
-    makeStripsLight(0x000000);
-    if (pros::millis() > time + 100 + startTime){
-      LEDs::setState(FILTER_COLOR);
+/**
+ * @brief Get the Filtered Color object
+ *
+ * @return std::optional<COLOR> Color that is currently going to the mogo.
+ * @return std::nullopt If not intaking to mogo
+ */
+static std::optional<COLOR> getFilteredColor() {
+  static auto visitor = overloads(
+      [](Intake::FilteringState& state) -> std::optional<COLOR> {
+        return state.color;
+      },
+      [](Intake::Filtering& state) -> std::optional<COLOR> {
+        if (bot.getAlliance() == COLOR::RED) {
+          if (state.red == Intake::MOGO) return COLOR::RED;
+          if (state.blue == Intake::MOGO) return COLOR::BLUE;
+        } else if (bot.getAlliance() == COLOR::BLUE) {
+          if (state.blue == Intake::MOGO) return COLOR::BLUE;
+          if (state.red == Intake::MOGO) return COLOR::RED;
+        }
+        return std::nullopt;
+      },
+      [](Intake::BaseState& state) -> std::optional<COLOR> {
+        return std::nullopt;
+      });
+  auto state = bot.intake.getState();
+  return std::visit(visitor, state);
+}
+
+void LEDs::update() {
+  if (pros::competition::is_disabled()) {
+    // If selecting auto, display alliance color
+    displayFilterColor(bot.selector.getAlliance());
+  } else if (pros::competition::is_autonomous()) {
+    // If running auton, display
+    switch (m_state) {
+      case FILTER_COLOR:
+        if (auto color = getFilteredColor()) {
+          displayFilterColor(*color);
+          break;
+        };
+        // Fall through
+      case DISCONNECT:
+        // Fall through (doesn't work rn)
+      case OFF: makeStripsLight(0x000000); break;
+      case MESSAGE:
+        // If message is done, then set to filter color
+        if (pros::millis() > time + startTime) {
+          makeStripsLight(0x000000);
+          if (pros::millis() > time + 100 + startTime) {
+            LEDs::setState(FILTER_COLOR);
+          }
+        } else makeStripsLight(color);
+        break;
     }
-  } else if(m_state == MESSAGE){
-    makeStripsLight(color);
+  } else if (!pros::competition::is_autonomous()) {
+    // If running opcontrol, let opcontrol handle it
+    if (pros::millis() % 100 < 10)
+      printf("LEDs::update(): letting opcontrol handle it\n");
   }
 }
