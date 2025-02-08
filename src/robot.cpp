@@ -94,7 +94,7 @@ static Localization makeSimLocalization(const RobotConfig& config) {
       .odom = odom,
       .obstacles = getObstacles(),
       .sensorFactory = factory,
-      .covar = Eigen::Matrix2f::Identity() * .01,
+      .covar = Eigen::Matrix2f::Identity() * .05,
   }};
 }
 

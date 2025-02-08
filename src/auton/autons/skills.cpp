@@ -129,7 +129,7 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // === Score on wall stake
 
-  const Pose wallStake {sign == SignTransform::NEGATIVE ? 1.f : 0.f, MIN_Y};
+  const Pose wallStake {sign == SignTransform::NEGATIVE ? -1.f : 0.f, MIN_Y};
 
   // Position in front of wall stake
   bot.moveToPose(wallStake.withY(-TILE * 1.75).withTheta(AUDIENCE), 2000,
@@ -457,10 +457,10 @@ void pushBlueRingMogo() {
   // Go to corner
   const Pose depositMogoCorner {MAX_X, MAX_Y};
   const Pose depositMogoTarget =
-      depositMogoCorner.withTheta(AUDIENCE + 45) +
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 5, AUDIENCE + 45);
-  bot.moveToPose(depositMogoTarget, 2000,
-                 {.forwards = false, .minSpeed = 72, .earlyExitRange = 6});
+      depositMogoCorner + Pose {-DRIVE_WIDTH / 2 + 4, -DRIVE_LENGTH / 2 - 4};
+  //   depositMogoCorner.withTheta(AUDIENCE + 45) +
+  //   Pose::fromPolar(DRIVE_LENGTH / 2 + 5, AUDIENCE + 45);
+  bot.moveToPoint(depositMogoTarget, 3000, {.forwards = false, .minSpeed = 72});
   bot.waitUntilDone();
 
   // === Escape
