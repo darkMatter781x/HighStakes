@@ -305,7 +305,7 @@ Intake::Sensor::Sensor(pros::Optical& optical) : m_optical(optical) {
   m_optical.set_led_pwm(100);
   const double oldIntegrationTime = m_optical.get_integration_time();
   printf("oldIntegrationTime: %f\n", oldIntegrationTime);
-  const double newIntegrationTime = m_optical.set_integration_time(50);
+  const double newIntegrationTime = m_optical.set_integration_time(10);
   printf("newIntegrationTime: %f\n", newIntegrationTime);
 }
 
