@@ -7,9 +7,9 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::negativeRush, auton::autons::safePositive,
-      auton::autons::skills,       auton::autons::safeAWP,
-      auton::autons::doNothing,
+      auton::autons::negativeElims, auton::autons::negativeRush,
+      auton::autons::safePositive,  auton::autons::skills,
+      auton::autons::safeAWP,       auton::autons::doNothing,
   };
 }
 

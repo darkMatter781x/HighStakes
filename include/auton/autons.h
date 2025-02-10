@@ -15,6 +15,7 @@ struct Auton {
 
 namespace autons {
 extern Auton negativeRush;
+extern Auton negativeElims;
 extern Auton safePositive;
 extern Auton safeAWP;
 extern Auton skills;
