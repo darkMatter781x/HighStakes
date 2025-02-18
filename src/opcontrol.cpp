@@ -1,5 +1,6 @@
 #include "lemlib/util.hpp"
 #include "pros/misc.h"
+#include <optional>
 #include <string>
 #include "pros/rtos.hpp"
 #include "subsystems/intake.h"
@@ -77,6 +78,11 @@ void opcontrol() {
         [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
     skillsMacro();
   }
+
+  /** Duration of hold for a hold */
+  constexpr uint32_t longPressDuration = 200;
+  std::optional<uint32_t> holdStartTime = std::nullopt;
+
   int time_since_press = INT_MAX - 1000;
   int startTime = INT_MAX - 1000;
   while (true) {
@@ -93,7 +99,8 @@ void opcontrol() {
     // LED control
 
     if (/* bot.led.getState() == LEDs::FILTER_COLOR */ true) {
-      if (pros::millis() % 100 < 10)printf("%s\n", filterColor == COLOR::RED ? "RED" : "BLUE");
+      // if (pros::millis() % 100 < 10)printf("%s\n", filterColor == COLOR::RED
+      // ? "RED" : "BLUE");
       bot.led.displayFilterColor(filterColor);
       // startTime = pros::millis();
       /*printf("change color\n");
@@ -104,9 +111,6 @@ void opcontrol() {
       // pros::delay(100);
       // bot.led.rightDisplayFilterColor(filterColor);
     }
-    // if (bot.led.getState() == LEDs::DISCONNECT) {
-    //   bot.led.displayDISCONNECT(bot.led.getMotorDisconnect());
-    // }
 
     // Intake control
     if (master.get_digital(map::INTAKE)) {
@@ -133,19 +137,24 @@ void opcontrol() {
     if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
-    if (master.get_digital_new_press(map::NEXT_LIFT_STATE)) {
-      if (bot.lady.getState() == LadyBrown::COLLECT) {
-        time_since_press = pros::millis();
-        std::cout << time_since_press << "\n";
-        // bot.intake.outtake();
-        bot.lady.nextState();
-      } else {
+
+    if (master.get_digital(map::NEXT_LIFT_STATE)) {
+      if (auto& start = holdStartTime) {
+        const uint32_t duration = pros::millis() - *start;
+        // If this is a long press, go to score
+        if (duration > longPressDuration) { bot.lady.flip(); }
+      } else { // Button was not pressed before (new press)
+        holdStartTime = pros::millis();
         bot.lady.nextState();
       }
+    } else { // If lift button not pressed
+      if (auto& start = holdStartTime) {
+        const uint32_t duration = pros::millis() - *start;
+        if (duration > longPressDuration) { bot.lady.goToIdle(); }
+      }
+      holdStartTime = std::nullopt;
     }
-    if (pros::millis() > time_since_press + 100) {
-      // bot.intake.stop();
-    }
+
     if (bot.lady.getState() == LadyBrown::COLLECT &&
         (std::holds_alternative<Intake::IntakingToKick>(
              bot.intake.getState()) ||
@@ -165,6 +174,6 @@ void opcontrol() {
     //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
     //       tuningCLI();
     // #endif
-    pros::delay(20); // Run every 20ms (refresh rate of the controller)
+    pros::delay(5); // Run every 20ms (refresh rate of the controller)
   }
 }

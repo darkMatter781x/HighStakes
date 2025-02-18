@@ -2,11 +2,11 @@
 #include "lemlib/chassis/chassis.hpp"
 
 LadyBrown::Config LadyBrown::Config::config {
-    .idle = 360.00 - 360.f,
-    .collect = 315.00 - 360.f,
-    .collect2 = 290.00 - 360.f,
-    .idle_collect = 260.00 - 360.f,
-    .score = 145.00 - 360.f,
+    .idle = 3,
+    .collect = 337.5,
+    .idle_score = 295.00,
+    .score = 180,
+    .flip = 127.5,
     .controllerSettings =
-        lemlib::ControllerSettings {300, 3, 1600, 0, 4, 100, 8, 100, 0},
+        lemlib::ControllerSettings {300, 0, 2500, 0, 4, 100, 8, 100, 0},
 };

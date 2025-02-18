@@ -153,7 +153,7 @@ void LEDs::update() {
     }
   } else if (!pros::competition::is_autonomous()) {
     // If running opcontrol, let opcontrol handle it
-    if (pros::millis() % 100 < 10)
-      printf("LEDs::update(): letting opcontrol handle it\n");
+    // if (pros::millis() % 100 < 10)
+    //   printf("LEDs::update(): letting opcontrol handle it\n");
   }
 }

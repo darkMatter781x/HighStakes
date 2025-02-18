@@ -8,35 +8,33 @@
 class LadyBrown : Subsystem {
   public:
     enum State {
-      /* Lowest state where the lady brown does not effect the hooks */
+      /** Lowest state where the lady brown does not affect the hooks. */
       IDLE,
-      /* Height where the lady brown picks up the ring from the hooks */
+      /** Angle for picking up rings from the hooks. */
       COLLECT,
-      /* Height where the lady brown picks up the second ring from the hooks */
-      COLLECT_2,
-      /* Height where the robot is able to intake rings with a ring in the lady brown*/
+      /** Angle where robot can intake with a ring in the lady brown. */
       IDLE_SCORE,
-      /* Height where the you are able to score onto the wall stake by driving
-         onto the wall stake */
+      /** Angle for scoring on a stake. */
       SCORE,
-      /* Height where the lady brown scores without extra force from the
-         drivetrain brakes motor in case of emergency */
+      /** Angle for flipping/tipping a mogo. Goes all the way down. */
+      FLIP,
+      /** Brakes motor in case of emergency. Only way to exit is with */
       EMERGENCY_STOP,
       /** Coast to touch ladder (for auto) */
       COAST
     };
 
     struct Config {
-        /* target angle of lady brown for State::IDLE */
+        /** target angle of lady brown for State::IDLE */
         float idle;
-        /* target angle of lady brown for State::COLLECT */
+        /** target angle of lady brown for State::COLLECT */
         float collect;
-        /* target angle of lady brown for State::COLLECT_2 */
-        float collect2;
-        /*target angle of lady brown for State::IDLE_COLLECT*/
-        float idle_collect;
-        /* target angle of lady brown for State::MOVE_SCORE */
+        /** target angle of lady brown for State::IDLE_SCORE */
+        float idle_score;
+        /** target angle of lady brown for State::SCORE */
         float score;
+        /** target angle of lady brown for State::FLIP */
+        float flip;
 
         /* Controller Settings for lift */
         lemlib::ControllerSettings controllerSettings;
@@ -44,7 +42,8 @@ class LadyBrown : Subsystem {
         /* default config */
         static Config config;
     };
-  // private:
+
+    // private:
     State m_state;
     Config& m_config;
     pros::MotorGroup& m_motors;
@@ -74,9 +73,9 @@ class LadyBrown : Subsystem {
     void emergencyStop();
     void goToIdle();
     void collect();
-    void collectSecond();
-    void score();
     void goToIdleScore();
+    void score();
+    void flip();
 
     /* cycles the lady brown to the next state */
     void nextState();

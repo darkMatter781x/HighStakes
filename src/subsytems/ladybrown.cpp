@@ -1,22 +1,36 @@
 #include "subsystems/ladybrown.h"
+#include "lemlib/util.hpp"
 #include "pros/llemu.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
+#include "units/units.hpp"
+#include "units/Angle.hpp"
+
+using units::sin;
+
+/**
+ * @param angle Angle in degrees
+ * @return angle between 0 and 360.
+ */
+constexpr float sanitizeAngle(float angle) {
+  return std::fmod(std::fmod(angle, 360) + 360, 360);
+}
+
+template <typename T> T clamp(T val, T min, T max) {
+  if (val < min) return min;
+  if (val > max) return max;
+  return val;
+}
+
+/** Constant for opposing torque from force of gravity */
+constexpr Voltage K_antiG = .75 * volt;
+
+/** Angle that shall not be crossed in degrees */
+constexpr float doNotCrossAngle = 45;
+constexpr Voltage maxPower = 8720 * mvolt;
 
 void LadyBrown::update() {
-  static size_t startTime = pros::millis();
-
-  // Initialize rotation sensor with proper position
-  if (pros::millis() - startTime < 100) {
-    // If rotation is something like 350, then set it to 10
-    int currCentidegree = m_rotation.get_position();
-    printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
-    if (currCentidegree > 180 * 100) {
-      printf("setting position\n");
-      m_rotation.set_position((currCentidegree - (360 * 100)));
-    }
-  }
-
+  // Handle non-feedback control modes
   switch (m_state) {
     case State::EMERGENCY_STOP: {
       m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_BRAKE);
@@ -30,27 +44,63 @@ void LadyBrown::update() {
     }
     default: break;
   }
+
+  // PID CONTROL
+
+  /** Angle of the Lady Brown */
+  const Angle thetaLB = calcLBAngle() * deg;
+  /** Angle of the force of gravity */
+  const Angle thetaF_g = 90 * deg - thetaLB - 180 * deg;
+  const Voltage antiGPower = sin(thetaF_g) * K_antiG;
+
   const float error = calcError();
-  const float output = std::min(8720.0f, m_pid.update(error));
-  bool shouldBrake = m_exitCondition.update(error);
-  if (shouldBrake) {
-    // if error > smallError, then don't brake and reset exit condition
-    if (std::abs(error) > m_config.controllerSettings.smallError)
-      m_exitCondition.reset();
-    else {
-      switch (m_state) {
-        case State::IDLE:
-          m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-          break;
-        default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
-      };
-      m_motors.brake();
-      if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
-      return;
-    }
-  }
-  if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
-  m_motors.move_voltage(output);
+  const Voltage pidPower = m_pid.update(error) * mvolt;
+
+  const Voltage desiredPower = antiGPower + pidPower;
+  const Voltage limitedPower = clamp(desiredPower, -maxPower, maxPower);
+
+  m_motors.move_voltage(limitedPower.convert(mvolt));
+
+  // Clear screen
+  // printf("\033[2J");
+  // printf("calcLBAngle():\t%3.2fdeg\n", calcLBAngle());
+  // printf("getTargetAngle():\t%3.2fdeg\n", getTargetAngle());
+  // printf("error:\t%3.2fdeg\n", error);
+  // printf("limitedPower:\t%2.3fV\n", limitedPower.convert(volt));
+
+  // static size_t startTime = pros::millis();
+  // // Initialize rotation sensor with proper position
+  // if (pros::millis() - startTime < 100) {
+  //   // If rotation is something like 350, then set it to 10
+  //   int currCentidegree = m_rotation.get_position();
+  //   printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
+  //   if (currCentidegree > 180 * 100) {
+  //     printf("setting position\n");
+  //     m_rotation.set_position((currCentidegree - (360 * 100)));
+  //   }
+  // }
+
+  // const float error = calcError();
+  // const float output = std::min(8720.0f, m_pid.update(error));
+  // bool shouldBrake = m_exitCondition.update(error);
+  // if (shouldBrake) {
+  //   // if error > smallError, then don't brake and reset exit condition
+  //   if (std::abs(error) > m_config.controllerSettings.smallError)
+  //     m_exitCondition.reset();
+  //   else {
+  //     switch (m_state) {
+  //       case State::IDLE:
+  //         m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
+  //         break;
+  //       default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
+  //     };
+  //     m_motors.brake();
+  //     if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
+  //     return;
+  //   }
+  // }
+  // if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
+  // m_motors.move_voltage(output);
 
   // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() <
   // 30) {
@@ -79,7 +129,7 @@ LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
     m_rotation(rotation),
     m_pid(m_config.controllerSettings.kP, m_config.controllerSettings.kI,
           m_config.controllerSettings.kD,
-          m_config.controllerSettings.windupRange, true),
+          m_config.controllerSettings.windupRange, false),
     m_exitCondition(m_config.controllerSettings.smallError,
                     m_config.controllerSettings.smallErrorTimeout) {}
 
@@ -87,9 +137,9 @@ float LadyBrown::getTargetAngle() const {
   switch (m_state) {
     case State::IDLE: return m_config.idle;
     case State::COLLECT: return m_config.collect;
-    case State::COLLECT_2: return m_config.collect2;
-    case State::IDLE_SCORE: return m_config.idle_collect;
+    case State::IDLE_SCORE: return m_config.idle_score;
     case State::SCORE: return m_config.score;
+    case State::FLIP: return m_config.flip;
     default: return NAN;
   }
 }
@@ -101,12 +151,24 @@ float LadyBrown::calcLBAngle() const {
 }
 
 float LadyBrown::calcError() const {
-  // constexpr AngDir CCW = lemlib::AngularDirection::CCW_COUNTERCLOCKWISE;
-  const float currAngle = calcLBAngle();
-  // // If past max angle, then only turn counter clockwise (towards idle)
-  // // This prevents the lady brown from turning through itself.
-  // const AngDir dir = m_config.score < currAngle ? CCW : AngDir::AUTO;
-  return getTargetAngle() - currAngle;
+  const float currAngle = sanitizeAngle(calcLBAngle());
+  const float targetAngle = sanitizeAngle(getTargetAngle());
+
+  const float shortError =
+      lemlib::angleError(targetAngle, currAngle, false, AngDir::AUTO);
+  const float longError =
+      -lemlib::sgn(shortError) * (360 - std::abs(shortError));
+
+  /** Error to angle that we dont want to go to */
+  const float doNotCrossError =
+      lemlib::angleError(doNotCrossAngle, currAngle, false);
+
+  // If short direction is the same as the direction to the do not cross zone
+  if (lemlib::sgn(shortError) == lemlib::sgn(doNotCrossError)) {
+    // If target is before do not cross zone
+    if (std::abs(shortError) < std::abs(doNotCrossError)) return shortError;
+    else return longError;
+  } else return shortError;
 }
 
 const LadyBrown::State& LadyBrown::getState() { return m_state; }
@@ -122,11 +184,11 @@ void LadyBrown::goToIdle() { setState(State::IDLE); }
 
 void LadyBrown::collect() { setState(State::COLLECT); }
 
-void LadyBrown::collectSecond() { setState(State::COLLECT_2); }
-
 void LadyBrown::goToIdleScore() { setState(State::IDLE_SCORE); }
 
 void LadyBrown::score() { setState(State::SCORE); }
+
+void LadyBrown::flip() { setState(State::FLIP); }
 
 void LadyBrown::nextState() {
   switch (m_state) {
@@ -134,10 +196,10 @@ void LadyBrown::nextState() {
       dir = AngDir::AUTO;
       collect();
       break;
-    case State::COLLECT: collectSecond(); break;
-    case State::COLLECT_2: goToIdleScore(); break;
+    case State::COLLECT: goToIdleScore(); break;
     case State::IDLE_SCORE: score(); break;
-    case State::SCORE: goToIdle(); break;
+    case State::SCORE: flip(); break;
+    case State::FLIP: goToIdle(); break;
     default: goToIdle(); break;
   }
 }
