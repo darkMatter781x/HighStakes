@@ -163,10 +163,12 @@ void AutonSelector::display() const {
 
   const char* allianceStr = alliance == ALLIANCE::RED ? "RED" : "BLUE";
 
+  std::string firstLine {allianceStr[0]};
+  firstLine += " ";
+  firstLine += auton.labelForController.value_or(auton.label);
+
   // Display the auton name on the controller. Do this every 100ms.
-  if (pros::millis() % 100 < 10)
-    bot.gamepad.print(0, 0, "%s",
-                      auton.labelForController.value_or(auton.label));
+  if (pros::millis() % 100 < 10) bot.gamepad.print(0, 0, "%s", firstLine);
 
   // Display the alliance on the controller. Do this every 100ms, offset 50ms
   // from the auton name.
