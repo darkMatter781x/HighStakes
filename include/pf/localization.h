@@ -51,7 +51,6 @@ class Localization : Subsystem {
         Eigen::Matrix2f covar;
     };
   private:
-    FILE* m_compressedLogFile;
     PF m_pf;
     std::shared_ptr<Odom> m_odom;
 

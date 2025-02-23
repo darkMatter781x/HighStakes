@@ -5,14 +5,12 @@
 #include "pros/misc.h"
 #include "pros/rtos.hpp"
 #include "profiler/profiler.h"
+#include "util/logger.h"
 #include "util/stats.h"
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
 #include <ostream>
-#include <string>
-#include <unistd.h>
-#include <fstream>
-#include "../liblz4/lz4file.h"
 
 extern "C" void vexSystemExitRequest();
 extern "C" int32_t vexControllerGet(int id, int button);
@@ -21,37 +19,6 @@ inline static bool isMasterControllerPowerPressed() {
   return vexControllerGet(pros::controller_id_e_t::E_CONTROLLER_MASTER,
                           pros::controller_digital_e_t::E_CONTROLLER_DIGITAL_A +
                               1) == true;
-}
-
-/** @brief Function to read, increment, and update a value in a file */
-int incrementValueInFile(const std::string& filename) {
-  // Step 1: Open the file for reading
-  std::ifstream inFile(filename);
-  if (!inFile) {
-    std::cerr << "Error opening file for reading!" << std::endl;
-    return -1; // Return -1 to indicate an error
-  }
-
-  // Step 2: Read the value from the file
-  std::int64_t value;
-  inFile >> value;
-  inFile.close();
-
-  // Step 3: Increment the value
-  value++;
-
-  // Open the file for writing
-  std::ofstream outFile(filename);
-  if (!outFile) {
-    std::cerr << "Error opening file for writing!" << std::endl;
-    return -1; // Return -1 to indicate an error
-  }
-
-  // Write the incremented value back to the file
-  outFile << value << std::endl;
-  outFile.close();
-
-  return value;
 }
 
 /** Uniform distribution for resampling */
@@ -76,37 +43,11 @@ Localization::Localization(const Config& config)
         config.sensorFactory(SensorFactoryConfig {.botPose = m_odom->getPose(),
                                                   .obstacles = m_obstacles})),
     m_resampler(uniform_float_0_to_1), m_predictor(config.covar),
-    m_prevPose(m_odom->getPose()), m_mutex(), m_compressedLogFile(nullptr) {
+    m_prevPose(m_odom->getPose()), m_mutex() {
   setPose({0, 0, 0}, 10, true, true);
-  std::int64_t index = incrementValueInFile("/usd/localization.index");
-  printf("localization index: %lli", index);
-  // if no errors incrementing value
-  if (index != -1) {
-    std::string logFileNameStr =
-        "/usd/localization." + std::to_string(index) + ".log";
-    const char* logFileName = logFileNameStr.c_str();
-    std::string compressedLogFileNameStr =
-        "/usd/localization." + std::to_string(index) + ".log.lz4";
-    const char* compressedLogFileName = compressedLogFileNameStr.c_str();
-
-    m_compressedLogFile = fopen(compressedLogFileName, "w");
-  }
 
   isInitialized = true;
 }
-
-template <typename T, int N>
-void writeLZ4Data(LZ4_writeFile_t* lz4File, const Eigen::Array<T, N, 1>& data) {
-  size_t compressedSize =
-      LZ4F_write(lz4File, reinterpret_cast<const char*>(data.data()),
-                 sizeof(T) * data.size());
-  if (LZ4F_isError(compressedSize)) {
-    LZ4F_writeClose(lz4File);
-    std::cerr << "Failed to compress and write data!" << std::endl;
-  }
-}
-
-static LZ4_writeFile_t* lz4File;
 
 Localization::PF::Data
 Localization::printParticles(Localization::PF::Data data) const {
@@ -122,25 +63,7 @@ Localization::printParticles(Localization::PF::Data data) const {
     }
     printf("\n");
   }
-
-  // sd card is attached
-  if (m_compressedLogFile != NULL) {
-    if (lz4File == nullptr) {
-      LZ4F_errorCode_t maybeErr =
-          LZ4F_writeOpen(&lz4File, m_compressedLogFile, nullptr);
-      if (LZ4F_isError(maybeErr)) {
-        std::cerr << "Failed to initialize LZ4 compression context!" << std::endl;
-      }
-    }
-
-    const auto time = Eigen::Array<uint64_t, 1, 1> {pros::micros()};
-    writeLZ4Data(lz4File, time);
-    // fwrite(&time, sizeof(time), 1, m_logFile);
-    writeLZ4Data(lz4File, *data.particles);
-    // fwrite(&*data.particles, sizeof(*data.particles), 1, m_logFile);
-    writeLZ4Data(lz4File, *data.weights);
-    // fwrite(&*data.weights, sizeof(*data.weights), 1, m_logFile);
-  }
+  logger::recordParticles(data, "particles");
 
   return data;
 }
@@ -154,10 +77,18 @@ void Localization::update() {
   static bool done = false;
   if (done) return;
 
-  // TODO: Extract timing code to a Timer class
   static size_t iteration = 0;
+  static size_t lastStartTime = pros::millis();
   START_PROFILE("LL.update()") // Starts profiled section
   m_mutex.take();
+
+  if (pros::millis() - lastStartTime > 20)
+    printf("\x1b[1;35m"
+           "Time jump:"
+           "\x1b[0m"
+           "\t%5i -> %5i\tDIFF: %5i\n",
+           lastStartTime, pros::millis(), pros::millis() - lastStartTime);
+  lastStartTime = pros::millis();
 
   m_odom->update();
 
@@ -192,10 +123,10 @@ void Localization::update() {
 
   iteration++;
 #ifdef ENABLE_PROFILING
-  Profiler::get().printReport();
+  // Profiler::get().printReport();
 #endif
 
-  if (isMasterControllerPowerPressed()) {
+  if (isMasterControllerPowerPressed() || iteration == 1000) {
     printf("[ProfSummary.Start]\n"); // Used by time script to identify which
                                      // data to put in log file
 #ifdef ENABLE_PROFILING
@@ -206,11 +137,11 @@ void Localization::update() {
     pros::delay(1000);
     done = true;
 
-    // If sd card is attached
-    if (m_compressedLogFile != NULL) {
-      LZ4F_writeClose(lz4File);
-      fclose(m_compressedLogFile);
-    }
+    // // If sd card is attached
+    // if (m_compressedLogFile != NULL) {
+    //   LZ4F_writeClose(lz4File);
+    //   fclose(m_compressedLogFile);
+    // }
     // vexSystemExitRequest();
   }
 }
