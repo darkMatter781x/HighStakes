@@ -8,14 +8,15 @@
 SubsystemHandler::SubsystemHandler()
   : m_lastUsedId(0), m_subsystems {},
     m_task {[this] {
-              // TODO: Implement some sort of recovery mechanism if subsytem handler task exits.
-              uint32_t now = pros::millis();
+              // TODO: Implement some sort of recovery mechanism if subsytem
+              // handler task exits.
               /**
                * first=id of subsystem.
                * second=error message.
                */
               std::vector<std::pair<int, const char*>> errors;
               while (true) {
+                uint32_t iterationStartTime = pros::millis();
                 for (auto sub : m_subsystems) {
                   try {
                     if (sub.second != nullptr) sub.second->update();
@@ -31,8 +32,7 @@ SubsystemHandler::SubsystemHandler()
                 // If an error occurred, remove the corresponding subsystem.
                 for (auto error : errors) m_subsystems.erase(error.first);
                 errors.clear();
-
-                pros::c::task_delay_until(&now, 10);
+                pros::c::task_delay_until(&iterationStartTime, 10);
               }
             },
             1, 0xF000} {}
