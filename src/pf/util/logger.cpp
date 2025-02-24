@@ -14,9 +14,11 @@
 #include <memory>
 #include <iostream>
 #include <fstream>
+#include <queue>
 #include <source_location>
 #include <string_view>
 #include <unordered_map>
+#include <vector>
 
 // Create foxglove::schema::x objects
 FOXGLOVE_SCHEMA(Pose)
@@ -69,8 +71,8 @@ static std::string getLogFilename() {
 
 static mcap::McapWriterOptions makeMcapWriterOpts() {
   mcap::McapWriterOptions opts {""};
-  opts.compression = mcap::Compression::Lz4;
-  opts.compressionLevel = mcap::CompressionLevel::Fastest;
+  opts.compression = mcap::Compression::None;
+  // opts.compressionLevel = mcap::CompressionLevel::Fastest;
 
   opts.noRepeatedSchemas = true;
   opts.noRepeatedChannels = true;
@@ -85,48 +87,6 @@ extern "C" void vPortClearInterruptMask(uint32_t ulNewMaskValue);
 #define DISABLE_INTERRUPTS() ulPortSetInterruptMask()
 #define ENABLE_INTERRUPTS() vPortClearInterruptMask(0)
 
-// Default:
-// writer.write:   4.3751±1.9577
-// LL.update():    5.9530±1.6812
-// PF.predict:     0.5551±0.0058
-// PF.update:      0.9661±0.0367
-// PF.updateWeights:       0.9335±0.0256
-// PF.printParticles:      4.3863±1.6811
-
-// Fast:
-// writer.write:   5.6750±8.5673
-// LL.update():    7.2574±8.5220
-// PF.predict:     0.5556±0.0070
-// PF.update:      0.9671±0.0356
-// PF.updateWeights:       0.9346±0.0265
-// PF.printParticles:      5.6889±8.5220
-
-// Fastest:
-//  [ProfSummary.Start]
-//  writer.write:   4.2929±5.8124
-//  LL.update():    5.8780±5.7830
-//  PF.predict:     0.5557±0.0095
-//  PF.update:      0.9807±0.0400
-//  PF.updateWeights:       0.9479±0.0299
-//  PF.printParticles:      4.2959±5.7833
-//  [ProfSummary.End]
-
-// Slowest:
-//  writer.write:   3.7698±2.1918
-//  LL.update():    5.3435±1.9922
-//  PF.predict:     0.5554±0.0066
-//  PF.update:      0.9793±0.0356
-//  PF.updateWeights:       0.9465±0.0241
-//  PF.printParticles:      3.7631±1.9919
-
-// Slow:
-//  writer.write:   3.7260±1.7334
-//  LL.update():    5.3115±1.6116
-//  PF.predict:     0.5556±0.0076
-//  PF.update:      0.9823±0.0348
-//  PF.updateWeights:       0.9495±0.0248
-//  PF.printParticles:      3.7280±1.6103
-
 static mcap::Timestamp currentMcapTime() { return pros::micros() * 1000; }
 
 static foxglove::Time makeFoxTime(mcap::Timestamp time) {
@@ -134,52 +94,129 @@ static foxglove::Time makeFoxTime(mcap::Timestamp time) {
           static_cast<uint32_t>(time % (1000 * 1000 * 1000))};
 }
 
+/**
+ * @brief Represents a queued message. Owns its data pointer.
+ * @see QueuedMcapWriter
+ */
+struct QueuedMessage {
+    mcap::Message msg;
+    std::vector<std::byte> data;
+
+    static std::unique_ptr<QueuedMessage> fromMcap(mcap::Message mMsg) {
+      return std::make_unique<QueuedMessage>(
+          mMsg, std::vector<std::byte> {mMsg.data, mMsg.data + mMsg.dataSize});
+    }
+};
+
+/**
+ * @brief Queues messages sent to it, and writes them in its own task
+ */
+class QueuedMcapWriter {
+    pros::Task m_task;
+    pros::MutexVar<mcap::McapWriter> m_writerMutex;
+    pros::MutexVar<std::queue<std::unique_ptr<QueuedMessage>>> m_queueMutex;
+
+    /** @returns Number of mcap messages that are queued */
+    size_t size() { return m_queueMutex.lock()->size(); }
+
+    /** @brief Removes the first element and returns it */
+    std::unique_ptr<QueuedMessage> popFront() {
+      auto queue = m_queueMutex.lock();
+
+      auto res = std::move(queue->front());
+      queue->pop();
+      return res;
+    }
+
+    void loop() {
+      while (true) {
+        if (this->size() == 0) {
+          // Clear notifs
+          pros::Task::current().notify_clear();
+          // Wait until notification received (message placed in buffer)
+          pros::Task::notify_take(true, TIMEOUT_MAX);
+        }
+        if (this->size() == 0) continue;
+
+        std::unique_ptr<QueuedMessage> msg = this->popFront();
+
+        {
+          PROFILE_SECTION("writer.write()", {
+            auto writer = this->getWriter();
+            const auto res = writer->write(msg->msg);
+            printf("[%2.6f]:\twrote message to writer!\n",
+                   float(pros::micros()) / 1000.f / 1000.f);
+            if (!res.ok()) {
+              std::cerr << "Failed to write message: " << res.message << "\n";
+              writer->terminate();
+            }
+          })
+        }
+      }
+    }
+    friend class LogTools;
+
+    QueuedMcapWriter()
+      : m_writerMutex(), m_task([&] { this->loop(); }, TASK_PRIORITY_MIN) {
+      const std::string logFilename = getLogFilename();
+      const auto res =
+          this->getWriter()->open(logFilename, makeMcapWriterOpts());
+
+      std::cout << "Opened " << logFilename << " for writing!" << std::endl;
+    }
+  public:
+    /** @brief Locks and returns the underlying mcap writer */
+    pros::MutexVarLock<mcap::McapWriter> getWriter() {
+      return m_writerMutex.lock();
+    }
+
+    void write(const mcap::Message& message) {
+      printf("[%2.6f]: add message to queue!\n",
+             float(pros::micros()) / 1000.f / 1000.f);
+      m_queueMutex.lock()->push(QueuedMessage::fromMcap(message));
+      m_task.notify();
+    }
+};
+
 struct LogTools {
     flatbuffers::FlatBufferBuilder builder;
-    mcap::McapWriter writer;
+    QueuedMcapWriter writer;
+    std::unordered_map<std::string_view, mcap::ChannelId> m_channels;
   private:
-    std::unordered_map<std::string_view, mcap::ChannelId> channels;
     static std::unique_ptr<pros::MutexVar<LogTools>> instance;
 
     friend pros::MutexVar<LogTools>;
     LogTools();
   public:
+    inline static pros::MutexVarLock<LogTools> get() {
+      if (instance == nullptr) {
+        printf("making LogTools instance!\n");
+        instance = std::make_unique<pros::MutexVar<LogTools>>();
+      }
+      return instance->lock();
+    };
+
     /**
      * @brief Attempts to find the existing channel id for a topic.
      * If it is not found, callback is called to create it.
      */
     mcap::ChannelId getChannelId(const std::string_view topic,
                                  mcap::Schema& schema) {
-      if (!channels.contains(topic))
-        channels[topic] = [&] {
-          writer.addSchema(schema);
+      auto w = this->writer.getWriter();
+      if (!m_channels.contains(topic))
+        m_channels[topic] = [&] {
+          w->addSchema(schema);
           mcap::Channel channel(topic, "flatbuffer", schema.id);
-          writer.addChannel(channel);
+          w->addChannel(channel);
           return channel.id;
         }();
-      return channels.at(topic);
+      return m_channels.at(topic);
     }
-
-    inline static pros::MutexVarLock<LogTools> get() {
-      if (instance == nullptr) {
-        instance = std::make_unique<pros::MutexVar<LogTools>>();
-      }
-      return instance->lock();
-    };
 };
 
 std::unique_ptr<pros::MutexVar<LogTools>> LogTools::instance = nullptr;
 
-LogTools::LogTools() : builder(BUILDER_SIZE), channels {}, writer {} {
-  const std::string logFilename = getLogFilename();
-  const auto res = writer.open(logFilename, makeMcapWriterOpts());
-  if (!res.ok()) {
-    std::cerr << "Failed to open " << logFilename
-              << " for writing: " << res.message << std::endl;
-  }
-
-  std::cout << "Opened " << logFilename << " for writing!" << std::endl;
-};
+LogTools::LogTools() : builder(BUILDER_SIZE), writer {} {};
 
 void recordPose(lemlib::Pose pose, const std::string_view channelTopic) {
   auto lt = LogTools::get();
@@ -199,12 +236,7 @@ void recordPose(lemlib::Pose pose, const std::string_view channelTopic) {
                      .dataSize = lt->builder.GetSize(),
                      .data =
                          (const std::byte*)(lt->builder.GetBufferPointer())};
-  const auto res = lt->writer.write(msg);
-  if (!res.ok()) {
-    std::cerr << "Failed to write message: " << res.message << "\n";
-    lt->writer.terminate();
-  }
-
+  lt->writer.write(msg);
   lt->builder.Clear();
 };
 
@@ -232,12 +264,7 @@ void log(const std::string_view message, const std::string_view channelTopic,
                      .dataSize = lt->builder.GetSize(),
                      .data =
                          (const std::byte*)(lt->builder.GetBufferPointer())};
-  const auto res = lt->writer.write(msg);
-  if (!res.ok()) {
-    std::cerr << "Failed to write message: " << res.message << "\n";
-    lt->writer.terminate();
-  }
-
+  lt->writer.write(msg);
   lt->builder.Clear();
 }
 
@@ -305,22 +332,7 @@ void recordParticles(Localization::PF::Data& data,
                      .dataSize = lt->builder.GetSize(),
                      .data =
                          (const std::byte*)(lt->builder.GetBufferPointer())};
-  PROFILE_SECTION("writer.write", {
-    const auto res = lt->writer.write(msg);
-    if (!res.ok()) {
-      std::cerr << "Failed to write message: " << res.message << "\n";
-      lt->writer.terminate();
-    }
-  })
-
-  // {
-  //   auto* sink = lt->writer.dataSink();
-  //   if (sink != nullptr) PROFILE_SECTION("writer.flush", { sink->flush();
-  //   })
-  // }
-
+  lt->writer.write(msg);
   lt->builder.Clear();
-
-  // ENABLE_INTERRUPTS();
 }
 }; // namespace logger

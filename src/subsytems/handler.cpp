@@ -35,7 +35,7 @@ SubsystemHandler::SubsystemHandler()
                 pros::c::task_delay_until(&iterationStartTime, 10);
               }
             },
-            1, 0xF000} {}
+            TASK_PRIORITY_DEFAULT, 0xF000} {}
 
 SubsystemHandler* SubsystemHandler::instance;
 
