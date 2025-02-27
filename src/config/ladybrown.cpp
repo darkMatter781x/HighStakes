@@ -3,7 +3,7 @@
 
 LadyBrown::Config LadyBrown::Config::config {
     .idle = 3,
-    .collect = 337.5,
+    .collect = 355,
     .idle_score = 295.00,
     .score = 180,
     .flip = 127.5,

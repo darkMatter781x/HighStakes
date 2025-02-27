@@ -3,16 +3,17 @@
 #include "pros/distance.hpp"
 #include <cmath>
 
-pros::Distance laserFront {22};
-pros::Distance laserLeft {23};
-pros::Distance laserRight {24};
+pros::Distance laserFront {1};
+pros::Distance laserLeft {21};
+pros::Distance laserRight {2};
+pros::Distance laserBack {4};
 
 RobotConfig::Sensors RobotConfig::Sensors::sensors {
-    .vert {3},
+    .vert {19},
     .hori {30},
-    .lb {16},
-    .imu {2},
-    .intake {11},
+    .lb {5},
+    .imu {20},
+    .intake {9},
     .autonSelector = pros::adi::Potentiometer {'D'},
     .lasers =
         {
