@@ -6,28 +6,32 @@
 pros::Distance laserFront {1};
 pros::Distance laserLeft {21};
 pros::Distance laserRight {2};
-pros::Distance laserBack {4};
+pros::Distance laserBack {3};
 
 RobotConfig::Sensors RobotConfig::Sensors::sensors {
-    .vert {19},
+    .vert {20},
     .hori {30},
     .lb {5},
-    .imu {20},
+    .imu {19},
     .intake {9},
     .autonSelector = pros::adi::Potentiometer {'D'},
     .lasers =
         {
             {
-                .pose {8, -4, 0},
+                .pose {7, 4.1, 0},
                 .sensor {laserFront},
             },
             {
-                .pose {2.25, 5.8, M_PI_2},
+                .pose {2, 6, M_PI_2},
                 .sensor {laserLeft},
             },
             {
-                .pose {2.25, -5.8, -M_PI_2},
+                .pose {2, -6, -M_PI_2},
                 .sensor {laserRight},
+            },
+            {
+                .pose {-2.1, 5.8, M_PI},
+                .sensor {laserBack},
             },
         },
 };

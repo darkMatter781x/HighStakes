@@ -3,7 +3,7 @@
 
 LadyBrown::Config LadyBrown::Config::config {
     .idle = 3,
-    .collect = 355,
+    .collect = 342,
     .idle_score = 295.00,
     .score = 180,
     .run_into_ally = 203.f,
