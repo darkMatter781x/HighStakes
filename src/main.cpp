@@ -41,7 +41,7 @@ void initialize() {
 
   bot.intakeLift.extend();
   bot.setAlliance(ALLIANCE::RED);
-  bot.setPose({-36, -36, dimensions::field::REFEREE}, 48);
+  bot.setPose({0, 0, dimensions::field::REFEREE}, 72);
   pros::delay(250);
 
   printf("Initialized!\n");

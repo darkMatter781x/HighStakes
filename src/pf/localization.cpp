@@ -125,25 +125,29 @@ void Localization::update() {
 #ifdef ENABLE_PROFILING
   // Profiler::get().printReport();
 #endif
+  if (pros::millis() % 100 < 10)
+    printf("Pose:\t(%03.3fin,\t%02.3fin,\t%03.2frad)\n", m_prevPose.x,
+           m_prevPose.y, m_prevPose.theta);
 
-  if (isMasterControllerPowerPressed() || iteration == 1000) {
-    printf("[ProfSummary.Start]\n"); // Used by time script to identify which
-                                     // data to put in log file
-#ifdef ENABLE_PROFILING
-    Profiler::get().printReport(false, (char*)"");
-#endif
-    printf("[ProfSummary.End]\n");
+  //   if (isMasterControllerPowerPressed() || iteration == 1000) {
+  //     printf("[ProfSummary.Start]\n"); // Used by time script to identify
+  //     which
+  //                                      // data to put in log file
+  // #ifdef ENABLE_PROFILING
+  //     Profiler::get().printReport(false, (char*)"");
+  // #endif
+  //     printf("[ProfSummary.End]\n");
 
-    pros::delay(1000);
-    done = true;
+  //     pros::delay(1000);
+  //     done = true;
 
-    // // If sd card is attached
-    // if (m_compressedLogFile != NULL) {
-    //   LZ4F_writeClose(lz4File);
-    //   fclose(m_compressedLogFile);
-    // }
-    // vexSystemExitRequest();
-  }
+  //     // // If sd card is attached
+  //     // if (m_compressedLogFile != NULL) {
+  //     //   LZ4F_writeClose(lz4File);
+  //     //   fclose(m_compressedLogFile);
+  //     // }
+  //     // vexSystemExitRequest();
+  //   }
 }
 
 void Localization::setPose(lemlib::Pose pose, float stdDev, bool radians,
