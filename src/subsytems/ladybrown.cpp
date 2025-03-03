@@ -139,6 +139,7 @@ float LadyBrown::getTargetAngle() const {
     case State::COLLECT: return m_config.collect;
     case State::IDLE_SCORE: return m_config.idle_score;
     case State::SCORE: return m_config.score;
+    case State::RUN_INTO_ALLY: return m_config.run_into_ally;
     case State::FLIP: return m_config.flip;
     default: return NAN;
   }
@@ -187,5 +188,7 @@ void LadyBrown::collect() { setState(State::COLLECT); }
 void LadyBrown::goToIdleScore() { setState(State::IDLE_SCORE); }
 
 void LadyBrown::score() { setState(State::SCORE); }
+
+void LadyBrown::runIntoAlly() { setState(State::RUN_INTO_ALLY); }
 
 void LadyBrown::flip() { setState(State::FLIP); }

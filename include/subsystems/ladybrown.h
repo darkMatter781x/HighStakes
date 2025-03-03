@@ -16,6 +16,8 @@ class LadyBrown : Subsystem {
       IDLE_SCORE,
       /** Angle for scoring on a stake. */
       SCORE,
+      /** Angle for running into alliance stake to score. */
+      RUN_INTO_ALLY,
       /** Angle for flipping/tipping a mogo. Goes all the way down. */
       FLIP,
       /** Brakes motor in case of emergency. Only way to exit is with */
@@ -33,6 +35,8 @@ class LadyBrown : Subsystem {
         float idle_score;
         /** target angle of lady brown for State::SCORE */
         float score;
+        /** target angle of lady brown for State::RUN_INTO_ALLY */
+        float run_into_ally;
         /** target angle of lady brown for State::FLIP */
         float flip;
 
@@ -75,5 +79,6 @@ class LadyBrown : Subsystem {
     void collect();
     void goToIdleScore();
     void score();
+    void runIntoAlly();
     void flip();
 };
