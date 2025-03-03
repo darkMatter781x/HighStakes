@@ -1,5 +1,6 @@
 #include "pf/odom/sim.h"
 #include "lemlib/pose.hpp"
+#include "pf/util/logger.h"
 #include "pf/util/stats.h"
 #include "pros/rtos.hpp"
 #include <cmath>
@@ -55,6 +56,9 @@ void SimOdom::update() {
     m_pose.x += displacement.x;
     m_pose.y += displacement.y;
     m_pose.theta += displacement.theta;
+
+    logger::recordPose(rawOdomPose, "odom/sim/rawOdom");
+    logger::recordPose(m_realPose, "odom/sim/real");
 
     // Update prev real pose
     prevRealPose = m_realPose;

@@ -2,6 +2,7 @@
 
 #include "foxglove/Log_generated.h"
 #include "foxglove/PointCloud_generated.h"
+#include "foxglove/PosesInFrame_generated.h"
 #include "foxglove/Pose_generated.h"
 #include "foxglove/schema.h"
 
@@ -16,12 +17,13 @@
 #include <fstream>
 #include <queue>
 #include <source_location>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 
 // Create foxglove::schema::x objects
-FOXGLOVE_SCHEMA(Pose)
+FOXGLOVE_SCHEMA(PosesInFrame)
 FOXGLOVE_SCHEMA(Log)
 FOXGLOVE_SCHEMA(PointCloud)
 
@@ -103,8 +105,10 @@ struct QueuedMessage {
     std::vector<std::byte> data;
 
     static std::unique_ptr<QueuedMessage> fromMcap(mcap::Message mMsg) {
-      return std::make_unique<QueuedMessage>(
+      auto qMsg = std::make_unique<QueuedMessage>(
           mMsg, std::vector<std::byte> {mMsg.data, mMsg.data + mMsg.dataSize});
+      qMsg->msg.data = qMsg->data.data();
+      return qMsg;
     }
 };
 
@@ -144,10 +148,15 @@ class QueuedMcapWriter {
           PROFILE_SECTION("writer.write()", {
             auto writer = this->getWriter();
             const auto res = writer->write(msg->msg);
-            printf("[%2.6f]:\twrote message to writer!\n",
-                   float(pros::micros()) / 1000.f / 1000.f);
+            // printf("[%2.6f]:\twrote message to writer!\n",
+            //        float(pros::micros()) / 1000.f / 1000.f);
             if (!res.ok()) {
-              std::cerr << "Failed to write message: " << res.message << "\n";
+              static std::string prevErrMsg = "";
+              if (res.message != prevErrMsg)
+                fprintf(stderr, "[%2.6f]:\tfailed to log to sd card!:\n\t%s\n",
+                        float(pros::micros()) / 1000.f / 1000.f,
+                        res.message.c_str());
+              prevErrMsg = res.message;
               writer->terminate();
             }
           })
@@ -171,8 +180,8 @@ class QueuedMcapWriter {
     }
 
     void write(const mcap::Message& message) {
-      printf("[%2.6f]: add message to queue!\n",
-             float(pros::micros()) / 1000.f / 1000.f);
+      // printf("[%2.6f]:\tadd message to queue!\n",
+      //        float(pros::micros()) / 1000.f / 1000.f);
       m_queueMutex.lock()->push(QueuedMessage::fromMcap(message));
       m_task.notify();
     }
@@ -218,24 +227,35 @@ std::unique_ptr<pros::MutexVar<LogTools>> LogTools::instance = nullptr;
 
 LogTools::LogTools() : builder(BUILDER_SIZE), writer {} {};
 
-void recordPose(lemlib::Pose pose, const std::string_view channelTopic) {
+void recordPose(lemlib::Pose pose, const std::string_view channelTopic,
+                const std::string_view frameId) {
   auto lt = LogTools::get();
   mcap::ChannelId channelId =
-      lt->getChannelId(channelTopic, foxglove::schemas::Pose);
+      lt->getChannelId(channelTopic, foxglove::schemas::PosesInFrame);
 
-  auto vector3 = foxglove::CreateVector3(lt->builder, pose.x, pose.y, 0);
-  auto quaternion = foxglove::CreateQuaternion(
+  const mcap::Timestamp mcapTime = currentMcapTime();
+  const foxglove::Time foxTime = makeFoxTime(mcapTime);
+
+  /** @brief Frame of reference */
+  const auto frameIdOffset = lt->builder.CreateString(frameId);
+
+  const auto vector3 = foxglove::CreateVector3(lt->builder, pose.x, pose.y, 0);
+  const auto quaternion = foxglove::CreateQuaternion(
       lt->builder, 0, 0, sin(pose.theta / 2), cos(pose.theta / 2));
-  auto foxPose = foxglove::CreatePose(lt->builder, vector3, quaternion);
+  const auto foxPose = foxglove::CreatePose(lt->builder, vector3, quaternion);
+  const auto poseVector = lt->builder.CreateVector({foxPose});
 
-  lt->builder.Finish(foxPose);
+  const auto posesInFrame = foxglove::CreatePosesInFrame(
+      lt->builder, &foxTime, frameIdOffset, poseVector);
+  lt->builder.Finish(posesInFrame);
 
   mcap::Message msg {.channelId = channelId,
-                     .logTime = currentMcapTime(),
-                     .publishTime = currentMcapTime(),
+                     .logTime = mcapTime,
+                     .publishTime = mcapTime,
                      .dataSize = lt->builder.GetSize(),
                      .data =
                          (const std::byte*)(lt->builder.GetBufferPointer())};
+
   lt->writer.write(msg);
   lt->builder.Clear();
 };
@@ -269,7 +289,8 @@ void log(const std::string_view message, const std::string_view channelTopic,
 }
 
 void recordParticles(Localization::PF::Data& data,
-                     const std::string_view channelTopic) {
+                     const std::string_view channelTopic,
+                     const std::string_view frameId) {
   // DISABLE_INTERRUPTS();
   auto lt = LogTools::get();
   mcap::ChannelId channelId =
@@ -319,11 +340,11 @@ void recordParticles(Localization::PF::Data& data,
       lt->builder, foxglove::CreateVector3(lt->builder, 0, 0, 0),
       foxglove::CreateQuaternion(lt->builder, 0, 0, 0, 1));
   /** @brief Frame of reference */
-  const auto frameId = lt->builder.CreateString(channelTopic);
+  const auto frameIdOffset = lt->builder.CreateString(frameId);
 
   const auto pointCloud = foxglove::CreatePointCloud(
-      lt->builder, &foxTime, frameId, pose, sizeof(float) * FIELDS_PER_POINT,
-      fieldVector, dataVectorOffset);
+      lt->builder, &foxTime, frameIdOffset, pose,
+      sizeof(float) * FIELDS_PER_POINT, fieldVector, dataVectorOffset);
   lt->builder.Finish(pointCloud);
 
   mcap::Message msg {.channelId = channelId,
