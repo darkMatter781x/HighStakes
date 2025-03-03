@@ -39,7 +39,6 @@ void initialize() {
   pros::delay(250);
   bot.calibrate();
 
-  bot.intakeLift.extend();
   bot.setAlliance(ALLIANCE::RED);
   bot.setPose({0, 0, dimensions::field::REFEREE}, 72);
   pros::delay(250);
