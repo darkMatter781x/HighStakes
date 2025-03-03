@@ -189,17 +189,3 @@ void LadyBrown::goToIdleScore() { setState(State::IDLE_SCORE); }
 void LadyBrown::score() { setState(State::SCORE); }
 
 void LadyBrown::flip() { setState(State::FLIP); }
-
-void LadyBrown::nextState() {
-  switch (m_state) {
-    case State::IDLE:
-      dir = AngDir::AUTO;
-      collect();
-      break;
-    case State::COLLECT: goToIdleScore(); break;
-    case State::IDLE_SCORE: score(); break;
-    case State::SCORE: flip(); break;
-    case State::FLIP: goToIdle(); break;
-    default: goToIdle(); break;
-  }
-}

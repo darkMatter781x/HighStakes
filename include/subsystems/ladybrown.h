@@ -76,7 +76,4 @@ class LadyBrown : Subsystem {
     void goToIdleScore();
     void score();
     void flip();
-
-    /* cycles the lady brown to the next state */
-    void nextState();
 };

@@ -145,7 +145,16 @@ void opcontrol() {
         if (duration > longPressDuration) { bot.lady.flip(); }
       } else { // Button was not pressed before (new press)
         holdStartTime = pros::millis();
-        bot.lady.nextState();
+        // Should only ever go to idle, collect, or flip as these are the only
+        // useful states for driver
+        switch (bot.lady.getState()) {
+          case LadyBrown::State::IDLE: bot.lady.collect(); break;
+          case LadyBrown::State::COLLECT: bot.lady.flip(); break;
+          case LadyBrown::State::IDLE_SCORE: bot.lady.flip(); break;
+          case LadyBrown::State::SCORE: bot.lady.flip(); break;
+          case LadyBrown::State::FLIP: bot.lady.goToIdle(); break;
+          default: bot.lady.goToIdle(); break;
+        }
       }
     } else { // If lift button not pressed
       if (auto& start = holdStartTime) {
