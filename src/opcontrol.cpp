@@ -1,4 +1,5 @@
 #include "lemlib/util.hpp"
+#include "lemlib/timer.hpp"
 #include "pros/misc.h"
 #include <optional>
 #include <string>
@@ -85,6 +86,11 @@ void opcontrol() {
 
   int time_since_press = INT_MAX - 1000;
   int startTime = INT_MAX - 1000;
+
+  // Timer to release the ring from the intake
+  lemlib::Timer releaseLBRingTimer {30};
+  releaseLBRingTimer.pause();
+
   while (true) {
     if (bot.lady.getState() == LadyBrown::COAST &&
         lemlib::angleError(bot.lady.calcLBAngle(), bot.lady.m_config.idle,
@@ -112,21 +118,6 @@ void opcontrol() {
       // bot.led.rightDisplayFilterColor(filterColor);
     }
 
-    // Intake control
-    if (master.get_digital(map::INTAKE)) {
-      // Rising edge of Intake button
-
-      // Intake current color to mogo, other color to kicker
-      if (bot.lady.getState() == LadyBrown::COLLECT) {
-        bot.intake.intakeTo(filterColor, Intake::LB);
-        bot.intake.intakeTo(!filterColor, Intake::KICK);
-      } else {
-        bot.intake.intakeTo(filterColor, Intake::MOGO);
-        bot.intake.intakeTo(!filterColor, Intake::KICK);
-      }
-    } else if (master.get_digital(map::OUTTAKE)) bot.intake.outtake();
-    else bot.intake.stop();
-
     // Mogo control
     if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
       bot.mogoClamp.toggle();
@@ -141,7 +132,7 @@ void opcontrol() {
     if (master.get_digital(map::NEXT_LIFT_STATE)) {
       if (auto& start = holdStartTime) {
         const uint32_t duration = pros::millis() - *start;
-        // If this is a long press, go to score
+        // If this is a long press, go to flip
         if (duration > longPressDuration) { bot.lady.flip(); }
       } else { // Button was not pressed before (new press)
         holdStartTime = pros::millis();
@@ -155,6 +146,13 @@ void opcontrol() {
           case LadyBrown::State::FLIP: bot.lady.goToIdle(); break;
           default: bot.lady.goToIdle(); break;
         }
+        // If new state is after collect, then outtake a little bit to release
+        // ring
+        if (bot.lady.getState() == LadyBrown::IDLE_SCORE) {
+          bot.intake.outtake();
+          releaseLBRingTimer.reset();
+          releaseLBRingTimer.resume();
+        }
       }
     } else { // If lift button not pressed
       if (auto& start = holdStartTime) {
@@ -162,6 +160,46 @@ void opcontrol() {
         if (duration > longPressDuration) { bot.lady.goToIdle(); }
       }
       holdStartTime = std::nullopt;
+    }
+
+    if (releaseLBRingTimer.isDone()) {
+      bot.intake.stop();
+      releaseLBRingTimer.reset();
+      releaseLBRingTimer.pause();
+    }
+
+    // === Intake control
+
+    // Intake button
+    if (master.get_digital(map::INTAKE)) {
+      // Rising edge of Intake button
+
+      // Override lb release functionality
+      releaseLBRingTimer.reset();
+      releaseLBRingTimer.pause();
+
+      // Intake current color to mogo, other color to kicker
+      if (bot.lady.getState() == LadyBrown::COLLECT) {
+        bot.intake.intakeTo(filterColor, Intake::LB);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      } else {
+        bot.intake.intakeTo(filterColor, Intake::MOGO);
+        bot.intake.intakeTo(!filterColor, Intake::KICK);
+      }
+      // Outtake button
+    } else if (master.get_digital(map::OUTTAKE)) {
+      // Override lb release functionality
+      releaseLBRingTimer.reset();
+      releaseLBRingTimer.pause();
+
+      bot.intake.outtake();
+    }
+    // If intake button is not pressed, and (timer is done or is paused)
+    else if (releaseLBRingTimer.isPaused() || releaseLBRingTimer.isDone()) {
+      // Then stop outtaking
+      releaseLBRingTimer.reset();
+      releaseLBRingTimer.pause();
+      bot.intake.stop();
     }
 
     if (bot.lady.getState() == LadyBrown::COLLECT &&
