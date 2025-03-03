@@ -41,94 +41,72 @@ void safeAWPFunc(ALLIANCE alliance) {
 
   const Time startTime = pros::millis() * msec;
 
-  const Pose startPose {-TILE * 2 + 1. / 2 - DRIVE_WIDTH / 2 - 5. / 2,
-                        0 - TILE + 1. / 2 + 8.5, AUDIENCE};
-  // Start on positive side of alliance wall stake, facing away from referee
-  // TODO: Implement this
-  bot.setPose(startPose, 1);
+  // Disable MCL during match auto
+  bot.localization.enabled = false;
+
+  const Pose startPose {-TILE * 2 - 8.5, TILE - 9.5, RED_STATION - 45 - 3};
+  bot.setPose(startPose);
 
   // === Score preload on ally stake
 
-  // Make as precise as possible
-  bot.lateralLargeExit.range = 0.4;
-  bot.lateralLargeExit.time = 50;
-  bot.lateralSmallExit.range = 0.6;
-  bot.lateralSmallExit.time = 300;
+  // Collect preload into LB
+  bot.lady.collect();
+  pros::delay(1000); // Wait for LB to settle
+  bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
 
-  const Pose allyStake = {MIN_X, 2, 0};
+  // Wait until preload collected
+  pros::delay(300);
 
-  // Disable MCL during scoring on ally stack
-  bot.localization.enabled = false;
-
-  // Get in front of ally stake
-  bot.moveToPoint(bot.getPose().withY(allyStake.y), 2000,
-                  {.forwards = false, .maxSpeed = 56});
-  // Turn to ally stake
-  bot.turnToPoint(allyStake, 500,
-                  {
-                      .forwards = false,
-                      .maxSpeed = 64,
-                  });
-  bot.waitUntilDone();
-
-  // Back up towards ally stake
-  bot.moveToPoint(bot.getPose().withX(-TILE * 2.5 - 2), 1000,
-                  {.forwards = false, .maxSpeed = 72});
-  bot.waitUntilDone();
-
-  bot.lateralLargeExit = defaultLatLargeExit;
-  bot.lateralSmallExit = defaultLatSmallExit;
-
-  // Score on ally stack
-  bot.intake.intakeBothTo(Intake::MOGO);
-  pros::delay(450);
-
-  // Dont get intake stuck
+  // Prime LB
+  bot.lady.runIntoAlly();
+  // Prevent hooks from getting stuck on the mogo
   bot.intake.outtake();
+  // Wait for LB to be to ready to score
+  pros::delay(1000);
 
-  // Enable MCL after scoring on ally stack
-  bot.localization.enabled = true;
+  // Push ring into stake
+  tank(64, 64, 300);
+
+  // Stop intake from heating up
+  bot.intake.stop();
+
+  // Push ring down onto stake
+  bot.lady.score();
+  pros::delay(100);
+
+  // Back out of stake
+  tank(-64, -64, 600, 0);
+  // Reset lady brown
+  bot.lady.goToIdle();
+  stop();
 
   // === Intake top ring of stack next to ally stake
 
   const Pose negMogo = {-TILE, TILE};
+  const Pose allySafeStack {-TILE * 2, 0};
 
   // Intake stack
-  bot.intakeLift.retract();
-  bot.moveToPoint(
-      negMogo + Pose::fromPolar(-(DRIVE_LENGTH / 2 + 9), BLUE_STATION - 30),
-      2500, {.maxSpeed = 72});
-
-  // Give intake time to unstuck
-  pros::delay(50);
+  bot.intakeLift.extend();
+  bot.moveToPose(
+      (allySafeStack + Pose {0, DRIVE_LENGTH / 2 + 2}).withTheta(AUDIENCE),
+      1000);
   bot.intake.intakeBothTo(Intake::MOGO);
 
+  // Once on top of stack, drop intake to intake
+  bot.waitUntilDone();
+  bot.intakeLift.retract();
+
   // Wait until red ring is sensed
-  waitUntil([&] {
-    return bot.intake.getSensedRing() == COLOR::RED || !bot.isInMotion();
-  });
-
-  // Outtake just in case blue ring is at bottom of intake
-  bot.intake.outtake();
-  bot.cancelMotion();
-
-  // Back up away from mogo
-  tank(-64, -64, 50);
-  // Stop intake
+  waitUntil([&] { return bot.intake.getSensedRing() == COLOR::RED; }, 0, 1500);
+  // Then stop the intake to hold the ring
   bot.intake.stop();
-  tank(-64, -64, 150);
-
   // === Clamp mogo on negative side
 
-  // Turn towards mogo
-  bot.turnToPoint(negMogo, 500,
-                  {.forwards = false, .minSpeed = 72, .earlyExitRange = 45});
-
-  // Make it more precise
-  bot.lateralLargeExit.range = 0.4;
-  bot.lateralLargeExit.time = 50;
-  bot.lateralSmallExit.range = 1;
-  bot.lateralSmallExit.time = 500;
+  // // Make it more precise
+  // bot.lateralLargeExit.range = 0.4;
+  // bot.lateralLargeExit.time = 50;
+  // bot.lateralSmallExit.range = 1;
+  // bot.lateralSmallExit.time = 500;
 
   // Push back of bot into mogo and index it
   bot.moveToPose(negMogo.withTheta(RED_STATION - 30), 1500,
@@ -143,9 +121,9 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Give robot time to clamp
   pros::delay(250);
 
-  // Reset settings
-  bot.lateralLargeExit = defaultLatLargeExit;
-  bot.lateralSmallExit = defaultLatSmallExit;
+  // // Reset settings
+  // bot.lateralLargeExit = defaultLatLargeExit;
+  // bot.lateralSmallExit = defaultLatSmallExit;
 
   // === Score held ring and negative safe stack on mogo
 
