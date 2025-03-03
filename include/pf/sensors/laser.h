@@ -1,13 +1,78 @@
 #pragma once
 
 #include "Eigen/Core"
+
+#include "Eigen/src/Core/Array.h"
 #include "Eigen/src/Core/Matrix.h"
 #include "lemlib/pose.hpp"
 #include "pf/sensors/sensor.h"
 #include "pf/util/lines.h"
 #include "pf/util/stats.h"
+#include "units/units.hpp"
+#include "math.h"
 
 namespace sensors {
+// constexpr double DENSITY_OF_UNTRACKED_OBSTACLES =
+
+auto square(auto a) { return a * a; }
+
+constexpr double getDensityOfUntrackedObstacles() {
+  Area ring = square(7 * in) * M_PI;
+  Area mogo = ring;
+  Area robot = square(18 * in);
+  Area ladderPost = 2 * in * 2 * in;
+  Area field = square(144 * in);
+  Area ringStack = ring;
+  Area untrackedObstacles =
+      mogo * 5 + robot * 3 + ladderPost * 4 + ringStack * 4;
+
+  Area totalNotIncludingMe = field - robot;
+  Number density = (untrackedObstacles / totalNotIncludingMe);
+  return density.internal();
+}
+
+auto my_erf(auto x) {
+  return x.unaryExpr([](auto y) { return erf(y); });
+}
+
+auto normPDF(auto mu, auto sigma, auto x) {
+  return 1 / (sqrt(2 * M_PI) * sigma) *
+         exp(-1. / 2 * square(mu - x) / square(sigma));
+};
+
+struct RangeSensorModel {
+    struct Parameters {
+        float alpha_hit;
+        float alpha_short;
+        float alpha_max;
+        float alpha_rand;
+        float sigma_hit;
+        float lambda_short;
+        float z_max;
+    } p;
+
+    /**
+     * @brief
+     *
+     * @param z The actual measurement
+     * @param z_star The expected measurement
+     * @return T The likelihood of the measurement
+     */
+    auto prob(auto z, auto z_star) {
+      auto p_hit =
+          ((0 < z && z < p.z_max)) *
+          (sqrt(M_PI) / 2.f * abs(my_erf(-z_star) - my_erf(p.z_max - z_star)) *
+           normPDF(z_star, p.sigma_hit, z));
+      auto p_short = ((0 < z) * (z < z_star))
+                         .select(1 / (1 - exp(-p.lambda_short * z_star)) *
+                                     p.lambda_short * exp(-p.lambda_short * z),
+                                 0); // 0 < z < z_star
+      // auto p_max = z >= p.z_max; // z >= z_max
+      // auto p_rand = (0 < z && z < p.z_max) / p.z_max; // 0 < z < z_max
+      return p_hit * p.alpha_hit + p_short * p.alpha_short;
+      //  p_max * p.alpha_max + p_rand * p.alpha_rand;
+    };
+};
 
 /**
  * @brief Updates weights with distance sensor measurement.
@@ -83,6 +148,17 @@ class Laser {
         void update(const Eigen::Array<Vec2, N, 1>& particles,
                     Eigen::Array<float, N, 1>& weights) override {
           auto measurement_opt = laser.sense();
+          static RangeSensorModel model {
+              .p = {
+                  .alpha_hit = 0.9,
+                  .alpha_short = 0.1,
+                  .alpha_max = 0,
+                  .alpha_rand = 0,
+                  .sigma_hit = 8.f,
+                  .lambda_short = (float)getDensityOfUntrackedObstacles(),
+                  .z_max = 2000.f,
+              }};
+
           if (!measurement_opt) return;
           auto& measurement = *measurement_opt;
           const lines::Ray ray = laser.toRay({0, 0});
@@ -98,12 +174,11 @@ class Laser {
                    .unaryExpr(&toEigenArray) /
                ray.direction.array());
 
-          Eigen::Array<float, N, 1> xDists = bothDirDists.unaryExpr(&getX);
-          Eigen::Array<float, N, 1> yDists = bothDirDists.unaryExpr(&getY);
-          auto pdfXs = xDists.min(yDists);
+          auto xDists = bothDirDists.unaryExpr(&getX);
+          auto yDists = bothDirDists.unaryExpr(&getY);
+          auto expectedDists = xDists.min(yDists);
 
-          weights *=
-              pdfCoeff * Eigen::exp(-.5 * Eigen::pow((pdfXs - mu) / sigma, 2));
+          weights *= model.prob(mu, expectedDists);
         }
 
         Sensor(Laser& laser) : laser(laser) {}

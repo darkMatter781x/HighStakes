@@ -9,9 +9,9 @@ std::optional<Laser::Measurement> V5Laser::sense() {
   const int dist_mm = m_sensor.get_distance();
   if (dist_mm == 9999 || dist_mm == PROS_ERR) return std::nullopt;
   const Length dist = dist_mm * mm;
-  const int size = m_sensor.get_object_size();
-  // Likely hitting non wall
-  if (size < 60) return std::nullopt;
+  // const int size = m_sensor.get_object_size();
+  // // Likely hitting non wall
+  // if (size < 60) return std::nullopt;
   // printf("dist: %fmm\n", dist_mm);
   // printf("dist: %fin\n", dist);
   // printf("size: %i\n", size);
