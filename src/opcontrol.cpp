@@ -18,7 +18,6 @@ constexpr axis_t LEFT_DRIVE = pros::E_CONTROLLER_ANALOG_LEFT_Y;
 constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 
 constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
-constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
 
 constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
@@ -65,13 +64,6 @@ void opcontrol() {
   bot.intakeLift.retract();
 
   /** The color of ring we are directing to the destination with the filter. */
-  COLOR filterColor = bot.selector.getAlliance();
-  auto intakeStateToStr = overloads(
-      [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
-      [filterColor](Intake::Filtering& state) {
-        return destToStrOp(filterColor == COLOR::BLUE ? state.blue : state.red);
-      },
-      [](Intake::BaseState& state) { return std::string("none"); });
   bool prevIntakeBtn = false;
 
   if (strcmp(bot.selector.getAuton().label, "Skills") == 0) {
@@ -101,23 +93,6 @@ void opcontrol() {
     bot.tank(master.get_analog(map::LEFT_DRIVE),
              master.get_analog(map::RIGHT_DRIVE));
 
-    // TODO: Move this responsibility to led code
-    // LED control
-
-    if (/* bot.led.getState() == LEDs::FILTER_COLOR */ true) {
-      // if (pros::millis() % 100 < 10)printf("%s\n", filterColor == COLOR::RED
-      // ? "RED" : "BLUE");
-      bot.led.displayFilterColor(filterColor);
-      // startTime = pros::millis();
-      /*printf("change color\n");
-      if (pros::millis() > startTime + 100) {
-        printf("other strip\n");
-        bot.led.rightDisplayFilterColor(filterColor);
-      } */
-      // pros::delay(100);
-      // bot.led.rightDisplayFilterColor(filterColor);
-    }
-
     // Mogo control
     if (master.get_digital_new_press(map::MOGO_CLAMP_TOGGLE))
       bot.mogoClamp.toggle();
@@ -128,7 +103,6 @@ void opcontrol() {
     if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
 
     // Lift control
-
     if (master.get_digital(map::NEXT_LIFT_STATE)) {
       if (auto& start = holdStartTime) {
         const uint32_t duration = pros::millis() - *start;
@@ -136,22 +110,24 @@ void opcontrol() {
         if (duration > longPressDuration) { bot.lady.flip(); }
       } else { // Button was not pressed before (new press)
         holdStartTime = pros::millis();
+
+        // If moving on from collect, then outtake a little bit to release ring
+        if (bot.lady.getState() == LadyBrown::COLLECT) {
+          bot.intake.outtake();
+          releaseLBRingTimer.reset();
+          releaseLBRingTimer.resume();
+        }
+
         // Should only ever go to idle, collect, or flip as these are the only
         // useful states for driver
         switch (bot.lady.getState()) {
           case LadyBrown::State::IDLE: bot.lady.collect(); break;
           case LadyBrown::State::COLLECT: bot.lady.flip(); break;
           case LadyBrown::State::IDLE_SCORE: bot.lady.flip(); break;
+          case LadyBrown::State::RUN_INTO_ALLY: bot.lady.flip(); break;
           case LadyBrown::State::SCORE: bot.lady.flip(); break;
           case LadyBrown::State::FLIP: bot.lady.goToIdle(); break;
           default: bot.lady.goToIdle(); break;
-        }
-        // If new state is after collect, then outtake a little bit to release
-        // ring
-        if (bot.lady.getState() == LadyBrown::IDLE_SCORE) {
-          bot.intake.outtake();
-          releaseLBRingTimer.reset();
-          releaseLBRingTimer.resume();
         }
       }
     } else { // If lift button not pressed
@@ -178,14 +154,7 @@ void opcontrol() {
       releaseLBRingTimer.reset();
       releaseLBRingTimer.pause();
 
-      // Intake current color to mogo, other color to kicker
-      if (bot.lady.getState() == LadyBrown::COLLECT) {
-        bot.intake.intakeTo(filterColor, Intake::LB);
-        bot.intake.intakeTo(!filterColor, Intake::KICK);
-      } else {
-        bot.intake.intakeTo(filterColor, Intake::MOGO);
-        bot.intake.intakeTo(!filterColor, Intake::KICK);
-      }
+      bot.intake.intakeBothTo(Intake::MOGO);
       // Outtake button
     } else if (master.get_digital(map::OUTTAKE)) {
       // Override lb release functionality
@@ -202,20 +171,7 @@ void opcontrol() {
       bot.intake.stop();
     }
 
-    if (bot.lady.getState() == LadyBrown::COLLECT &&
-        (std::holds_alternative<Intake::IntakingToKick>(
-             bot.intake.getState()) ||
-         std::holds_alternative<Intake::KickingRing>(bot.intake.getState()))) {
-      bot.lady.goToIdle();
-    }
-
-    // Toggle filtering color
-    if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE)) {
-      filterColor = !filterColor;
-    }
     auto intakeState = bot.intake.getState();
-    master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
-                 std::visit(intakeStateToStr, intakeState));
     // #ifdef TUNING
     //     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
     //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
