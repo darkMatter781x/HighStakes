@@ -44,14 +44,14 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Disable MCL during match auto
   bot.localization.enabled = false;
 
-  const Pose startPose {-TILE * 2 - 8.5, TILE - 9.5, RED_STATION - 45 - 3};
+  const Pose startPose {-TILE * 2 - 6.66, TILE - 11.53, RED_STATION - 45 - 3};
   bot.setPose(startPose);
 
   // === Score preload on ally stake
 
   // Collect preload into LB
   bot.lady.collect();
-  pros::delay(1000); // Wait for LB to settle
+  pros::delay(700); // Wait for LB to settle
   bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
 
   // Wait until preload collected
@@ -62,96 +62,110 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Prevent hooks from getting stuck on the mogo
   bot.intake.outtake();
   // Wait for LB to be to ready to score
-  pros::delay(1000);
+  pros::delay(400);
 
   // Push ring into stake
-  tank(64, 64, 300);
+  tank(64, 64, 400);
+  stop();
 
   // Stop intake from heating up
   bot.intake.stop();
 
   // Push ring down onto stake
-  bot.lady.score();
-  pros::delay(100);
-
-  // Back out of stake
-  tank(-64, -64, 600, 0);
-  // Reset lady brown
   bot.lady.goToIdle();
-  stop();
+  pros::delay(100);
 
   // === Intake top ring of stack next to ally stake
 
   const Pose negMogo = {-TILE, TILE};
   const Pose allySafeStack {-TILE * 2, 0};
 
+  // Back straight out of stake
+  tank(-96, -96, 400, 4);
+
+  // Turn to ally sta
+  bot.turnToPoint(allySafeStack, 500);
+  bot.waitUntilDone();
+  // Reset lady brown
+  bot.lady.goToIdle();
+  stop();
+
   // Intake stack
   bot.intakeLift.extend();
-  bot.moveToPose(
-      (allySafeStack + Pose {0, DRIVE_LENGTH / 2 + 2}).withTheta(AUDIENCE),
-      1000);
+  const Pose allySafeStackTarget =
+      Pose::fromPolar(-DRIVE_LENGTH / 2, bot.getPose().theta) + allySafeStack;
+
+  bot.moveToPoint(allySafeStackTarget, 1000, {.earlyExitRange = 2});
   bot.intake.intakeBothTo(Intake::MOGO);
 
   // Once on top of stack, drop intake to intake
   bot.waitUntilDone();
   bot.intakeLift.retract();
 
-  // Wait until red ring is sensed
-  waitUntil([&] { return bot.intake.getSensedRing() == COLOR::RED; }, 0, 1500);
-  // Then stop the intake to hold the ring
-  bot.intake.stop();
+  // Give time to pickup
+  pros::delay(300);
+
   // === Clamp mogo on negative side
 
-  // // Make it more precise
-  // bot.lateralLargeExit.range = 0.4;
-  // bot.lateralLargeExit.time = 50;
-  // bot.lateralSmallExit.range = 1;
-  // bot.lateralSmallExit.time = 500;
-
   // Push back of bot into mogo and index it
-  bot.moveToPose(negMogo.withTheta(RED_STATION - 30), 1500,
-                 {.forwards = false});
+  bot.moveToPoint(negMogo, 1500, {.forwards = false, .maxSpeed = 64});
 
-  // Clamp mogo once
-  bot.waitUntilDone();
+  // Wait until red ring is sensed
+  waitUntil(
+      [&] {
+        return bot.intake.getSensedRing() == bot.getColor() ||
+               !bot.isInMotion();
+      },
+      0, 1000);
+  // Then stop the intake to hold the ring
+  bot.intake.stop();
+
+  // Wait until near mogo to clamp it
+  waitUntilDistToPose(negMogo, 5, 0, true);
   bot.mogoClamp.retract();
   // Reset mogo ring counter
   bot.intake.numOfMogoRings = 0;
 
   // Give robot time to clamp
   pros::delay(250);
-
-  // // Reset settings
-  // bot.lateralLargeExit = defaultLatLargeExit;
-  // bot.lateralSmallExit = defaultLatSmallExit;
+  bot.waitUntilDone();
 
   // === Score held ring and negative safe stack on mogo
 
   const Pose negSafeStack = {-TILE, TILE * 2};
 
   // Turn towards stack
-  bot.turnToPoint(negSafeStack, 500, {.minSpeed = 72, .earlyExitRange = 30});
+  bot.turnToPoint(negSafeStack + Pose {-1, 0}, 500,
+                  {.minSpeed = 72, .earlyExitRange = 30});
   bot.waitUntilDone();
 
   // Score on mogo
-  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(bot.getColor(), Intake::KICK);
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Go towards negative safe stack and intake it
-  bot.moveToPoint(negSafeStack, 1000, {.minSpeed = 64, .earlyExitRange = 4});
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, REFEREE) + negSafeStack,
+                 1000
+                 /* {.minSpeed = 64 , .earlyExitRange = 4} */);
+  bot.waitUntilDone();
+  // Give time to intake
+  pros::delay(300);
 
-  // === Deposit mogo in positive half and push alliance bot
+  // === Deposit mogo in positive half and push alliance partner bot
 
-  bot.moveToPose({-TILE * 2.5, -TILE * 2.5, REFEREE}, 2500,
-                 {.forwards = false, .minSpeed = 64, .earlyExitRange = 5});
-
-  // Wait until ring is intaked to release mogo
-  waitUntil([] { return bot.intake.numOfMogoRings >= 2 || !bot.isInMotion(); });
+  // Go around ally stake rings
+  bot.moveToPoint({-TILE * 1.7, 0}, 800,
+                  {.forwards = false, .minSpeed = 96, .earlyExitRange = 6});
+  bot.waitUntilDone();
 
   // Release mogo to make sure mogo hitting rings doesn't stop us
   bot.mogoClamp.extend();
-  bot.intake.outtake();
+  // Stop intake to prevent hooking the mogo with hooks
+  bot.intake.stop();
 
+  // Deposit mogo
+  bot.moveToPoint({-TILE * 2.5, -TILE * 2}, 2500,
+                  {.forwards = false, .minSpeed = 72, .earlyExitRange = 6});
   bot.waitUntilDone();
 
   // === Clamp mogo on positive side
@@ -160,22 +174,26 @@ void safeAWPFunc(ALLIANCE alliance) {
 
   // Get out of corner
   bot.moveToPoint({-TILE * 2.5, -TILE}, 1000,
-                  {.minSpeed = 64, .earlyExitRange = 5});
+                  {.minSpeed = 48, .earlyExitRange = 5});
 
   // Turn towards mogo
-  bot.swingToPoint(posMogo, lemlib::DriveSide::RIGHT, 500,
-                   {.forwards = false, .minSpeed = 64, .earlyExitRange = 30});
+  bot.swingToPoint(posMogo, lemlib::DriveSide::RIGHT, 750,
+                   {.forwards = false, .minSpeed = 24, .earlyExitRange = 15});
 
   // Go pick up mogo
-  bot.moveToPose(posMogo.withTheta(RED_STATION - 30), 1000,
-                 {.forwards = false});
+  bot.moveToPoint(posMogo, 1500, {.forwards = false, .maxSpeed = 64});
+
+  // Wait until near mogo to clamp it
+  waitUntilDistToPose(posMogo, 5, 0, true);
+  bot.mogoClamp.retract();
+  // Reset mogo ring counter
+  bot.intake.numOfMogoRings = 0;
+
+  pros::delay(250);
   bot.waitUntilDone();
 
-  // Clamp mogo
-  bot.mogoClamp.retract();
-  pros::delay(250);
-
   // === Score positive safe stack on mogo
+
   const Pose posSafeStack = {-TILE, -TILE * 2};
 
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
@@ -185,26 +203,33 @@ void safeAWPFunc(ALLIANCE alliance) {
   bot.swingToPoint(posSafeStack, lemlib::DriveSide::LEFT, 500,
                    {.minSpeed = 72, .earlyExitRange = 30});
   // Go towards positive safe stack and intake it
-  bot.moveToPoint(posSafeStack, 1000, {.minSpeed = 64, .earlyExitRange = 4});
+  bot.moveToPoint(posSafeStack, 1000,
+                  {.minSpeed = 64 /* , .earlyExitRange = 4 */});
   bot.waitUntilDone();
 
   // === Touch ladder
 
-  // Raise lady brown to touch ladder
-  bot.lady.goToIdleScore();
+  // Raise hang to touch ladder
+  bot.lady.flip();
+
+  // Give time to intake
+  pros::delay(250);
 
   // Go to ladder
-  bot.moveToPose({-TILE * .5, -TILE * .5, AUDIENCE + 45}, 2000,
-                 {.forwards = false, .minSpeed = 64, .earlyExitRange = 5});
-
+  const Pose ladderTouchTarget {-TILE * .5, -TILE * .5, AUDIENCE + 45};
+  bot.moveToPose(ladderTouchTarget, 2000,
+                 {.forwards = false, .minSpeed = 127, .earlyExitRange = 6});
   // Stop intake to prevent it from getting stuck on ladder
   bot.waitUntil(12);
   bot.intake.stop();
+  waitUntilDistToPose(ladderTouchTarget, 8, 0, true);
+  bot.cancelMotion();
 
-  // Drop lady at last second
-  waitUntil(
-      [startTime] { return (pros::millis() * msec - startTime) > 14.8 * sec; });
-  bot.lady.goToIdle();
-  pros::delay(100);
-  bot.lady.setState(LadyBrown::COAST);
+  //   // Drop lady at last second
+  //   waitUntil(
+  //       [startTime] { return (pros::millis() * msec - startTime) > 14.8 *
+  //       sec; });
+  //   bot.lady.goToIdle();
+  //   pros::delay(100);
+  //   bot.lady.setState(LadyBrown::COAST);
 }
