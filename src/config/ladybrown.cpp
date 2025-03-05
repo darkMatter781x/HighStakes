@@ -2,7 +2,7 @@
 #include "lemlib/chassis/chassis.hpp"
 
 LadyBrown::Config LadyBrown::Config::config {
-    .idle = 3,
+    .idle = 6,
     .collect = 342,
     .idle_score = 295.00,
     .score = 180,
