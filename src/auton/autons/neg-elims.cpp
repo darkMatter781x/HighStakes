@@ -1,3 +1,4 @@
+#include "color.h"
 #include "lemlib/chassis/chassis.hpp"
 #include "lemlib/util.hpp"
 #include "pros/rtos.hpp"
@@ -5,6 +6,7 @@
 #include "dimensions.h"
 #include "auton/autons.h"
 #include "auton/util.h"
+#include "subsystems/intake.h"
 #include "units/units.hpp"
 
 using namespace dimensions::all;
@@ -44,18 +46,18 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   const Pose startPose {-TILE * 2 - 4.4, TILE * 1 + DRIVE_WIDTH / 2 + .5,
                         BLUE_STATION};
   bot.setPose(startPose);
-  const Pose preloadRing {-TILE * 2, TILE * 1 - RING_DIAM / 2};
+  const Pose preloadRing {-TILE * 2 - 3, TILE * 1 - RING_DIAM / 2 - 1};
 
   // Drop intake
-  bot.intakeLift.retract();
+  //bot.intakeLift.retract();
 
   // === Yoink center ring
 
-  const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
+  const Pose centerRing {-RING_DIAM / 2 + 1, TILE * 2 - RING_DIAM / 2};
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
-    bot.moveToPoint((safeStack + Pose {6, -RING_DIAM / 2 - DRIVE_WIDTH / 2 + 2})
+    bot.moveToPoint((safeStack + Pose {4.2, -RING_DIAM / 2 - DRIVE_WIDTH / 2 + 3})
                         .withTheta(BLUE_STATION),
                     1000, {.minSpeed = 72, .earlyExitRange = 6});
   }
@@ -104,15 +106,22 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   // // TODO: Figure out how to doink for different alliances
   // // === Intake rings from negative corner stack
 
-  // const Pose negCorner {MIN_X, MAX_Y};
-
+  const Pose negCorner {MIN_X, MAX_Y};
+  const Pose goofyOtherSpot {-TILE * 1, TILE * 2 - 2};
   // // Get in front of stack
-  // const Pose negCornerTarget =
-  //     Pose::fromPolar(-DRIVE_LENGTH / 2 - 8 +
-  //                         (bot.getColor() == COLOR::RED ? 1 : 0),
-  //                     REFEREE - 55) +
-  //     negCorner + Pose {0, -1};
-  // bot.moveToPose(negCornerTarget, 1500, {.lead = .5});
+  const Pose negCornerTarget =
+       Pose::fromPolar(-DRIVE_LENGTH / 2 - 8 +
+                           (bot.getColor() == COLOR::RED ? 1 : 0),
+                       REFEREE - 55) +
+       negCorner;
+  
+  bot.intake.intakeTo(ALLIANCE::RED, Intake::MOGO);
+
+  bot.moveToPose(goofyOtherSpot, 0, {.minSpeed = 42});
+  bot.waitUntilDone();
+  //bot.turnToHeading(REFEREE - 55, 5000);
+  bot.moveToPose(negCornerTarget, 2000, {.minSpeed = 42});
+  pros::delay(500);
 
   // // == Doink stack
   // // Deploy doinker once near stack
@@ -149,17 +158,17 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   // === Intake preload
 
   // Adjust odometry
-  bot.setPose(bot.getPose() + Pose {3, 0});
+  bot.setPose(bot.getPose());
 
   // Go to preload
   bot.moveToPose(preloadRing.withTheta(AUDIENCE), 2000, {.lead = .8});
   bot.waitUntilDone();
-  pros::delay(500);
+  pros::delay(700);
 
   // === Intake stack next to alliance stake to LB
 
   // Place intake on top of stack
-  const Pose allyStack {-TILE * 2, -1};
+  const Pose allyStack {-TILE * 2, 0};
   bot.intakeLift.extend();
   bot.moveToPose(
       (allyStack + Pose {0, DRIVE_LENGTH / 2 + 1}).withTheta(AUDIENCE), 1000);
@@ -169,7 +178,7 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   bot.intakeLift.retract();
 
   // Give time to intake
-  pros::delay(500);
+  pros::delay(1000);
   // // Raise LB
   // bot.lady.collect();
   // Back up to intake
@@ -177,23 +186,23 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   stop();
 
   // // === Score on ally stake
-  // const Pose scoreOnAllyStake {-TILE * 2.5 + 1.5, -2 , RED_STATION};
-  // bot.moveToPose(scoreOnAllyStake, 2500);
-  // bot.waitUntilDone();
-  // bot.intake.outtake();
-  // bot.lady.flip();
+   const Pose scoreOnAllyStake {-TILE * 2.5 + 1.5, -2 , RED_STATION};
+   bot.moveToPose(scoreOnAllyStake, 2500);
+   bot.waitUntilDone();
+   bot.intake.outtake();
+   bot.lady.flip();
 
-  // // Give time to score LB
-  // pros::delay(600);
-  // // Back out to release LB
-  // tank(-127, -127, 300, 0);
-  // stop();
+   // Give time to score LB
+   pros::delay(600);
+   // Back out to release LB
+   tank(-127, -127, 300, 0);
+   stop();
 
   // // === Touch ladder
 
-  // const Pose ladderTarget {-TILE * .5 - 1, TILE * .5 - 1, REFEREE - 45};
+   const Pose ladderTarget {-TILE * .5 - 1, TILE * .5 - 1, REFEREE - 45};
   // // Go to ladder
-  // bot.moveToPose(ladderTarget, 3000, {.forwards = false});
+   bot.moveToPose(ladderTarget, 3000, {.forwards = false});
 
   // // Stop intake to prevent it from getting stuck on ladder
   // waitUntilDistToPose(ladderTarget, 12, 0, true);
@@ -219,23 +228,23 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   // === Doink pos corner stack
 
   // Go around stack
-  bot.moveToPoint({-TILE * 1.6, 0}, 1000,
-                  {.minSpeed = 127, .earlyExitRange = 6});
+  //bot.moveToPoint({-TILE * 1.6, 0}, 1000,
+  //                {.minSpeed = 127, .earlyExitRange = 6});
 
-  const Pose posCorner {MIN_X, MIN_Y};
+  //const Pose posCorner {MIN_X, MIN_Y};
 
   // Move in front of pos corner stack
-  const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
-  bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
+  //const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
+  //bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
 
-  bot.waitUntil(12);
-  bot.lady.goToIdle();
+  //bot.waitUntil(12);
+  //bot.lady.goToIdle();
 
-  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  //bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  //bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Once near, deploy doinker
-  waitUntilDistToPose(posCornerTarget, 11, 0, true);
+  //waitUntilDistToPose(posCornerTarget, 11, 0, true);
   // bot.doinker.extend();
 
   // // Spin to doink rings

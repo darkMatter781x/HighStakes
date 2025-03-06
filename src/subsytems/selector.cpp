@@ -1,4 +1,5 @@
 #include "subsystems/selector.h"
+#include "auton/autons.h"
 #include "pros/llemu.hpp"
 #include "robot.h"
 #include <algorithm>

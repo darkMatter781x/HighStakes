@@ -66,7 +66,7 @@ void waitUntilRingIsInLB(bool& ringSensed, bool& ringCollected,
  * @param corner Which of the two corners to do
  */
 void redQuadrant(SignTransform::SIGN sign) {
-  // Change coordinate system based on sign of quadrant
+    // Change coordinate system based on sign of quadrant
   bot.setTransform(
       std::make_shared<SignTransform>(sign, SignTransform::POSITIVE));
 
@@ -90,7 +90,7 @@ void redQuadrant(SignTransform::SIGN sign) {
   bot.cancelMotion();
 
   // Go around ladder
-  bot.moveToPoint({0, -TILE - 4.5 - DRIVE_WIDTH / 2 - 5}, 800,
+  bot.moveToPoint({0, -TILE - 5.5 - DRIVE_WIDTH / 2 - 5}, 800,
                   {.minSpeed = 64, .earlyExitRange = 6});
 
   // 2nd ring
@@ -109,9 +109,9 @@ void redQuadrant(SignTransform::SIGN sign) {
   const Pose lbRing1 = [&] {
     switch (sign) {
       case SignTransform::SIGN::POSITIVE:
-        return Pose {TILE * 2, -TILE * 2, BLUE_STATION};
+        return Pose {TILE * 2 + 1, -TILE * 2, BLUE_STATION};
       case SignTransform::SIGN::NEGATIVE:
-        return Pose {TILE * 2, -TILE * 2.5, BLUE_STATION + 30};
+        return Pose {TILE * 2 + 1, -TILE * 2.5, BLUE_STATION + 30};
     }
   }();
   bot.moveToPoint(
@@ -119,6 +119,7 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // Wait until all mogo rings should be intaked, before lifting LB
   bot.waitUntilDone();
+  pros::delay(50);
   bot.lady.collect();
   pros::delay(300);
   const size_t timeLadyBrownFirstRaised = pros::millis();
@@ -131,6 +132,7 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // === Score 1st ring on wall stake
 
+  //slightly adjusted
   const Pose wallStake {0, MIN_Y};
   /** Ring in front of wall stake */
   const Pose wallStakeRing {0, -TILE * 2.5};
@@ -139,7 +141,7 @@ void redQuadrant(SignTransform::SIGN sign) {
   bot.moveToPoint(
       wallStakeRing +
           Pose {
-              0,
+              0 - 0.1,
               RING_DIAM / 2 + (float)hypot(DRIVE_LENGTH / 2, DRIVE_WIDTH / 2) +
                   4 + (sign == SignTransform::SIGN::NEGATIVE ? 1 : 0),
           },
@@ -286,13 +288,13 @@ void redQuadrant(SignTransform::SIGN sign) {
   // Intake 3rd ring
   bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
   bot.intake.intakeTo(COLOR::BLUE, Intake::MOGO);
-  bot.moveToPoint(ring3, 2000, {.minSpeed = 48, .earlyExitRange = 6});
+  bot.moveToPoint(ring3, 2000, {.maxSpeed = 100, .minSpeed = 48, .earlyExitRange = 6});
 
   // Intake 4th and 5th rings
   // bot.moveToPoint(ring4 + Pose {DRIVE_LENGTH / 2 - 2,
   // 1}, 2000);
   bot.moveToPoint(ring5 + Pose {DRIVE_LENGTH / 2, 1}, 2000,
-                  {.minSpeed = 48, .earlyExitRange = 6});
+                  {.maxSpeed = 100, .minSpeed = 48, .earlyExitRange = 6});
   bot.waitUntilDone();
 
   // Wait for ring to go into mogo
@@ -300,11 +302,11 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // Intake 6th ring
   bot.swingToPoint(ring6, lemlib::DriveSide::LEFT, 500,
-                   {.minSpeed = 72, .earlyExitRange = 30});
+                   {.maxSpeed = 100, .minSpeed = 72, .earlyExitRange = 30});
   // Scoop up by going parallel and next to wall
   bot.moveToPose(
       {ring6.x + DRIVE_LENGTH / 2, MIN_Y + DRIVE_WIDTH / 2 + 3, BLUE_STATION},
-      1500, {.minSpeed = 72, .earlyExitRange = 6});
+      1500, {.maxSpeed = 100, .minSpeed = 72, .earlyExitRange = 6});
 
   bot.waitUntilDone();
 
@@ -665,7 +667,7 @@ void skillsFunc(ALLIANCE _alliance) {
 
   // === Clamp negative mogo
 
-  const Pose mogo2 {-TILE * 2, TILE};
+  const Pose mogo2 {-TILE * 2, TILE - 0.75};
 
   // Get out of corner
   bot.moveToPoint({-TILE * 2, -TILE * 2}, 500,
@@ -674,12 +676,12 @@ void skillsFunc(ALLIANCE _alliance) {
 
   // Go to mogo
   bot.moveToPoint(mogo2, 3000,
-                  {.forwards = false, .minSpeed = 24, .earlyExitRange = 15});
+                  {.forwards = false, .maxSpeed = 100, .minSpeed = 24, .earlyExitRange = 15});
 
   bot.waitUntilDone();
 
   // Once near mogo, coast into it
-  tank(-24, -24, 250);
+  tank(-30, -30, 250);
   // Then clamp
   bot.mogoClamp.retract();
 
