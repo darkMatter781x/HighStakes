@@ -8,9 +8,9 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::negativeElims, auton::autons::negativeRush,
-      auton::autons::safePositive,  auton::autons::skills,
-      auton::autons::safeAWP,       auton::autons::doNothing,
+      auton::autons::safePositive, auton::autons::negativeElims,
+      auton::autons::safeAWP,      auton::autons::skills,
+      auton::autons::negativeRush, auton::autons::doNothing,
   };
 }
 
@@ -20,7 +20,7 @@ bool didConstructorRun = false;
 
 AutonSelector::AutonSelector(pros::adi::Potentiometer& pot,
                              Intake::Sensor& intakeSensor)
-  : m_pot(pot), m_intakeSensor(intakeSensor), m_alliance(ALLIANCE::RED),
+  : m_pot(pot), m_intakeSensor(intakeSensor), m_alliance(ALLIANCE::BLUE),
     m_autons(getAutons()), m_indexOffset(0), m_locked(std::nullopt),
     m_ignoreSensor(false) {
   printf("print m_autons\n");

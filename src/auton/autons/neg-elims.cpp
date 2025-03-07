@@ -117,7 +117,7 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   
   bot.intake.intakeTo(ALLIANCE::RED, Intake::MOGO);
 
-  bot.moveToPose(goofyOtherSpot, 0, {.minSpeed = 42});
+  bot.moveToPose(goofyOtherSpot, 500, {.minSpeed = 42, .earlyExitRange=6});
   bot.waitUntilDone();
   //bot.turnToHeading(REFEREE - 55, 5000);
   bot.moveToPose(negCornerTarget, 2000, {.minSpeed = 42});

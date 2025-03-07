@@ -5,7 +5,7 @@ LadyBrown::Config LadyBrown::Config::config {
     .idle = 6,
     .collect = 342,
     .idle_score = 295.00,
-    .score = 180,
+    .score = 180 - 10,
     .run_into_ally = 203.f,
     .flip = 127.5,
     .controllerSettings =

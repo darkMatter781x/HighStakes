@@ -144,23 +144,24 @@ class QueuedMcapWriter {
 
         std::unique_ptr<QueuedMessage> msg = this->popFront();
 
-        {
-          PROFILE_SECTION("writer.write()", {
-            auto writer = this->getWriter();
-            const auto res = writer->write(msg->msg);
-            // printf("[%2.6f]:\twrote message to writer!\n",
-            //        float(pros::micros()) / 1000.f / 1000.f);
-            if (!res.ok()) {
-              static std::string prevErrMsg = "";
-              if (res.message != prevErrMsg)
-                fprintf(stderr, "[%2.6f]:\tfailed to log to sd card!:\n\t%s\n",
-                        float(pros::micros()) / 1000.f / 1000.f,
-                        res.message.c_str());
-              prevErrMsg = res.message;
-              writer->terminate();
-            }
-          })
-        }
+        // {
+        //   PROFILE_SECTION("writer.write()", {
+        //     auto writer = this->getWriter();
+        //     const auto res = writer->write(msg->msg);
+        //     // printf("[%2.6f]:\twrote message to writer!\n",
+        //     //        float(pros::micros()) / 1000.f / 1000.f);
+        //     if (!res.ok()) {
+        //       static std::string prevErrMsg = "";
+        //       if (res.message != prevErrMsg)
+        //         fprintf(stderr, "[%2.6f]:\tfailed to log to sd
+        //         card!:\n\t%s\n",
+        //                 float(pros::micros()) / 1000.f / 1000.f,
+        //                 res.message.c_str());
+        //       prevErrMsg = res.message;
+        //       writer->terminate();
+        //     }
+        //   })
+        // }
       }
     }
     friend class LogTools;

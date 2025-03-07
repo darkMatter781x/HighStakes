@@ -22,7 +22,7 @@ auton::Auton auton::autons::negativeRush = {
                           "Set using Shreya's setting stick. "
                           "Yoink center ring, "
                           "score on mogo, "
-                          "intake safe stack, ally stack, preload, "
+                          "intake safe stack, ally stacthenk, preload, "
                           "and touch ladder.",
 };
 

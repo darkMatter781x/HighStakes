@@ -37,95 +37,44 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   const Time startTime = pros::millis() * msec;
 
-  // Start on negative side of alliance wall stake, facing towards referee
-  const Pose startPose {-TILE * 2 + 1. / 2 - DRIVE_WIDTH / 2 - 5. / 2,
-                        -(0 - TILE + 1. / 2 + 8.5), REFEREE};
-  bot.setPose(startPose, 1);
+  const Pose startPose {-TILE * 2 - 6.66, -(TILE - 11.53),
+                        180 - (RED_STATION - 45 - 3)};
+
+  bot.setPose(startPose);
 
   // === Score preload on ally stake
 
-  // Make as precise as possible
-  bot.lateralLargeExit.range = 0.4;
-  bot.lateralLargeExit.time = 50;
-  bot.lateralSmallExit.range = 0.6;
-  bot.lateralSmallExit.time = 300;
+  // Collect preload into LB
+  bot.lady.collect();
+  pros::delay(700); // Wait for LB to settle
+  bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
 
-  const Pose allyStake = {MIN_X, -2, 0};
+  // Wait until preload collected
+  pros::delay(300);
 
-  // Disable MCL during scoring on ally stake
-  bot.localization.enabled = false;
-
-  // Get in front of ally stake
-  bot.moveToPoint(bot.getPose().withY(allyStake.y), 2000,
-                  {.forwards = false, .maxSpeed = 56});
-  // Turn to ally stake
-  bot.turnToPoint(allyStake, 500,
-                  {
-                      .forwards = false,
-                      .maxSpeed = 64,
-                  });
+  bot.moveToPoint(Pose::fromPolar(4, bot.getPose().theta) + bot.getPose(), 800);
   bot.waitUntilDone();
 
-  // Back up towards ally stake
-  bot.moveToPoint(bot.getPose().withX(-TILE * 2.5 - 1.75), 1000,
-                  {.forwards = false, .maxSpeed = 72});
-  bot.waitUntilDone();
-
-  bot.lateralLargeExit = defaultLatLargeExit;
-  bot.lateralSmallExit = defaultLatSmallExit;
-
-  // Score on ally stack
-  bot.intake.intakeBothTo(Intake::MOGO);
-  pros::delay(450);
-
-  // Dont get intake stuck
+  // Move hook out of the way
   bot.intake.outtake();
+  pros::delay(30);
 
-  // Enable MCL after scoring on ally stack
-  bot.localization.enabled = false;
-  // Give MCL time to stabilize
-  pros::delay(10);
+  bot.lady.score();
+  pros::delay(600);
+
+  // Stop intake from heating up
+  bot.intake.stop();
+
+  // Push ring down onto stake
+  bot.lady.goToIdle();
+  pros::delay(100);
+
+  // Back straight out of stake
+  tank(-96, -96, 400, 4);
 
   // === Intake top ring of stack next to ally stake
 
   const Pose posMogo = {-TILE, -TILE};
-
-  // Drop intake in order to intake mogo
-  bot.intakeLift.retract();
-
-  const Pose allyStackTarget =
-      posMogo + Pose::fromPolar(-(DRIVE_LENGTH / 2 + 9), BLUE_STATION + 30);
-
-  // Intake stack
-  bot.moveToPoint(allyStackTarget, 750, {.maxSpeed = 72});
-
-  // Give intake time to unstuck
-  pros::delay(50);
-  bot.intake.intakeBothTo(Intake::MOGO);
-
-  // Wait for a bit after intaking first ring
-  waitUntilDistToPose(allyStackTarget, 5, 0, true);
-  bot.cancelMotion();
-  pros::delay(500);
-
-  // Continue on
-  bot.moveToPoint(allyStackTarget, 1500, {.maxSpeed = 72});
-
-  // Wait until red ring is sensed
-  waitUntil([&] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
-            2000);
-
-  // Outtake just in case blue ring is at bottom of intake
-  bot.intake.outtake();
-  bot.cancelMotion();
-
-  // Back up away from mogo
-  tank(-64, -64, 50);
-  // Stop intake
-  bot.intake.stop();
-  tank(-64, -64, 150);
-
-  // === Clamp mogo on positive side
 
   // Turn towards mogo
   bot.turnToPoint(posMogo, 500,
@@ -198,11 +147,17 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   // Go towards positive safe stack and intake it
   bot.moveToPose(Pose::fromPolar(
-                     -DRIVE_LENGTH / 2 + 8,
+                     -DRIVE_LENGTH / 2 + 3,
                      90 - lemlib::radToDeg(bot.getPose().angle(posSafeStack))) +
                      posSafeStack,
                  2000);
   bot.waitUntilDone();
+
+  // === Yoink ring from corner
+
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 - 4, AUDIENCE + 45) +
+                     Pose {MIN_X, MIN_Y},
+                 1500);
 
   // === Touch ladder
 

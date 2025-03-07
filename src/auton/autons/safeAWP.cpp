@@ -57,16 +57,15 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Wait until preload collected
   pros::delay(300);
 
-  // Prime LB
-  bot.lady.runIntoAlly();
-  // Prevent hooks from getting stuck on the mogo
-  bot.intake.outtake();
-  // Wait for LB to be to ready to score
-  pros::delay(400);
+  bot.moveToPoint(Pose::fromPolar(3, bot.getPose().theta) + bot.getPose(), 800);
+  bot.waitUntilDone();
 
-  // Push ring into stake
-  tank(64, 64, 400);
-  stop();
+  // Move hook out of the way
+  bot.intake.outtake();
+  pros::delay(30);
+
+  bot.lady.score();
+  pros::delay(600);
 
   // Stop intake from heating up
   bot.intake.stop();
@@ -83,7 +82,7 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Back straight out of stake
   tank(-96, -96, 400, 4);
 
-  // Turn to ally sta
+  // Turn to ally stake
   bot.turnToPoint(allySafeStack, 500);
   bot.waitUntilDone();
   // Reset lady brown
