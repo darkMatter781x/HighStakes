@@ -2,6 +2,7 @@
 
 #include "color.h"
 #include "lemlib/chassis/chassis.hpp"
+#include <memory>
 
 namespace auton {
 
@@ -22,6 +23,40 @@ class Transformation {
 
     /** @note Assumes theta is in compass degrees. */
     virtual float transformHeading(float oldHeading) = 0;
+};
+
+class ChainedTransform : public Transformation {
+  private:
+    /** @brief First transform */
+    std::shared_ptr<Transformation> m_t1;
+    /** @brief Second transform */
+    std::shared_ptr<Transformation> m_t2;
+  public:
+    /** @note Assumes theta is in compass degrees. */
+    virtual lemlib::Pose transformPose(lemlib::Pose oldPose) override;
+
+    virtual lemlib::DriveSide
+    transformDriveSide(lemlib::DriveSide oldDriveSide) override;
+
+    virtual lemlib::AngularDirection
+    transformAngDir(lemlib::AngularDirection oldAngDir) override;
+
+    /** @note Assumes theta is in compass degrees. */
+    virtual float transformHeading(float oldHeading) override;
+
+    ChainedTransform(std::shared_ptr<Transformation> transformA,
+                     std::shared_ptr<Transformation> transformB);
+
+    /**
+     * @brief Creates a chained transform by transforming the output from
+     * transformA with transformB.
+     *
+     * input ============> ============> output
+     *        transformA    transformB
+     */
+    static std::shared_ptr<ChainedTransform>
+    make(std::shared_ptr<Transformation> transformA,
+         std::shared_ptr<Transformation> transformB);
 };
 
 /**

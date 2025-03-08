@@ -33,7 +33,7 @@ static constexpr size_t BUILDER_SIZE =
     Localization::N * (sizeof(Localization::P) + sizeof(float)) + 64;
 
 /** @brief Function to read, increment, and update a value in a file */
-int incrementValueInFile(const std::string& filename) {
+static int incrementValueInFile(const std::string& filename) {
   // Step 1: Open the file for reading
   std::ifstream inFile(filename);
   if (!inFile) {
@@ -148,13 +148,10 @@ class QueuedMcapWriter {
         //   PROFILE_SECTION("writer.write()", {
         //     auto writer = this->getWriter();
         //     const auto res = writer->write(msg->msg);
-        //     // printf("[%2.6f]:\twrote message to writer!\n",
-        //     //        float(pros::micros()) / 1000.f / 1000.f);
         //     if (!res.ok()) {
         //       static std::string prevErrMsg = "";
         //       if (res.message != prevErrMsg)
-        //         fprintf(stderr, "[%2.6f]:\tfailed to log to sd
-        //         card!:\n\t%s\n",
+        //         fprintf(stderr, "[%2.6f]:\tfailed to log to sd card!:\n\t%s\n",
         //                 float(pros::micros()) / 1000.f / 1000.f,
         //                 res.message.c_str());
         //       prevErrMsg = res.message;

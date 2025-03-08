@@ -89,14 +89,11 @@ void redQuadrant(SignTransform::SIGN sign) {
   waitUntilDistToPose(ring1, DRIVE_LENGTH / 2 + 3, 0, true);
   bot.cancelMotion();
 
-  // // Go around ladder
-  // bot.moveToPoint({0, -TILE - 4.5 - DRIVE_WIDTH / 2 - 5}, 800,
-  //                 {.minSpeed = 64, .earlyExitRange = 6});
-
   // 2nd ring (next to wall stake)
   const Pose ring2 {0, -TILE * 2.5};
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, AUDIENCE) + ring2, 1500,
-                 {.lead = .3});
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, AUDIENCE) + ring2 +
+                     Pose {0, sign == SignTransform::POSITIVE ? -1.f : 0.f},
+                 1500, {.lead = .3});
   bot.waitUntilDone();
 
   // === Intake 4 more mogo rings
@@ -117,7 +114,6 @@ void redQuadrant(SignTransform::SIGN sign) {
                   {.maxSpeed = 96, .minSpeed = 48, .earlyExitRange = 6});
 
   // Intake 4th and 5th rings
-  // bot.moveToPoint(ring4 + Pose {DRIVE_LENGTH / 2 - 2, 1}, 2000);
   bot.moveToPoint(ring5 + Pose {DRIVE_LENGTH / 2, 1}, 2000,
                   {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
   bot.waitUntilDone();
@@ -148,9 +144,8 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // Go to corner
   const Pose depositMogoTarget =
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 8, REFEREE + 45) + depositMogoCorner +
-      Pose {0, -3};
-  bot.moveToPose(depositMogoTarget, 3000, {.forwards = false});
+      Pose::fromPolar(DRIVE_LENGTH / 2 + 8, REFEREE + 45) + depositMogoCorner;
+  bot.moveToPoint(depositMogoTarget, 3000, {.forwards = false});
 
   // Wait until mogo is full
   waitUntil([&] { return bot.intake.numOfMogoRings >= 6; }, 0, 1750);
@@ -384,7 +379,7 @@ void skillsFunc(ALLIANCE _alliance) {
   bot.moveToPoint(mogo1 + Pose {0, DRIVE_LENGTH / 2 - 4.5}, 2500,
                   {
                       .forwards = false,
-                      .maxSpeed = 96,
+                      .maxSpeed = 64,
                       .minSpeed = 24,
                       .earlyExitRange = 3,
                   });
@@ -471,7 +466,7 @@ void skillsFunc(ALLIANCE _alliance) {
     bot.cancelMotion();
 
     // Go to mogo
-    const Pose mogo3 {TILE * 2, 0};
+    const Pose mogo3 {TILE * 2 + 2, 0 + 2};
     bot.turnToPoint(mogo3, 500,
                     {.forwards = false, .minSpeed = 72, .earlyExitRange = 30});
 
