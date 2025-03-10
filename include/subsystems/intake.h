@@ -8,6 +8,34 @@
 #include "color.h"
 
 class Intake : public Subsystem {
+  private:
+    /** Actually controls motors and implements auto dejam functions */
+    class AutoDejamIntake {
+      private:
+        pros::MotorGroup& m_motors;
+
+        enum STATE {
+          /** Do not dejam */
+          JUST_INTAKE,
+          /** Intake, but attempt to dejam if needed */
+          INTAKE_DEJAM,
+          /** Outtaking to dejam intake */
+          INTAKE_DEJAM_OUT,
+          OUTTAKE,
+          STOPPED
+        } m_state;
+      public:
+        /** Intake without dejamming */
+        void justIntake();
+        /** Intake with dejamming */
+        void intakeDejam();
+        void outtake();
+        void stop();
+
+        void update();
+
+        AutoDejamIntake(pros::MotorGroup& motors);
+    } intake;
   public:
     /** @brief Wrapper for the intake's optical sensor. */
     class Sensor {
@@ -116,9 +144,8 @@ class Intake : public Subsystem {
         void update(Intake& intake) override;
     };
 
-    using State =
-        std::variant<Filtering, IntakingToKick, KickingRing, IntakingToLB,
-                    Outtaking, Idling, IntakingToMogo> ;
+    using State = std::variant<Filtering, IntakingToKick, KickingRing,
+                               IntakingToLB, Outtaking, Idling, IntakingToMogo>;
 
     struct Config {
         float intakingToLiftInches;
@@ -152,14 +179,14 @@ class Intake : public Subsystem {
     /** @brief Intake specified color of rings to dest. */
     void intakeTo(COLOR color, DESTINATION dest);
 
-    //std::optional<COLOR> getFilterColor();
+    // std::optional<COLOR> getFilterColor();
 
     std::optional<COLOR> getSensedRing();
 
     void update() override;
 
     const State& getState() const;
-    //const DESTINATION& getDestination() const;
+    // const DESTINATION& getDestination() const;
 
     /** @brief Number of rings intaked. */
     size_t numOfRings = 0;

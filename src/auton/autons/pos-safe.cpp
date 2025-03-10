@@ -37,29 +37,83 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   const Time startTime = pros::millis() * msec;
 
-  const Pose startPose {-TILE * 2 - 6.66, -(TILE - 11.53),
-                        180 - (RED_STATION - 45 - 3)};
-
+  const Pose startPose {-TILE * 2 - 4.4, -(TILE * 1 + DRIVE_WIDTH / 2 + .5),
+                        BLUE_STATION};
   bot.setPose(startPose);
 
-  // === Score preload on ally stake
+  // === Score preload on middle mogo
+
+  const Pose midMogo {0, -TILE * 2};
+  const Pose safeStack {-TILE, -TILE * 2};
+
+  // Go past mogo and safe ring stack
+  {
+    bot.moveToPoint((safeStack + Pose {4, RING_DIAM / 2 + DRIVE_WIDTH / 2 - 2})
+                        .withTheta(BLUE_STATION),
+                    1000, {.minSpeed = 64, .earlyExitRange = 6});
+  }
 
   // Collect preload into LB
   bot.lady.collect();
-  pros::delay(700); // Wait for LB to settle
+  pros::delay(400); // Wait for LB to settle
   bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
-
-  // Wait until preload collected
-  pros::delay(300);
-
-  bot.moveToPoint(Pose::fromPolar(4, bot.getPose().theta) + bot.getPose(), 800);
   bot.waitUntilDone();
+
+  // Go to actual mogo
+  const Pose midMogoTarget =
+      Pose::fromPolar(-15, BLUE_STATION + 30) + midMogo + Pose {-1, -1};
+  bot.lateralLargeExit.time = 10;
+  bot.lateralSmallExit.time = 10;
+  bot.lateralLargeExit.range = 1;
+  bot.lateralSmallExit.range = 1;
+
+  bot.moveToPoint(midMogoTarget, 2500);
 
   // Move hook out of the way
   bot.intake.outtake();
   pros::delay(30);
+  bot.intake.stop();
 
+  // Once ready, score on mogo
+  bot.waitUntilDone();
   bot.lady.score();
+  pros::delay(400); // Give time to score
+
+  bot.lateralLargeExit = defaultLatLargeExit;
+  bot.lateralSmallExit = defaultLatSmallExit;
+
+  // Tip the mid mogo
+  bot.lady.flip();
+  bot.turnToHeading(AUDIENCE + 30, 500,
+                    {.minSpeed = 127, .earlyExitRange = 10});
+
+  // Turn towards mogo
+  const Pose posMogo {-TILE, -TILE};
+  bot.turnToPoint(posMogo, 500, {.forwards = false});
+  bot.waitUntilDone();
+
+  // Go to mogo
+  bot.moveToPoint(posMogo, 500, {.forwards = false});
+
+  // Retract mogo
+  bot.waitUntil(9);
+  bot.mogoClamp.retract();
+
+  pros::delay(500);
+
+  const Pose posSafeStack = {-TILE, -TILE * 2};
+
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+
+  // Turn towards stack
+  bot.swingToPoint(posSafeStack, lemlib::DriveSide::RIGHT, 500);
+  bot.waitUntilDone();
+
+  bot.moveToPoint(posSafeStack, 1000);
+
+  return;
+
   pros::delay(600);
 
   // Stop intake from heating up
@@ -74,7 +128,7 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   // === Intake top ring of stack next to ally stake
 
-  const Pose posMogo = {-TILE, -TILE};
+  //   const Pose posMogo = {-TILE, -TILE};
 
   // Turn towards mogo
   bot.turnToPoint(posMogo, 500,
@@ -133,7 +187,7 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   // === Score positive safe stack on mogo
 
-  const Pose posSafeStack = {-TILE, -TILE * 2};
+//   const Pose posSafeStack = {-TILE, -TILE * 2};
 
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);

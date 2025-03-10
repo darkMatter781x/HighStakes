@@ -44,31 +44,13 @@
 //   // Disable MCL during match auto
 //   bot.localization.enabled = false;
 
-//   const Pose startPose {-TILE * 2 - 6.66, TILE - 11.53, RED_STATION - 45 - 3};
+//   const Pose startPose {-TILE * 2 - 8.7 - 4, TILE - 15.5 + 6,
+//                         AUDIENCE - 14 + 30};
 //   bot.setPose(startPose);
 
 //   // === Score preload on ally stake
-
-//   // Collect preload into LB
-//   bot.lady.collect();
-//   pros::delay(700); // Wait for LB to settle
-//   bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
-
-//   // Wait until preload collected
-//   pros::delay(300);
-
-//   bot.moveToPoint(Pose::fromPolar(4, bot.getPose().theta) + bot.getPose(), 800);
-//   bot.waitUntilDone();
-
-//   // Move hook out of the way
-//   bot.intake.outtake();
-//   pros::delay(30);
-
 //   bot.lady.flip();
 //   pros::delay(400);
-
-//   // Stop intake from heating up
-//   bot.intake.stop();
 
 //   // Back straight out of stake
 //   tank(-96, -96, 100, 4);

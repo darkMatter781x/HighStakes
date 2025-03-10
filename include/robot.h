@@ -32,6 +32,7 @@ class Robot : private lemlib::Chassis {
     LEDs m_led;
 
     ALLIANCE m_alliance;
+  public:
     std::shared_ptr<auton::Transformation> m_transform;
   public:
     /**

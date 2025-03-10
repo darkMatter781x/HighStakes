@@ -1,8 +1,10 @@
 #include "auton/autons.h"
+#include "auton/transform.h"
 #include "auton/util.h"
 #include "dimensions.h"
 #include "robot.h"
 #include "units/units.hpp"
+#include <memory>
 
 using lemlib::Pose;
 
@@ -28,6 +30,10 @@ auton::Auton auton::autons::safeAWP = {
 // Autonomous for negative rush (side of the field with negative corners)
 void safeAWPFunc(ALLIANCE alliance) {
   bot.setAlliance(alliance);
+  bot.setTransform(auton::ChainedTransform::make(
+      bot.m_transform,
+      std::make_shared<auton::SignTransform>(auton::SignTransform::POSITIVE,
+                                             auton::SignTransform::NEGATIVE)));
 
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
@@ -44,31 +50,15 @@ void safeAWPFunc(ALLIANCE alliance) {
   // Disable MCL during match auto
   bot.localization.enabled = false;
 
-  const Pose startPose {-TILE * 2 - 6.66, TILE - 11.53, RED_STATION - 45 - 3};
+  const Pose startPose {-TILE * 2 - 8.7 - 4, TILE - 15.5 + 6,
+                        AUDIENCE - 14 + 30};
   bot.setPose(startPose);
 
+  pros::delay(2000);
+
   // === Score preload on ally stake
-
-  // Collect preload into LB
-  bot.lady.collect();
-  pros::delay(700); // Wait for LB to settle
-  bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
-
-  // Wait until preload collected
-  pros::delay(300);
-
-  bot.moveToPoint(Pose::fromPolar(4, bot.getPose().theta) + bot.getPose(), 800);
-  bot.waitUntilDone();
-
-  // Move hook out of the way
-  bot.intake.outtake();
-  pros::delay(30);
-
   bot.lady.flip();
   pros::delay(400);
-
-  // Stop intake from heating up
-  bot.intake.stop();
 
   // Back straight out of stake
   tank(-96, -96, 100, 4);
@@ -80,7 +70,7 @@ void safeAWPFunc(ALLIANCE alliance) {
   const Pose negMogo = {-TILE, TILE};
   const Pose allySafeStack {-TILE * 2, 0};
 
-  // Turn to ally stake
+  // Turn to ally stack
   bot.turnToPoint(allySafeStack, 500);
   bot.waitUntilDone();
   // Reset lady brown
@@ -99,8 +89,10 @@ void safeAWPFunc(ALLIANCE alliance) {
   bot.waitUntilDone();
   bot.intakeLift.retract();
 
-  // Give time to pickup
-  pros::delay(300);
+  // Give time to pickup (300ms)
+  waitUntil([&] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
+            300);
+  if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
 
   // Back up for 200ms
   tank(-96, -96, 0, 0);
@@ -166,15 +158,8 @@ void safeAWPFunc(ALLIANCE alliance) {
 
   // === Touch ladder
 
-  // Raise hang to touch ladder
-  bot.lady.flip();
-
-  // Give time to intake
-  pros::delay(250);
-
   // Go to ladder
-  const Pose ladderTouchTarget {-TILE * .5 + 1, -(-TILE * .5 - 1),
-                                REFEREE - 45};
+  const Pose ladderTouchTarget {-TILE, -(-TILE), REFEREE - 45};
   bot.moveToPose(
       ladderTouchTarget, 2000,
       {.forwards = false, .maxSpeed = 64, .minSpeed = 36, .earlyExitRange = 6});

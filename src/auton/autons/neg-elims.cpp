@@ -19,9 +19,9 @@ using AngDir = lemlib::AngularDirection;
 static void negativeElimsFunc(ALLIANCE alliance);
 
 auton::Auton auton::autons::negativeElims = {
-    .label = (char*)"Negative Elims",
+    .label = (char*)"dont run",
     .run = negativeElimsFunc,
-    .labelForController = (char*)"neg ELIMS",
+    .labelForController = (char*)"BAD NEIL",
     .description = (char*)"Front of bot faces opposite driver station. "
                           "Starts on tile edge closest to mogo. "
                           "Set using Shreya's setting stick. "

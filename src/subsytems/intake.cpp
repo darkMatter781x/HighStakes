@@ -1,12 +1,75 @@
 #include "subsystems/intake.h"
+#include "lemlib/timer.hpp"
+#include "pros/misc.hpp"
+#include "pros/motor_group.hpp"
 #include "pros/motors.h"
 #include "pros/rtos.hpp"
+#include "units/units.hpp"
 #include <cmath>
+#include <cstdint>
 #include <cstdio>
 
 #define POWER 127
 
 // TODO: use mutex for state changes
+
+Intake::AutoDejamIntake::AutoDejamIntake(pros::MotorGroup& motors)
+  : m_motors(motors), m_state() {};
+
+void Intake::AutoDejamIntake::update() {
+  constexpr Time OUTTAKE_DURATION = 100 * msec;
+  constexpr Time JAM_TIMEOUT = 100 * msec;
+
+  static lemlib::Timer outtakeTimer {(uint32_t)OUTTAKE_DURATION.convert(msec)};
+  static lemlib::Timer isJammedTimer {(uint32_t)JAM_TIMEOUT.convert(msec)};
+
+  const STATE prevState = m_state;
+
+  switch (m_state) {
+    case JUST_INTAKE: m_motors.move(POWER); break;
+    case INTAKE_DEJAM: m_motors.move(POWER); break;
+    case INTAKE_DEJAM_OUT:
+      // Do not dejam in driver!
+      if (pros::competition::is_autonomous()) m_motors.move(-POWER);
+      else m_motors.move(POWER);
+      break;
+    case OUTTAKE: m_motors.move(-POWER); break;
+    case STOPPED: m_motors.move(0); break;
+  }
+
+  if (m_state == INTAKE_DEJAM) {
+    // If jammed
+    if (m_motors.get_actual_velocity() < 0.5) {
+      if (isJammedTimer.isPaused()) isJammedTimer.resume();
+      if (isJammedTimer.isDone()) m_state = INTAKE_DEJAM_OUT;
+    }
+  } else {
+    isJammedTimer.reset();
+    isJammedTimer.pause();
+  }
+
+  if (m_state == INTAKE_DEJAM_OUT) {
+    if (outtakeTimer.isPaused()) outtakeTimer.resume();
+    if (outtakeTimer.isDone()) m_state = INTAKE_DEJAM;
+  } else {
+    outtakeTimer.reset();
+    outtakeTimer.pause();
+  }
+
+  // if (prevState != m_state) update();
+}
+
+void Intake::AutoDejamIntake::intakeDejam() {
+  if (m_state == INTAKE_DEJAM) return;
+  if (m_state == INTAKE_DEJAM_OUT) return;
+  m_state = INTAKE_DEJAM;
+}
+
+void Intake::AutoDejamIntake::justIntake() { m_state = JUST_INTAKE; }
+
+void Intake::AutoDejamIntake::outtake() { m_state = OUTTAKE; }
+
+void Intake::AutoDejamIntake::stop() { m_state = STOPPED; }
 
 std::string destToStr(Intake::DESTINATION dest) {
   switch (dest) {
@@ -23,16 +86,12 @@ void printFiltering(Intake::Filtering& filter) {
 
 Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
                pros::adi::Pneumatics& kicker, Config conf)
-  : m_motors(motors), m_sensor(sensor), m_kicker(kicker),
+  : intake(motors), m_motors(motors), m_sensor(sensor), m_kicker(kicker),
     m_visitor([this](BaseState& state) { state.update(*this); }), m_conf(conf) {
   m_motors.set_encoder_units(pros::E_MOTOR_ENCODER_ROTATIONS);
 }
 
 const Intake::State& Intake::getState() const { return m_state; }
-
-// std::optional<COLOR> Intake::getFilterColor() { return  }
-
-// const Intake::DESTINATION& Intake::getDestination() const { return dest; }
 
 void Intake::BaseState::start(
     Intake& intake) { /* printf("starting state\n"); */ }
@@ -80,7 +139,7 @@ Intake::IntakingToMogo::IntakingToMogo(Filtering afterState, COLOR color)
   : FilteringState(afterState, color) {}
 
 void Intake::IntakingToKick::update(Intake& intake) {
-  intake.m_motors.move(POWER);
+  intake.intake.justIntake();
   if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
@@ -105,7 +164,7 @@ void Intake::IntakingToKick::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::KickingRing::update(Intake& intake) {
-  intake.m_motors.move(-127);
+  intake.intake.outtake();
   printf("kick\n");
   printFiltering(afterState);
   if (pros::millis() % 200 < 10) printf("idling to kick\n");
@@ -131,7 +190,7 @@ void Intake::KickingRing::end(Intake& intake) {
 }
 
 void Intake::IntakingToLB::update(Intake& intake) {
-  intake.m_motors.move(POWER);
+  intake.intake.justIntake();
   // if (pros::millis() % 200 < 10) printf("intaking to lift\n");
   printf("intaking to lift, %4.2f\n", getInchesTraveled(intake));
 }
@@ -173,7 +232,7 @@ void Intake::IntakingToMogo::update(Intake& intake) {
   sensed
    * previously. */
   static int startedNotSensingRing = -1;
-  intake.m_motors.move(POWER);
+  intake.intake.intakeDejam();
   // Wait until no longer sensing ring to increment mogo rings.
   // Might need a filter to ensure rings aren't counted twice.
   bool sensedRing = intake.getSensedRing() == color;
@@ -210,7 +269,7 @@ void Intake::IntakingToMogo::switchDest(Intake& intake, DESTINATION dest) {
 }
 
 void Intake::Filtering::update(Intake& intake) {
-  intake.m_motors.move(POWER);
+  intake.intake.intakeDejam();
 
   if (pros::millis() % 200 < 10) printFiltering(*this);
 
@@ -250,9 +309,9 @@ void Intake::Filtering::end(Intake& intake) {
   // intake.m_sensor.set_led_pwm(0);
 }
 
-void Intake::Idling::update(Intake& intake) { intake.m_motors.move(0); }
+void Intake::Idling::update(Intake& intake) { intake.intake.stop(); }
 
-void Intake::Outtaking::update(Intake& intake) { intake.m_motors.move(-POWER); }
+void Intake::Outtaking::update(Intake& intake) { intake.intake.outtake(); }
 
 void Intake::update() {
   const State prevState = m_state;
@@ -261,6 +320,8 @@ void Intake::update() {
 
   // if state changed types, run update again
   if (prevState.index() != m_state.index()) update();
+
+  this->intake.update();
 }
 
 void Intake::setState(State newState) {

@@ -2,6 +2,7 @@
 #include "auton/transform.h"
 #include "auton/util.h"
 #include "dimensions.h"
+#include "lemlib/chassis/chassis.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "subsystems/ladybrown.h"
@@ -91,9 +92,8 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // 2nd ring (next to wall stake)
   const Pose ring2 {0, -TILE * 2.5};
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 1, AUDIENCE) + ring2 +
-                     Pose {0, sign == SignTransform::POSITIVE ? -1.f : 0.f},
-                 1500, {.lead = .3});
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 3, AUDIENCE) + ring2, 1500,
+                 {.lead = .3});
   bot.waitUntilDone();
 
   // === Intake 4 more mogo rings
@@ -104,7 +104,8 @@ void redQuadrant(SignTransform::SIGN sign) {
   const Pose ring6 {-TILE * 2, -TILE * 2.5};
 
   // Face ring3
-  bot.turnToPoint(ring3, 500, {.minSpeed = 127, .earlyExitRange = 30});
+  bot.swingToPoint(ring3, lemlib::DriveSide::LEFT, 500,
+                   {.minSpeed = 127, .earlyExitRange = 30});
   bot.waitUntilDone();
 
   // Intake 3rd ring
