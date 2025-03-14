@@ -17,7 +17,7 @@ class SimLaser : public Laser {
 
     SimLaser(const Laser::Config config, const lemlib::Pose& botPose);
   public:
-    std::optional<Measurement> sense() override;
+    Measurement sense() override;
 };
 
 /**
