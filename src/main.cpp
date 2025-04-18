@@ -31,8 +31,9 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  // pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
-
+#ifdef VEXIDE_SIMULATION
+  pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
+#endif
   // ensure robot is initialized
   Robot::get();
   // indicate calibration
