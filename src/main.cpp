@@ -42,6 +42,7 @@ void initialize() {
 
   bot.setAlliance(ALLIANCE::RED);
   bot.setPose({0, 0, dimensions::field::REFEREE}, 72);
+  bot.localization.enabled = false;
   pros::delay(250);
 
   printf("Initialized!\n");
