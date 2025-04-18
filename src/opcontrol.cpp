@@ -25,7 +25,8 @@ constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
 // Pneumatic controls
 constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
 constexpr button_t INTAKE_LIFT_TOGGLE = pros::E_CONTROLLER_DIGITAL_X;
-constexpr button_t DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
+constexpr button_t LEFT_DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_RIGHT;
+constexpr button_t RIGHT_DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
 }; // namespace controller_mapping
 namespace map = controller_mapping;
 
@@ -100,7 +101,8 @@ void opcontrol() {
     if (master.get_digital_new_press(map::INTAKE_LIFT_TOGGLE))
       bot.intakeLift.toggle();
     // Doinker control
-    if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
+    if (master.get_digital_new_press(map::LEFT_DOINKER_TOGGLE)) bot.leftDoinker.toggle();
+    if (master.get_digital_new_press(map::RIGHT_DOINKER_TOGGLE)) bot.rightDoinker.toggle();
 
     // Lift control
     if (master.get_digital(map::NEXT_LIFT_STATE)) {

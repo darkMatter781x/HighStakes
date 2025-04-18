@@ -49,7 +49,9 @@ class Robot : private lemlib::Chassis {
     // pros::adi::Pneumatics& kicker;
     pros::adi::Pneumatics& mogoClamp;
     /** Extended is down/active. */
-    pros::adi::Pneumatics& doinker;
+    pros::adi::Pneumatics leftDoinker;
+    /** Extended is down/active. */
+    pros::adi::Pneumatics rightDoinker;
     /** Extended is up/inactive. */
     pros::adi::Pneumatics& intakeLift;
     pros::Controller& gamepad;

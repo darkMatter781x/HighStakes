@@ -26,7 +26,8 @@ struct RobotConfig {
     struct Pneumatics {
         pros::adi::Pneumatics mogoClamp;
         pros::adi::Pneumatics kicker;
-        pros::adi::Pneumatics doinker;
+        pros::adi::Pneumatics leftDoinker;
+        pros::adi::Pneumatics rightDoinker;
         pros::adi::Pneumatics intakeLift;
       private:
         friend struct RobotConfig;
@@ -60,7 +61,6 @@ struct RobotConfig {
         const float trackWidth;
         const float driveWheelDiameter;
         const float driveWheelRpm;
-        const float driveEncGearRatio;
 
         const float vertEncDiameter;
         const float vertEncDistance;

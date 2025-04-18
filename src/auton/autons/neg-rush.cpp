@@ -212,7 +212,7 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Once near, deploy doinker
   waitUntilDistToPose(posCornerTarget, 11, 0, true);
-  bot.doinker.extend();
+  bot.leftDoinker.extend();
 
   // Spin to doink rings
   bot.turnToPoint(posCorner, 500,

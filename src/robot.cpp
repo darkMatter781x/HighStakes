@@ -124,7 +124,9 @@ Robot::Robot(const RobotConfig& config)
         AutonSelector::getRef(config.sensors.autonSelector, m_intakeSensor)),
     m_localization(makeLocalization(config)), localization(m_localization),
     intakeLift(config.pneumatics.intakeLift),
-    mogoClamp(config.pneumatics.mogoClamp), doinker(config.pneumatics.doinker),
+    mogoClamp(config.pneumatics.mogoClamp),
+    leftDoinker(config.pneumatics.leftDoinker),
+    rightDoinker(config.pneumatics.rightDoinker),
     m_transform(std::make_shared<auton::AllianceTransform>(COLOR::RED)) {}
 
 Robot Robot::instance {RobotConfig::config};
