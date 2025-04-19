@@ -1,6 +1,6 @@
 #pragma once
 #include "config.h"
-#include "leds/functions.h"
+#include "leds/gooberTech.h"
 #include "pf/localization.h"
 #include "pros/adi.hpp"
 #include "subsystems/selector.h"
@@ -29,7 +29,7 @@ class Robot : private lemlib::Chassis {
     pros::Controller m_gamepad;
     Intake::Sensor m_intakeSensor;
     Localization m_localization;
-    LEDs m_led;
+    LED m_led;
 
     ALLIANCE m_alliance;
   public:
@@ -44,7 +44,7 @@ class Robot : private lemlib::Chassis {
 
     LadyBrown& lady;
     Intake& intake;
-    LEDs& led;
+    LED& led;
 
     // pros::adi::Pneumatics& kicker;
     pros::adi::Pneumatics& mogoClamp;

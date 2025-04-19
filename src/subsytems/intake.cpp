@@ -1,4 +1,5 @@
 #include "subsystems/intake.h"
+#include "color.h"
 #include "lemlib/timer.hpp"
 #include "pros/misc.hpp"
 #include "pros/motor_group.hpp"
@@ -6,8 +7,10 @@
 #include "pros/rtos.hpp"
 #include "units/units.hpp"
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdio>
+#include <optional>
 
 #define POWER 127
 
@@ -94,9 +97,11 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 const Intake::State& Intake::getState() const { return m_state; }
 
 void Intake::BaseState::start(
-    Intake& intake) { /* printf("starting state\n"); */ }
+    Intake& intake) { /* printf("starting state\n"); */
+}
 
-void Intake::BaseState::end(Intake& intake) { /* printf("ending state\n"); */ }
+void Intake::BaseState::end(Intake& intake) { /* printf("ending state\n"); */
+}
 
 Intake::FilteringState::FilteringState(Filtering afterState, COLOR color)
   : color(color), afterState(afterState) {}
@@ -355,6 +360,29 @@ void Intake::intakeTo(COLOR color, DESTINATION dest) {
         setState(newState);
       });
   std::visit(visitor, m_state);
+}
+
+std::optional<Intake::DESTINATION> Intake::getDestination(COLOR color){
+  auto visitor = overloads(
+      [this, color](FilteringState& state)->std::optional<Intake::DESTINATION> {
+        if (color == ALLIANCE::RED){
+          return state.afterState.red;
+        } else{
+          return state.afterState.blue;
+        }
+      },
+      [this, color](Filtering& state)->std::optional<Intake::DESTINATION> {
+        if (color == ALLIANCE::RED){
+          return state.red;
+        } else {
+          return state.blue;
+        }
+      },
+      [this, color](BaseState& state)->std::optional<Intake::DESTINATION> {
+        return std::nullopt;
+      }
+  );
+  return std::visit(visitor, m_state);
 }
 
 void Intake::intakeBothTo(DESTINATION dest) {

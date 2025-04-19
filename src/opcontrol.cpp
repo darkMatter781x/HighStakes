@@ -5,7 +5,7 @@
 #include <string>
 #include "pros/rtos.hpp"
 #include "subsystems/intake.h"
-#include "leds/functions.h"
+#include "leds/gooberTech.h"
 #include "auton/util.h"
 #include "robot.h"
 #include "main.h"

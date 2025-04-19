@@ -183,6 +183,9 @@ class Intake : public Subsystem {
 
     std::optional<COLOR> getSensedRing();
 
+    /* gets the destination of the ring color */
+    std::optional<Intake::DESTINATION> getDestination(COLOR color);
+
     void update() override;
 
     const State& getState() const;
