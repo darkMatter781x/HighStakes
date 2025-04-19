@@ -9,6 +9,7 @@
 #include "auton/util.h"
 #include "robot.h"
 #include "main.h"
+#include "tuning.h"
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -174,11 +175,11 @@ void opcontrol() {
     }
 
     auto intakeState = bot.intake.getState();
-    // #ifdef TUNING
-    //     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-    //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-    //       tuningCLI();
-    // #endif
+    #ifdef TUNING
+        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+            master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+          tuningCLI();
+    #endif
     pros::delay(5); // Run every 20ms (refresh rate of the controller)
   }
 }
