@@ -125,9 +125,9 @@ void Localization::update() {
 #ifdef ENABLE_PROFILING
   // Profiler::get().printReport();
 #endif
-  if (pros::millis() % 100 < 10)
-    printf("Pose:\t(%03.3fin,\t%02.3fin,\t%03.2frad)\n", m_prevPose.x,
-           m_prevPose.y, m_prevPose.theta);
+  // if (pros::millis() % 100 < 10)
+    // printf("Pose:\t(%03.3fin,\t%02.3fin,\t%03.2frad)\n", m_prevPose.x,
+    //        m_prevPose.y, m_prevPose.theta);
 
   //   if (isMasterControllerPowerPressed() || iteration == 1000) {
   //     printf("[ProfSummary.Start]\n"); // Used by time script to identify

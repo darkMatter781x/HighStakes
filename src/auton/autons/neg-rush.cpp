@@ -5,6 +5,8 @@
 #include "auton/autons.h"
 #include "auton/util.h"
 #include "units/units.hpp"
+#include <cmath>
+#include <iostream>
 
 using namespace dimensions::all;
 using namespace DIR;
@@ -47,8 +49,8 @@ void negativeRushFunc(ALLIANCE alliance) {
   // Front of bot facing opposite driver station
   // Aligned using Shreyas's setting tool
   // Starts on tile edge closest to mogo
-  const Pose startPose {-TILE * 2 - 4.4, TILE * 1 + DRIVE_WIDTH / 2 + .5,
-                        BLUE_STATION};
+  const Pose startPose {-TILE * 2 - 27. / 2. / 2. - .5,
+                        TILE * 1 + DRIVE_WIDTH / 2 + 1.5, BLUE_STATION};
   bot.setPose(startPose);
   const Pose preloadRing {-TILE * 2, TILE * 1 - RING_DIAM / 2};
 
@@ -57,29 +59,43 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // === Yoink center ring
 
+  /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
+  const Pose centerRingTarget =
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, BLUE_STATION - 30) + centerRing;
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
     // const float targetHeading = BLUE_STATION - 30;
-    bot.moveToPoint((safeStack + Pose {6, -RING_DIAM / 2 - DRIVE_WIDTH / 2 + 2})
-                        .withTheta(BLUE_STATION),
-                    1000, {.minSpeed = 127, .earlyExitRange = 6});
+    bot.moveToPose(centerRingTarget, 1000,
+                   {
+                     .horizontalDrift = 2,
+                       .lead = .3,
+                        .minSpeed = 127,
+                       .earlyExitRange = 6,
+                   });
   }
+  // Wait a bit to deploy doinkers
+  bot.waitUntil(12);
+  // Extend doinker to grab center ring closest to Referee
+  switch (bot.getColor()) {
+    case COLOR::BLUE: bot.rightDoinker.extend(); break;
+    case COLOR::RED: bot.leftDoinker.extend(); break;
+  }
+
   // bot.led.autonMessage(0x00FF00, 500);
   // Once past safe stack, move on
   waitUntil([safeStack] {
-    return bot.getPose().x > (safeStack.x) || !bot.isInMotion();
+    return bot.getPose().x > (safeStack.x - 2) || !bot.isInMotion();
   });
   bot.led.autonMessage(0x00FFFF, 500);
   bot.cancelMotion();
 
-  // Intake center ring
+  // Intake center ring and grab other ring
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, BLUE_STATION - 30) +
-                     centerRing,
-                 1000, {});
+
+  bot.moveToPose(centerRingTarget, 1000, {.horizontalDrift = 2, .lead = .3});
 
   waitUntil([] {
     return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion();
@@ -90,7 +106,8 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Push back of bot into mogo and index it
   const lemlib::Pose mogo {-TILE, TILE, BLUE_STATION - 30};
-  bot.moveToPose(mogo.withTheta(BLUE_STATION - 30), 1500, {.forwards = false});
+  bot.moveToPoint(mogo.withTheta(BLUE_STATION - 30), 1500,
+                  {.forwards = false});
 
   // Stop intake once ring is sensed
   waitUntil([] {
@@ -102,6 +119,16 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.waitUntilDone();
   bot.mogoClamp.retract();
 
+  // Release ring in doinker
+  bot.rightDoinker.retract();
+  bot.leftDoinker.retract();
+  const Pose doinkedRing = bot.getPose() +
+                           Pose {
+                               13,
+                               +DRIVE_WIDTH / 2 - .25,
+                           }
+                               .rotate((90 - bot.getPose().theta) * M_PI / 180);
+  printf("doinkedRing: %f, %f\n", doinkedRing.x, doinkedRing.y);
   // Give robot time to clamp
   pros::delay(250);
 
@@ -109,11 +136,16 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
+  // === Intake doinked ring
+
+  bot.moveToPoint(doinkedRing, 3000);
+
   // === Intake safe stack
 
-  bot.moveToPoint({-TILE - 1, TILE * 2 - 1}, 3000);
+  bot.moveToPoint(safeStack, 3000);
   bot.waitUntilDone();
   pros::delay(500);
+  return;
 
   // === Intake corner ring
 
