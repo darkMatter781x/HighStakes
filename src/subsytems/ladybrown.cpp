@@ -148,7 +148,8 @@ float LadyBrown::getTargetAngle() const {
 float LadyBrown::calcLBAngle() const {
   // Prevent lift from moving if rotation sensor is not installed
   if (!m_rotation.is_installed()) return getTargetAngle();
-  return m_rotation.get_position() / 100.0;
+  // printf("rot.get_pos()/100: %fdeg\n", m_rotation.get_position() / 100.f);
+  return m_rotation.get_position() / 100.0 * m_config.sensorGearRatio;
 }
 
 float LadyBrown::calcError() const {

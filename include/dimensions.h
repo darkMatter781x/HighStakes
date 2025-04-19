@@ -47,10 +47,10 @@ constexpr float RING_DIAM = 7;
 } // namespace field
 
 namespace robot {
-/** @todo change to correct track width */
-constexpr float TRACK_WIDTH = 16.5 - 1. / 8;
-constexpr float DRIVE_WIDTH = 29.0 / 2 + 1. / 8;
-constexpr float DRIVE_LENGTH = 32.0 / 2;
+constexpr float TRACK_WIDTH = 11;
+constexpr float DRIVE_WIDTH = 27.0 / 2;
+/** Includes funnels */
+constexpr float DRIVE_LENGTH = 15.0 - 1. / 8;
 
 } // namespace robot
 
