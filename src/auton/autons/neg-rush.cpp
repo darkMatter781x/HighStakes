@@ -1,4 +1,5 @@
 #include "lemlib/chassis/chassis.hpp"
+#include "lemlib/pose.hpp"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "dimensions.h"
@@ -6,7 +7,6 @@
 #include "auton/util.h"
 #include "units/units.hpp"
 #include <cmath>
-#include <iostream>
 
 using namespace dimensions::all;
 using namespace DIR;
@@ -49,9 +49,10 @@ void negativeRushFunc(ALLIANCE alliance) {
   // Front of bot facing opposite driver station
   // Aligned using Shreyas's setting tool
   // Starts on tile edge closest to mogo
-  const Pose startPose {-TILE * 2 - 27. / 2. / 2. - .5,
-                        TILE * 1 + DRIVE_WIDTH / 2 + 1.5, BLUE_STATION};
+  const Pose startPose {-TILE * 2 - 27. / 2. / 2. - 0.2,
+                        TILE * 1 + DRIVE_WIDTH / 2 + 1.9, BLUE_STATION - 9.5};
   bot.setPose(startPose);
+
   const Pose preloadRing {-TILE * 2, TILE * 1 - RING_DIAM / 2};
 
   // Drop intake
@@ -62,16 +63,17 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, BLUE_STATION - 30) + centerRing;
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, BLUE_STATION - 25) + Pose {0, 3} +
+      centerRing;
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
     // const float targetHeading = BLUE_STATION - 30;
     bot.moveToPose(centerRingTarget, 1000,
                    {
-                     .horizontalDrift = 2,
-                       .lead = .3,
-                        .minSpeed = 127,
+                       .horizontalDrift = 2,
+                       .lead = .4,
+                       .minSpeed = 100,
                        .earlyExitRange = 6,
                    });
   }
@@ -94,20 +96,18 @@ void negativeRushFunc(ALLIANCE alliance) {
   // Intake center ring and grab other ring
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-
-  bot.moveToPose(centerRingTarget, 1000, {.horizontalDrift = 2, .lead = .3});
+  bot.moveToPose(centerRingTarget, 1000, {.horizontalDrift = 2, .lead = .4});
 
   waitUntil([] {
     return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion();
   });
   if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
+  // // === Score center ring on mogo
 
-  // === Score center ring on mogo
-
-  // Push back of bot into mogo and index it
-  const lemlib::Pose mogo {-TILE, TILE, BLUE_STATION - 30};
+  // // Push back of bot into mogo and index it
+  const lemlib::Pose mogo {-TILE, TILE - 1, BLUE_STATION - 30};
   bot.moveToPoint(mogo.withTheta(BLUE_STATION - 30), 1500,
-                  {.forwards = false});
+                  {.forwards = false, .maxSpeed = 72});
 
   // Stop intake once ring is sensed
   waitUntil([] {
@@ -130,7 +130,7 @@ void negativeRushFunc(ALLIANCE alliance) {
                                .rotate((90 - bot.getPose().theta) * M_PI / 180);
   printf("doinkedRing: %f, %f\n", doinkedRing.x, doinkedRing.y);
   // Give robot time to clamp
-  pros::delay(250);
+  pros::delay(350);
 
   // Intake center ring to mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
@@ -138,131 +138,188 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // === Intake doinked ring
 
-  bot.moveToPoint(doinkedRing, 3000);
+  bot.moveToPoint(doinkedRing, 2000, {.maxSpeed = 64});
 
   // === Intake safe stack
 
-  bot.moveToPoint(safeStack, 3000);
-  bot.waitUntilDone();
-  pros::delay(500);
-  return;
-
-  // === Intake corner ring
-
-  const Pose negCorner {MIN_X, MAX_Y};
-  const Pose negCornerTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2, REFEREE - 45) + negCorner;
-  bot.moveToPose(negCornerTarget, 2000, {.minSpeed = 56});
-  bot.waitUntilDone();
-
-  // === Intake preload
-
-  // Back up from corner
-  tank(-64, -64, 150, 4);
-
-  bot.swingToPoint(preloadRing, lemlib::DriveSide::RIGHT, 500,
-                   {.minSpeed = 64, .earlyExitRange = 30});
-  bot.moveToPoint(preloadRing, 2000);
+  bot.moveToPoint(safeStack + Pose {0, 2}, 3000, {.maxSpeed = 64});
   bot.waitUntilDone();
   pros::delay(500);
 
-  // === Collect ring stack next to alliance stake into LB
+  const lemlib::Pose Corner(MIN_X, MAX_Y, RED_STATION + 45);
+  const lemlib::Pose frontOfCorner(TILE * -2, TILE * 2, RED_STATION + 45);
 
-  // Place intake on top of stack
-  const Pose allyStack {-TILE * 2, 0};
-  bot.intakeLift.extend();
-  bot.moveToPose((allyStack + Pose {-3, DRIVE_LENGTH / 2}).withTheta(AUDIENCE),
-                 1000);
-
-  // Raise LB to collect ring
-  bot.waitUntil(24);
-  bot.lady.collect();
+  bot.swingToPoint(frontOfCorner, lemlib::DriveSide::RIGHT, 3000);
   bot.waitUntilDone();
-
-  // Drop intake on stack
-  bot.intakeLift.retract();
-
-  // Give time to pickup (300ms)
-  waitUntil([] { return isRingPushedIntoLadyBrown(); }, 0, 300);
-  if (isRingPushedIntoLadyBrown()) bot.intake.stop();
-
-  // Back up for 250ms
-  tank(-96, -96, 0, 0);
-  waitUntil([&] { return isRingPushedIntoLadyBrown(); }, 0, 50);
-  if (isRingPushedIntoLadyBrown()) bot.intake.stop();
-  tank(-24, -24, 0, 0);
-  waitUntil([&] { return isRingPushedIntoLadyBrown(); }, 0, 200);
-  if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
-
-  // === Score ring on alliance stake
-
-  // Turn towards ally stake
-  const Pose allyStake {MIN_X + .5, 0};
-  bot.swingToPoint(allyStake, lemlib::DriveSide::LEFT, 750);
-  bot.waitUntilDone();
-
-  // Move to correct distance from ally stake
-  bot.moveToPoint(allyStake + Pose::fromPolar(-13, bot.getPose().theta) +
-                      Pose {0, -1},
-                  750);
-  bot.waitUntilDone();
-
-  // Score on ally stake
-  bot.lady.flip();
-  pros::delay(500);
-
-  tank(-96, -96, 100, 4);
-  bot.lady.goToIdle();
-  tank(-96, -96, 300, 4);
-
-  stop();
-
-  // === Go near pos corner
-  const Pose nearPosCornerTarget {-TILE * 2.5, -TILE * 1.75, REFEREE};
-  bot.turnToPoint(nearPosCornerTarget, 500, {.forwards = false});
-  bot.moveToPose(nearPosCornerTarget, 2000, {.forwards = false});
-  bot.lady.goToIdle();
-  return;
-
-  // === Doink pos corner stack
-
-  // Go around stack
-  bot.moveToPoint({-TILE * 1.6, 0}, 1000,
-                  {.minSpeed = 127, .earlyExitRange = 6});
-
-  const Pose posCorner {MIN_X, MIN_Y};
-
-  // Move in front of pos corner stack
-  const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
-  bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
-
-  bot.waitUntil(12);
-  bot.lady.goToIdle();
 
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
   bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.moveToPose(frontOfCorner, 3000, {.lead = .2, .minSpeed = 100});
+  bot.waitUntilDone();
+  bot.moveToPose(Corner, 3500);
+  waitUntilDistToPose(Corner, DRIVE_LENGTH/2 + 3, 0, true);
+  bot.cancelMotion();
+  tank(72, 72, 750, 0);
 
-  // Once near, deploy doinker
-  waitUntilDistToPose(posCornerTarget, 11, 0, true);
-  bot.leftDoinker.extend();
+  bot.setPose(bot.getPose() + Pose{0,7});
 
-  // Spin to doink rings
-  bot.turnToPoint(posCorner, 500,
-                  {
-                      .forwards = false,
-                      .direction = AngDir::CW_CLOCKWISE,
-                      .minSpeed = 127,
-                  });
+//turns toward the preload
+  bot.swingToPoint(preloadRing, lemlib::DriveSide::RIGHT, 500, {.minSpeed = 96, .earlyExitRange=30});
+
+// eats the preload ring
+  lemlib::Pose allyStack(TILE * -2, 0, AUDIENCE);
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.moveToPoint(preloadRing + Pose {0, -2}, 1500);
   bot.waitUntilDone();
 
-  // === Push mogo into corner
+//pose for the alliance stake
+  lemlib::Pose allianceStake(TILE * -2.5, 0, BLUE_STATION+90);
 
-  // Release mogo
-  bot.mogoClamp.extend();
+// eats the alliance stack ring, and also the alliance stake
+  bot.intakeLift.extend();
+  pros::delay(500);
+  bot.lady.collect();
+  bot.moveToPose(allyStack + Pose{-5, 0}, 1500);
+  bot.intakeLift.retract();
+    switch (bot.getColor()) {
+    case COLOR::BLUE: bot.leftDoinker.extend(); break;
+    case COLOR::RED: bot.rightDoinker.extend(); break;
+  }
+  pros::delay(350);
+  bot.turnToPoint(allianceStake, 1500);
+  bot.waitUntilDone();
+  switch (bot.getColor()) {
+    case COLOR::BLUE: bot.leftDoinker.retract(); break;
+    case COLOR::RED: bot.rightDoinker.retract(); break;
+  }
+  bot.moveToPoint(allianceStake, 1500);
+  bot.waitUntilDone();
+  bot.lady.score();
+  pros::delay(500);
 
-  // Push mogo
-  const Pose depositMogoTarget =
-      posCorner.withTheta(REFEREE + 45) +
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 3, REFEREE + 45);
-  bot.moveToPose(depositMogoTarget, 2000, {.forwards = false, .minSpeed = 72});
+  // bot.moveToPoint(Pose{TILE * -2, 0}, 1000);
+
+  return;
+
+  // // === Intake corner ring
+
+  // const Pose negCorner {MIN_X, MAX_Y};
+  // const Pose negCornerTarget =
+  //     Pose::fromPolar(-DRIVE_LENGTH / 2, REFEREE - 45) + negCorner;
+  // bot.moveToPose(negCornerTarget, 2000, {.minSpeed = 56});
+  // bot.waitUntilDone();
+
+  // // === Intake preload
+
+  // // Back up from corner
+  // tank(-64, -64, 150, 4);
+
+  // bot.swingToPoint(preloadRing, lemlib::DriveSide::RIGHT, 500,
+  //                  {.minSpeed = 64, .earlyExitRange = 30});
+  // bot.moveToPoint(preloadRing, 2000);
+  // bot.waitUntilDone();
+  // pros::delay(500);
+
+  // // === Collect ring stack next to alliance stake into LB
+
+  // // Place intake on top of stack
+  // const Pose allyStack {-TILE * 2, 0};
+  // bot.intakeLift.extend();
+  // bot.moveToPose((allyStack + Pose {-3, DRIVE_LENGTH /
+  // 2}).withTheta(AUDIENCE),
+  //                1000);
+
+  // // Raise LB to collect ring
+  // bot.waitUntil(24);
+  // bot.lady.collect();
+  // bot.waitUntilDone();
+
+  // // Drop intake on stack
+  // bot.intakeLift.retract();
+
+  // // Give time to pickup (300ms)
+  // waitUntil([] { return isRingPushedIntoLadyBrown(); }, 0, 300);
+  // if (isRingPushedIntoLadyBrown()) bot.intake.stop();
+
+  // // Back up for 250ms
+  // tank(-96, -96, 0, 0);
+  // waitUntil([&] { return isRingPushedIntoLadyBrown(); }, 0, 50);
+  // if (isRingPushedIntoLadyBrown()) bot.intake.stop();
+  // tank(-24, -24, 0, 0);
+  // waitUntil([&] { return isRingPushedIntoLadyBrown(); }, 0, 200);
+  // if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
+
+  // // === Score ring on alliance stake
+
+  // // Turn towards ally stake
+  // const Pose allyStake {MIN_X + .5, 0};
+  // bot.swingToPoint(allyStake, lemlib::DriveSide::LEFT, 750);
+  // bot.waitUntilDone();
+
+  // // Move to correct distance from ally stake
+  // bot.moveToPoint(allyStake + Pose::fromPolar(-13, bot.getPose().theta) +
+  //                     Pose {0, -1},
+  //                 750);
+  // bot.waitUntilDone();
+
+  // // Score on ally stake
+  // bot.lady.flip();
+  // pros::delay(500);
+
+  // tank(-96, -96, 100, 4);
+  // bot.lady.goToIdle();
+  // tank(-96, -96, 300, 4);
+
+  // stop();
+
+  // // === Go near pos corner
+  // const Pose nearPosCornerTarget {-TILE * 2.5, -TILE * 1.75, REFEREE};
+  // bot.turnToPoint(nearPosCornerTarget, 500, {.forwards = false});
+  // bot.moveToPose(nearPosCornerTarget, 2000, {.forwards = false});
+  // bot.lady.goToIdle();
+  // return;
+
+  // // === Doink pos corner stack
+
+  // // Go around stack
+  // bot.moveToPoint({-TILE * 1.6, 0}, 1000,
+  //                 {.minSpeed = 127, .earlyExitRange = 6});
+
+  // const Pose posCorner {MIN_X, MIN_Y};
+
+  // // Move in front of pos corner stack
+  // const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
+  // bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
+
+  // bot.waitUntil(12);
+  // bot.lady.goToIdle();
+
+  // bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  // bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+
+  // // Once near, deploy doinker
+  // waitUntilDistToPose(posCornerTarget, 11, 0, true);
+  // bot.leftDoinker.extend();
+
+  // // Spin to doink rings
+  // bot.turnToPoint(posCorner, 500,
+  //                 {
+  //                     .forwards = false,
+  //                     .direction = AngDir::CW_CLOCKWISE,
+  //                     .minSpeed = 127,
+  //                 });
+  // bot.waitUntilDone();
+
+  // // === Push mogo into corner
+
+  // // Release mogo
+  // bot.mogoClamp.extend();
+
+  // // Push mogo
+  // const Pose depositMogoTarget =
+  //     posCorner.withTheta(REFEREE + 45) +
+  //     Pose::fromPolar(DRIVE_LENGTH / 2 + 3, REFEREE + 45);
+  // bot.moveToPose(depositMogoTarget, 2000, {.forwards = false, .minSpeed =
+  // 72});
 }

@@ -17,7 +17,7 @@ Intake::AutoDejamIntake::AutoDejamIntake(pros::MotorGroup& motors)
   : m_motors(motors), m_state() {};
 
 void Intake::AutoDejamIntake::update() {
-  constexpr Time OUTTAKE_DURATION = 100 * msec;
+  constexpr Time OUTTAKE_DURATION = 200 * msec;
   constexpr Time JAM_TIMEOUT = 100 * msec;
 
   static lemlib::Timer outtakeTimer {(uint32_t)OUTTAKE_DURATION.convert(msec)};

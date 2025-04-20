@@ -23,7 +23,7 @@ template <typename T> T clamp(T val, T min, T max) {
 }
 
 /** Constant for opposing torque from force of gravity */
-constexpr Voltage K_antiG = 1 * volt;
+constexpr Voltage K_antiG = .4 * volt;
 
 /** Angle that shall not be crossed in degrees */
 constexpr float doNotCrossAngle = 45;
@@ -78,7 +78,7 @@ void LadyBrown::update() {
   const Voltage desiredPower = antiGPower + pidPower;
   const Voltage limitedPower = clamp(desiredPower, -maxPower, maxPower);
 
-  m_motors.move_voltage(antiGPower.convert(mvolt));
+  m_motors.move_voltage(limitedPower.convert(mvolt));
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
