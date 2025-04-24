@@ -25,6 +25,7 @@ class Intake : public Subsystem {
           STOPPED
         } m_state;
       public:
+        bool enabled = true;
         /** Intake without dejamming */
         void justIntake();
         /** Intake with dejamming */
@@ -196,6 +197,8 @@ class Intake : public Subsystem {
     size_t numOfKickRings = 0;
     /** @brief Number of rings intaked to mogo. */
     size_t numOfMogoRings = 0;
+
+    bool& dejamEnabled = intake.enabled;
 
     Intake(pros::MotorGroup& motors, Sensor& sensor,
            pros::adi::Pneumatics& kicker, Config conf);

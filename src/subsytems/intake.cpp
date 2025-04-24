@@ -30,7 +30,7 @@ void Intake::AutoDejamIntake::update() {
     case INTAKE_DEJAM: m_motors.move(POWER); break;
     case INTAKE_DEJAM_OUT:
       // Do not dejam in driver!
-      if (pros::competition::is_autonomous()) m_motors.move(-POWER);
+      if (pros::competition::is_autonomous() && enabled) m_motors.move(-POWER);
       else m_motors.move(POWER);
       break;
     case OUTTAKE: m_motors.move(-POWER); break;
