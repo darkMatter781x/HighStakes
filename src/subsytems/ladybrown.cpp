@@ -27,7 +27,7 @@ constexpr Voltage K_antiG = .4 * volt;
 
 /** Angle that shall not be crossed in degrees */
 constexpr float doNotCrossAngle = 45;
-constexpr Voltage maxPower = 8720 * mvolt;
+constexpr Voltage maxPower = 12 * volt * 1.;
 
 void LadyBrown::update() {
   // Handle non-feedback control modes

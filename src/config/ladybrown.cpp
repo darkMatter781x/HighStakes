@@ -2,9 +2,9 @@
 #include "lemlib/chassis/chassis.hpp"
 
 LadyBrown::Config LadyBrown::Config::config {
-    .idle = 6,
-    .collect = 353,
-    .idle_score = 295.00,
+    .idle = 10,
+    .collect = 345,
+    .idle_score = 310,
     .score = 180 - 30,
     .run_into_ally = 203.f,
     .flip = 100.f,
