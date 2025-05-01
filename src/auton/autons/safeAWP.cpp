@@ -1,22 +1,22 @@
-// #include "auton/autons.h"
-// #include "auton/util.h"
-// #include "dimensions.h"
-// #include "robot.h"
-// #include "units/units.hpp"
+#include "auton/autons.h"
+#include "auton/util.h"
+#include "dimensions.h"
+#include "robot.h"
+#include "units/units.hpp"
 
-// using lemlib::Pose;
+using lemlib::Pose;
 
-// using namespace dimensions::all;
-// using namespace DIR;
+using namespace dimensions::all;
+using namespace DIR;
 
-// using namespace auton::util;
+using namespace auton::util;
 
-// void safeAWPFunc(ALLIANCE alliance);
+void safeAWPFunc(ALLIANCE alliance);
 
-// auton::Auton auton::autons::safeAWP = {
-//     .label = (char*)"Safe AWP",
-//     .run = safeAWPFunc,
-//     .labelForController = (char*)"Safe AWP",
+auton::Auton auton::autons::safeAWP = {
+     .label = (char*)"Safe AWP",
+     .run = safeAWPFunc,
+     .labelForController = (char*)"Safe AWP",
 //     .description = (char*)"Start on positive side of alliance wall stake, "
 //                           "facing away from ref. "
 //                           "Gets solo sig AWP. "

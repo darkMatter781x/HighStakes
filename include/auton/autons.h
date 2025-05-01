@@ -20,5 +20,6 @@ extern Auton safePositive;
 extern Auton safeAWP;
 extern Auton skills;
 extern Auton doNothing;
+extern Auton posRush;
 } // namespace autons
 } // namespace auton
