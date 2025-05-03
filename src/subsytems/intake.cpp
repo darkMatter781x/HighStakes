@@ -1,5 +1,6 @@
 #include "subsystems/intake.h"
 #include "lemlib/timer.hpp"
+#include "pros/adi.hpp"
 #include "pros/misc.hpp"
 #include "pros/motor_group.hpp"
 #include "pros/motors.h"
@@ -85,8 +86,10 @@ void printFiltering(Intake::Filtering& filter) {
 }
 
 Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
-               pros::adi::Pneumatics& kicker, Config conf)
+               pros::adi::AnalogIn& intakeKick, pros::adi::Pneumatics& kicker,
+               Config conf)
   : intake(motors), m_motors(motors), m_sensor(sensor), m_kicker(kicker),
+    m_intakeKick(intakeKick),
     m_visitor([this](BaseState& state) { state.update(*this); }), m_conf(conf) {
   m_motors.set_encoder_units(pros::E_MOTOR_ENCODER_ROTATIONS);
 }
@@ -94,9 +97,11 @@ Intake::Intake(pros::MotorGroup& motors, Sensor& sensor,
 const Intake::State& Intake::getState() const { return m_state; }
 
 void Intake::BaseState::start(
-    Intake& intake) { /* printf("starting state\n"); */ }
+    Intake& intake) { /* printf("starting state\n"); */
+}
 
-void Intake::BaseState::end(Intake& intake) { /* printf("ending state\n"); */ }
+void Intake::BaseState::end(Intake& intake) { /* printf("ending state\n"); */
+}
 
 Intake::FilteringState::FilteringState(Filtering afterState, COLOR color)
   : color(color), afterState(afterState) {}
@@ -142,9 +147,20 @@ void Intake::IntakingToKick::update(Intake& intake) {
   intake.intake.justIntake();
   if (pros::millis() % 200 < 10) printf("intaking to kick\n");
   printFiltering(afterState);
+  /*
   if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration) {
     printf("naturally switching to idle\n");
     intake.setState(KickingRing {afterState, color});
+  }
+  */
+  static bool hasSensed = false;
+  if (intake.m_intakeKick.get_value() < 1500) {
+    hasSensed = true;
+    printf("naturally switching to idle\n");
+  }
+  if (getInchesTraveled(intake) > intake.m_conf.intakingToKickDuration && hasSensed == true) {
+    intake.setState(KickingRing {afterState, color});
+    hasSensed = false;
   }
 }
 

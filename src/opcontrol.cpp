@@ -20,6 +20,7 @@ constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 
 constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
+constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 
 constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
 
@@ -61,6 +62,7 @@ void skillsMacro() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+  COLOR filterColor = bot.selector.getAlliance();
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   // Drop intake automatically
   bot.intakeLift.retract();
@@ -102,8 +104,10 @@ void opcontrol() {
     if (master.get_digital_new_press(map::INTAKE_LIFT_TOGGLE))
       bot.intakeLift.toggle();
     // Doinker control
-    if (master.get_digital_new_press(map::LEFT_DOINKER_TOGGLE)) bot.leftDoinker.toggle();
-    if (master.get_digital_new_press(map::RIGHT_DOINKER_TOGGLE)) bot.rightDoinker.toggle();
+    if (master.get_digital_new_press(map::LEFT_DOINKER_TOGGLE))
+      bot.leftDoinker.toggle();
+    if (master.get_digital_new_press(map::RIGHT_DOINKER_TOGGLE))
+      bot.rightDoinker.toggle();
 
     // Lift control
     if (master.get_digital(map::NEXT_LIFT_STATE)) {
@@ -149,6 +153,10 @@ void opcontrol() {
 
     // === Intake control
 
+    if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE)) {
+      filterColor = !filterColor;
+    }
+
     // Intake button
     if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button
@@ -157,7 +165,8 @@ void opcontrol() {
       releaseLBRingTimer.reset();
       releaseLBRingTimer.pause();
 
-      bot.intake.intakeBothTo(Intake::MOGO);
+      bot.intake.intakeTo(filterColor, Intake::LB);
+      bot.intake.intakeTo(!filterColor, Intake::KICK);
       // Outtake button
     } else if (master.get_digital(map::OUTTAKE)) {
       // Override lb release functionality
@@ -175,11 +184,11 @@ void opcontrol() {
     }
 
     auto intakeState = bot.intake.getState();
-    #ifdef TUNING
-        if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-            master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-          tuningCLI();
-    #endif
+#ifdef TUNING
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+      tuningCLI();
+#endif
     pros::delay(5); // Run every 20ms (refresh rate of the controller)
   }
 }
