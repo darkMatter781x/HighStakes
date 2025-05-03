@@ -93,7 +93,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 5, BLUE_STATION - 22) + Pose {0, 3} +
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 5, BLUE_STATION - 2) + Pose {0, 3} +
       centerRing;
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
@@ -178,7 +178,6 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   bot.moveToPoint(safeStack + Pose {0, -2}, 3000, {.maxSpeed = 64});
   bot.waitUntilDone();
-  return;
 
   // === Intake corner ring into LB
 

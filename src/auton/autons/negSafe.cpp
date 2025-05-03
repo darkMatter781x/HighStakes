@@ -54,11 +54,48 @@ void posSafeFunction(ALLIANCE alliance){
   const Pose posCorner = { MIN_X, MIN_Y };
   const Pose centerRing {0 + RING_DIAM/2, 0 - RING_DIAM/2};
 
-  // === scores on the alliance stake and get the mogo
+  // === scores on the alliance stake 
   // flips the lb and scores on the alliance stake
   bot.lady.flip();
-  pros::delay(300);
-  // backs away from the alliance stake and moves to the mobile goal
+  pros::delay(400);
+    // Back straight out of stake
+  tank(-96, -96, 400, 4);
+  // Reset LB
+  bot.lady.goToIdle();
+
+  // === Intake top ring of stack next to ally stake
+
+  const Pose negMogo = {-TILE, TILE + 1};
+  const Pose allySafeStack {-TILE * 2, 0};
+
+  // Turn to ally stake
+  bot.turnToPoint(allySafeStack, 500);
+  bot.waitUntilDone();
+
+  // Intake stack
+  bot.intakeLift.extend();
+  const Pose allySafeStackTarget =
+      Pose::fromPolar(-DRIVE_LENGTH / 2 - 1, bot.getPose().theta) +
+      allySafeStack;
+
+  bot.moveToPoint(allySafeStackTarget, 1000);
+  bot.intake.intakeBothTo(Intake::MOGO);
+
+  // Once on top of stack, drop intake to intake the ring
+  waitUntilDistToPose(allySafeStack, DRIVE_LENGTH / 2 + 2, 0, true);
+  bot.intakeLift.retract();
+  bot.waitUntilDone();
+
+  // Give time to pickup
+  pros::delay(500);
+  // Back up for 200ms
+  tank(-32, -32, 0, 0);
+  waitUntil([&] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
+            200);
+  if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
+
+
+  // == after getting the ring, clamps onto the goal
   bot.moveToPoint(safeGoal - Pose { -4, 0 }, 1000, {.forwards = false, .maxSpeed = 96});
   // resets the lady brown
   bot.waitUntil(3);
@@ -68,6 +105,8 @@ void posSafeFunction(ALLIANCE alliance){
   pros::delay(500);
   bot.mogoClamp.extend();
   pros::delay(250);
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
 
 
@@ -77,6 +116,7 @@ void posSafeFunction(ALLIANCE alliance){
   // turns toward the center ring
   bot.turnToPoint(targetCenterRing, 1000);
   bot.waitUntilDone();
+  bot.intake.stop();
   // moves the intake lift out of the way
   bot.intakeLift.extend();
   // moves towards the center ring
