@@ -17,7 +17,8 @@ namespace autons {
 extern Auton negativeRush;
 extern Auton negativeElims;
 extern Auton safePositive;
-extern Auton safeAWP;
+extern Auton negAWP;
+extern Auton posAWP;
 extern Auton skills;
 extern Auton doNothing;
 extern Auton posRush;
