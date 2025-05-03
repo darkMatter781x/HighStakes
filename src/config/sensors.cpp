@@ -14,6 +14,7 @@ RobotConfig::Sensors RobotConfig::Sensors::sensors {
     .lb {-5},
     .imu {12},
     .intake {6},
+    .intakeKick = pros::adi::AnalogIn{'G'},
     .autonSelector = pros::adi::Potentiometer {'D'},
     .lasers =
         {

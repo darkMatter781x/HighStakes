@@ -93,7 +93,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 2, BLUE_STATION - 25) + Pose {0, 3} +
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 5, BLUE_STATION - 2) + Pose {0, 3} +
       centerRing;
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
@@ -227,6 +227,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.moveToPose((preloadRing + Pose {0, DRIVE_LENGTH / 2}).withTheta(AUDIENCE),
                  1500);
   bot.waitUntilDone();
+  pros::delay(300);
 
   // === Intake ring next to alliance wall stake
 
@@ -297,7 +298,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   // === Touch ladder
 
   // Move to ladder
-  bot.moveToPose({-TILE + 9, 8. / 2 + DRIVE_LENGTH / 2 + 4, RED_STATION}, 1500,
+  bot.moveToPose({-TILE + 3, 8. / 2 + DRIVE_LENGTH / 2 + 3, RED_STATION}, 1500,
                  {.forwards = false});
   // Raise LB to go above ladder rung
   bot.waitUntil(8);

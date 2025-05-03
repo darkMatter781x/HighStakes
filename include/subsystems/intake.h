@@ -169,6 +169,7 @@ class Intake : public Subsystem {
 
     pros::MotorGroup& m_motors;
     Sensor& m_sensor;
+    pros::adi::AnalogIn m_intakeKick;
     pros::adi::Pneumatics& m_kicker;
   public:
     void setState(State state);
@@ -200,6 +201,6 @@ class Intake : public Subsystem {
 
     bool& dejamEnabled = intake.enabled;
 
-    Intake(pros::MotorGroup& motors, Sensor& sensor,
+    Intake(pros::MotorGroup& motors, Sensor& sensor, pros::adi::AnalogIn& intakeKicker,
            pros::adi::Pneumatics& kicker, Config conf);
 };

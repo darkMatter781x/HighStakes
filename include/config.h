@@ -40,6 +40,7 @@ struct RobotConfig {
         pros::Rotation lb;
         pros::IMU imu;
         pros::Optical intake;
+        pros::adi::AnalogIn intakeKick;
         pros::adi::Potentiometer autonSelector;
 
         /** Config for constructing distance sensors*/
