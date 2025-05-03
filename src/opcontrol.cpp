@@ -63,6 +63,13 @@ void skillsMacro() {}
  */
 void opcontrol() {
   COLOR filterColor = bot.selector.getAlliance();
+  auto intakeStateToStr = overloads(
+      [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
+      [filterColor](Intake::Filtering& state) {
+        return destToStrOp(filterColor == COLOR::BLUE ? state.blue : state.red);
+      },
+      [](Intake::BaseState& state) { return std::string("none"); });
+
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   // Drop intake automatically
   bot.intakeLift.retract();
@@ -184,6 +191,9 @@ void opcontrol() {
     }
 
     auto intakeState = bot.intake.getState();
+    master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
+                 std::visit(intakeStateToStr, intakeState));
+
 #ifdef TUNING
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
