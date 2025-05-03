@@ -8,6 +8,7 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
+    auton::autons::posSafe,
     auton::autons::posRush,
     auton::autons::negativeRush,
     auton::autons::negativeElims,
