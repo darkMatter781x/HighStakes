@@ -348,6 +348,7 @@ void skillsFunc(ALLIANCE _alliance) {
   const auto defaultLatLargeExit = bot.lateralLargeExit;
   const auto defaultLatSmallExit = bot.lateralSmallExit;
 
+  bot.localization.enabled = true;
   bot.intake.numOfMogoRings = 0;
   bot.intake.numOfLiftRings = 0;
 

@@ -8,10 +8,10 @@ using auton::Auton;
 
 std::vector<Auton> getAutons() {
   return {
-      auton::autons::negativeRush,  auton::autons::negAWP,
-      auton::autons::posAWP,        auton::autons::posRush,
-      auton::autons::negativeElims, auton::autons::safePositive,
-      auton::autons::skills,        auton::autons::doNothing,
+      auton::autons::skills,       auton::autons::negativeRush,
+      auton::autons::negAWP,       auton::autons::posAWP,
+      auton::autons::posRush,      auton::autons::negativeElims,
+      auton::autons::safePositive, auton::autons::doNothing,
   };
 }
 
