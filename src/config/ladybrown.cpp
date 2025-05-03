@@ -4,7 +4,8 @@
 LadyBrown::Config LadyBrown::Config::config {
     .idle = 10,
     .collect = 345,
-    .idle_score = 310,
+    /* Angle just above ladder rung, useful for touching bar using hang */
+    .idle_score = 330,
     .score = 180 - 30,
     .run_into_ally = 203.f,
     .flip = 100.f,
