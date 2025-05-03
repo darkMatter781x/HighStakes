@@ -19,9 +19,9 @@ using AngDir = lemlib::AngularDirection;
 void negativeRushFunc(ALLIANCE alliance);
 
 auton::Auton auton::autons::negativeRush = {
-    .label = (char*)"Negative Rush",
+    .label = (char*)"Ring Rush",
     .run = negativeRushFunc,
-    .labelForController = (char*)"neg rush",
+    .labelForController = (char*)"ring rush",
     .description = (char*)"Front of bot faces opposite driver station. "
                           "Starts on tile edge closest to mogo. "
                           "Set using Shreya's setting stick. "
@@ -237,8 +237,14 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Move to stack
   bot.moveToPose(allyStackTarget, 1500);
-  // Once near stack, lift intake
-  waitUntilDistToPose(allyStackTarget, 12, 0, true);
+  // Once prior ring intaked or near stack, lift intake
+  waitUntil(
+      [&] {
+        return bot.getColor() == bot.intake.getSensedRing() ||
+               bot.getPose().distance(allyStackTarget) < 15 ||
+               !bot.isInMotion();
+      },
+      0, 500);
   bot.intakeLift.extend();
   // Once near stack, raise LB to collect ring
   waitUntilDistToPose(allyStackTarget, 3, 0, true);
@@ -277,8 +283,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   // Wait a little longer to intake ring to LB
   waitUntilRingIsInLB(lbRingSensed, lbRingCollected, false, 500);
   // Once ring is collected, stop intake
-  if (lbRingCollected) bot.intake.stop();
-
+  bot.intake.stop();
   // Move LB to score
   bot.lady.score();
 
@@ -292,9 +297,15 @@ void negativeRushFunc(ALLIANCE alliance) {
   // === Touch ladder
 
   // Move to ladder
-  bot.moveToPose({-TILE + 3, 8. / 2 + DRIVE_LENGTH / 2 + 4, RED_STATION - 30},
-                 1500, {.forwards = false, .horizontalDrift = 2.});
-  // Move LB to touch ladder once
+  bot.moveToPose({-TILE + 9, 8. / 2 + DRIVE_LENGTH / 2 + 4, RED_STATION}, 1500,
+                 {.forwards = false});
+  // Raise LB to go above ladder rung
   bot.waitUntil(8);
   bot.lady.goToIdleScore();
+  // Stop intake to stop it from getting stuck on ladder
+  bot.intake.stop();
+
+  // Use hang to touch ladder rung from below
+  bot.waitUntilDone();
+  bot.lady.flip();
 }
