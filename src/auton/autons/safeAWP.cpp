@@ -4,6 +4,7 @@
 #include "dimensions.h"
 #include "robot.h"
 #include "units/units.hpp"
+#include "lemlib/util.hpp"
 
 using lemlib::Pose;
 
@@ -39,7 +40,9 @@ auton::Auton auton::autons::posAWP = {
                           "Pos mogo - 2. - deposited in neg corner",
 };
 
-static void scoreOnPosMogo() {}
+auto clamp(auto val, auto min, auto max) {
+  return std::max(min, std::min(val, max));
+}
 
 /**
  * @brief Autonomous for solo AWP
@@ -130,20 +133,20 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
 
   // Push back of bot into mogo and index it
-  bot.moveToPoint(negMogo, 1500, {.forwards = false, .maxSpeed = 80});
+  bot.moveToPoint(negMogo, 1500, {.forwards = false, .maxSpeed = 72});
 
   // Wait until red ring is sensed
   waitUntil(
       [&] {
         return bot.intake.getSensedRing() == bot.getColor() ||
-               !bot.isInMotion() || bot.getPose().distance(negMogo) < 3;
+               !bot.isInMotion() || bot.getPose().distance(negMogo) < 5;
       },
       0);
   // Then stop the intake to hold the ring
   bot.intake.stop();
 
   // Once near mogo clamp it
-  waitUntilDistToPose(negMogo, 3);
+  waitUntilDistToPose(negMogo, 5);
   bot.mogoClamp.retract();
   // Reset mogo ring counter
   bot.intake.numOfMogoRings = 0;
@@ -157,25 +160,28 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
 
   const Pose negSafeStack = {-TILE, TILE * 2};
 
-  // Turn towards stack
-  bot.turnToPoint(negSafeStack, 500, {.minSpeed = 72, .earlyExitRange = 30});
-  bot.waitUntilDone();
-
   // Score on mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-
-  // Give time to score
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
   pros::delay(300);
+
+  // Turn towards stack
+  bot.turnToPoint(negSafeStack, 500, {.minSpeed = 64, .earlyExitRange = 30});
+  bot.waitUntilDone();
 
   // Go towards negative safe stack and intake it
   bot.moveToPoint(negSafeStack, 1000
                   /* {.minSpeed = 64 , .earlyExitRange = 4} */);
   bot.waitUntilDone();
   // Give time to intake
-  pros::delay(500);
+  pros::delay(750);
 
-  // === Deposit mogo in positive half and push alliance partner bot
+  // === Deposit mogo in actually positive corner and push alliance partner bot
+  const Pose goAroundAllyStackTarget {-TILE * 1.5, 0};
+
+  // Turn towards target first, hopefully reducing potential for burn outs
+  bot.swingToPoint(goAroundAllyStackTarget, lemlib::DriveSide::LEFT, 500,
+                   {.forwards = false, .minSpeed = 48, .earlyExitRange = 20});
 
   // Go around ally stake rings
   bot.moveToPoint({-TILE * 1.5, 0}, 1200,
@@ -188,7 +194,7 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   bot.intake.stop();
 
   // Deposit mogo
-  bot.moveToPoint({-TILE * 2.5, -TILE * 1.75}, 2500, {.forwards = false});
+  bot.moveToPoint({-TILE * 2.2, -TILE * 1.75}, 2500, {.forwards = false});
   bot.waitUntilDone();
 
   const Pose posMogo = {-TILE, -TILE};
@@ -196,12 +202,12 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   // === Intake Safe stack on positive side
 
   // Adjust odom pose
-  bot.setPose(bot.getPose() + Pose {-3, 0});
+  bot.setPose(bot.getPose() + Pose {-3, 2});
 
   const Pose posSafeStack = {-TILE, -TILE * 2};
 
   // Move towards safe stack, giving a wide berth for alliance partner
-  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 7, AUDIENCE - 45) +
+  bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 6, AUDIENCE - 60) +
                      posSafeStack,
                  3000,
                  {
@@ -211,8 +217,11 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   // Once near stack, intake
   bot.waitUntil(9);
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-  bot.waitUntilDone();
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
+  waitUntil([&] {
+    return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion();
+  });
+  bot.intake.stop();
 
   // // Get out of corner
   // bot.moveToPoint({-TILE * 2.5, -TILE}, 1000,
@@ -241,29 +250,31 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   // Wait until ring is sensed
   waitUntil([&] {
     return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion() ||
-           bot.getPose().distance(posMogo) < 3;
+           bot.getPose().distance(posMogo) < 5;
   });
   // Then stop the intake to hold the ring
   bot.intake.stop();
 
   // Once near mogo, clamp it
-  waitUntilDistToPose(posMogo, 3, 0, true);
+  waitUntilDistToPose(posMogo, 5, 0, true);
   bot.mogoClamp.retract();
   // Give time to clamp
   pros::delay(250);
   bot.waitUntilDone();
 
-  // Score on mogo
-  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-  // Give time to score
-  pros::delay(500);
-
-  // === Touch ladder
-
   // Turn to be perpendicular to ladder rung
   bot.turnToHeading(AUDIENCE + 45, 500);
   bot.waitUntilDone();
+
+  // Back away from ladder
+  tank(40, 40, 100);
+  // Score on mogo
+  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
+  // Give time to score and get away from ladder
+  tank(40, 40, 500);
+
+  // === Touch ladder
 
   // Raise LB to go over ladder rung
   bot.lady.goToIdleScore();
@@ -273,11 +284,21 @@ static void genericAWP(ALLIANCE alliance, auton::SignTransform::SIGN corner) {
   // Give time to raise LB
   pros::delay(250);
 
+  // /** Target position of the point that will touch the ladder.  */
+  // const Pose ladderTouchTarget = [&] {
+  //   const Pose desired =
+  //       (Pose {1, -1} * (bot.getPose().x - bot.getPose().y) - Pose {24, 24})
+  //       / 2;
+  //   // Prevent from running into ladder post
+  //   return Pose {clamp(desired.x, -18.f, -6.f), clamp(desired.y, -6.f,
+  //   -18.f)};
+  // }();
   /** Target position of the point that will touch the ladder.  */
   const Pose ladderTouchTarget =
       (Pose {1, -1} * (bot.getPose().x - bot.getPose().y) - Pose {24, 24}) / 2;
+
   const Pose ladderTarget =
-      ladderTouchTarget + Pose::fromPolar(-DRIVE_LENGTH / 2 + 6, REFEREE + 45);
+      ladderTouchTarget + Pose::fromPolar(-DRIVE_LENGTH / 2 + 8, REFEREE + 45);
 
   // Go backwards towards ladder
   bot.moveToPoint(ladderTarget, 1000, {.forwards = false});
