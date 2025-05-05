@@ -6,7 +6,7 @@
 #include <string>
 #include "pros/rtos.hpp"
 #include "subsystems/intake.h"
-#include "leds/functions.h"
+//#include "leds/functions.h"
 #include "auton/util.h"
 #include "robot.h"
 #include "main.h"
@@ -192,6 +192,9 @@ void opcontrol() {
     }
 
     auto intakeState = bot.intake.getState();
+    master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
+                 std::visit(intakeStateToStr, intakeState));
+
 #ifdef TUNING
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))

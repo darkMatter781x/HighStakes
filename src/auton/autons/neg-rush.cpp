@@ -93,8 +93,8 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 5, BLUE_STATION - 2) + Pose {0, 3} +
-      centerRing;
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 4, BLUE_STATION - 25) +  centerRing;
+  
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
@@ -108,7 +108,7 @@ void negativeRushFunc(ALLIANCE alliance) {
                    });
   }
   // Wait a bit to deploy doinkers
-  bot.waitUntil(12);
+  bot.waitUntil(5);
   // Extend doinker to grab center ring closest to Referee
   switch (bot.getColor()) {
     case COLOR::BLUE: bot.rightDoinker.extend(); break;
@@ -123,7 +123,7 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Intake center ring and grab other ring
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
   bot.moveToPose(centerRingTarget, 1000, {.horizontalDrift = 2, .lead = .4});
 
   waitUntil([] {
@@ -165,19 +165,20 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Intake center ring to mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
 
   // === Intake doinked ring
 
-  bot.moveToPoint(doinkedRing, 2000, {.maxSpeed = 64});
+  bot.moveToPoint(doinkedRing, 2000, {.maxSpeed = 72});
   bot.waitUntilDone();
   // Give time to intake
-  pros::delay(250);
+  pros::delay(100);
 
   // === Intake safe stack
 
-  bot.moveToPoint(safeStack + Pose {0, -2}, 3000, {.maxSpeed = 64});
+  bot.moveToPoint(safeStack + Pose {0, 5}, 3000, {.maxSpeed = 72});
   bot.waitUntilDone();
+  pros::delay(100);
 
   // === Intake corner ring into LB
 
@@ -198,17 +199,19 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Go quickly towards corner
   bot.moveToPose(cornerTarget, 2500,
-                 {.horizontalDrift = 2, .lead = .6, .minSpeed = 96});
+                 {.horizontalDrift = 2, .lead = .6, .minSpeed = 72});
   // Once near corner, go slower to avoid messing up odometry
-  waitUntilDistToPose(cornerTarget, 12, 0, true);
+  waitUntilDistToPose(cornerTarget, 18, 0, true);
   bot.cancelMotion();
   // Ram into corner, in order to wedge intake into corner
   bot.moveToPose(cornerTarget, 2500,
-                 {.horizontalDrift = 2, .lead = .6, .minSpeed = 32});
+                 {.horizontalDrift = 2, .lead = .6, .minSpeed = 48});
   bot.waitUntilDone();
 
   // Continue pushing into corner
   tank(48, 48, 10, 0);
+
+
   // Once ring is sensed, we can continue on
   waitUntil([] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
             500);
@@ -290,7 +293,7 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Back away from wall stake to score on it
   const Pose allyStakeTarget =
-      Pose::fromPolar(-7, bot.getPose().theta) + bot.getPose();
+      Pose::fromPolar(-7, bot.getPose().theta) + bot.getPose() + Pose { 0, -5};
   bot.moveToPoint(allyStakeTarget, 1500, {.forwards = false, .maxSpeed = 64});
   bot.waitUntilDone();
   pros::delay(300);
