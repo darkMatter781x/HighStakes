@@ -196,14 +196,14 @@ void opcontrol() {
     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
       tuningCLI();
-    if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
-      bot.moveToPoint(
-          {-dimensions::field::TILE * 2, -dimensions::field::TILE * 2}, 3000);
-      auton::util::waitUntil([&] {
-        return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A) ||
-               !bot.isInMotion();
-      });
-    }
+    // if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+    //   bot.moveToPoint(
+    //       {-dimensions::field::TILE * 2, -dimensions::field::TILE * 2}, 3000);
+    //   auton::util::waitUntil([&] {
+    //     return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A) ||
+    //            !bot.isInMotion();
+    //   });
+    // }
 #endif
     pros::delay(5); // Run every 20ms (refresh rate of the controller)
   }
