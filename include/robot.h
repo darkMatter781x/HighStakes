@@ -74,6 +74,7 @@ class Robot : private lemlib::Chassis {
     using lemlib::Chassis::cancelAllMotions;
     using lemlib::Chassis::cancelMotion;
     using lemlib::Chassis::curvature;
+    using lemlib::Chassis::drivetrain;
     using lemlib::Chassis::isInMotion;
     using lemlib::Chassis::lateralLargeExit;
     using lemlib::Chassis::lateralPID;
