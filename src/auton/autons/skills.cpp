@@ -84,145 +84,12 @@ void redQuadrant(SignTransform::SIGN sign) {
                    {.maxSpeed = 100, .earlyExitRange = 45});
   bot.moveToPoint(ring1, 1250,
                   {
-                      .minSpeed = 64,
+                      .maxSpeed = 64,
                       .earlyExitRange = 6,
                   });
   waitUntilDistToPose(ring1, DRIVE_LENGTH / 2 + 3, 0, true);
   bot.cancelMotion();
 
-  // 2nd ring
-  const Pose ring2 { TILE, TILE * -2 };
-  const Pose aroundLadder { 0, TILE * -2, BLUE_STATION };
-
-  bot.moveToPose(aroundLadder, 1000, {.minSpeed = 1000});
-  bot.waitUntilDone();
-  bot.moveToPoint(ring2, 1000, {.minSpeed = 1000});
-  bot.waitUntilDone();
-
-  // 3rd ring (lady brown)
-  const Pose ring3 { TILE * 2.5, TILE * -2.5 };
-
-  bool firstLBRingSensed = false;
-  bool firstLBRingCollected = false;
-  
-  bot.swingToPoint(ring3, lemlib::DriveSide::RIGHT, 1000);
-  bot.waitUntilDone();
-  bot.lady.collect();
-  bot.moveToPoint(ring3 + Pose::fromPolar(4, bot.getPose().theta), 1000);
-  bot.waitUntilDone();
-  pros::delay(400);
-  waitUntil(
-      [&] {
-        firstLBRingSensed |= bot.intake.getSensedRing() != std::nullopt;
-        return firstLBRingSensed || !bot.isInMotion();
-      },
-  0, 1000);
-
-  // wallstake
-  const Pose inFrontofWallStake { 0, - TILE * 2 };
-  const Pose wallStake { 0, MIN_Y - DRIVE_LENGTH/2, AUDIENCE };
-
-  waitUntilRingIsInLB(firstLBRingSensed, firstLBRingCollected, false, 1000);
-  bot.intake.stop();
-  bot.moveToPoint(inFrontofWallStake, 1000, {.forwards = false});
-  bot.waitUntilDone();
-  bot.moveToPose(wallStake, 1000);
-  bot.waitUntilDone();
-  bot.lady.score();
-  pros::delay(400);
-  // Back straight out of stake
-  bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
-  bot.intake.intakeTo(COLOR::BLUE, Intake::KICK);
-  tank(-96, -96, 300, 4);
-  // Reset LB
-  bot.lady.collect();
-
-
-  // 2nd wallstake
-  bool secondLBRingSensed = false;
-  bool secondLBRingCollected = false;
-
-  waitUntil(
-      [&] {
-        secondLBRingSensed |= bot.intake.getSensedRing() != std::nullopt;
-        return secondLBRingSensed || !bot.isInMotion();
-      },
-  0, 1000);
-  waitUntilRingIsInLB(secondLBRingSensed, secondLBRingCollected, false, 1000);
-  bot.intake.stop();
-  bot.moveToPose(wallStake, 1000);
-  bot.waitUntilDone();
-  bot.lady.score();
-  pros::delay(400);
-  tank(-96, -96, 300, 4);
-  bot.lady.goToIdle();
-
-
-  // rest of the rings
-  const Pose ring4 { - TILE, - TILE * 2 };
-  bot.swingToPoint(ring4, lemlib::DriveSide::RIGHT, 1000);
-  bot.waitUntilDone();
-  bot.moveToPoint(ring4 + Pose::fromPolar(4, bot.getPose().theta), 1000);
-  bot.waitUntilDone();
-
-  const Pose ring5 {-TILE * 2, -TILE * 2};
-  const Pose ring6 {-TILE * 2.5, -TILE * 2};
-  const Pose ring7 {-TILE * 2, -TILE * 2.5};
-
-  // Intake 4th and 5th rings
-  bot.moveToPose((ring6 + Pose {DRIVE_LENGTH / 2, 1}).withTheta(RED_STATION), 2000,
-                  {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
-  bot.waitUntilDone();
-
-  // Wait for ring to go into mogo
-  pros::delay(300);
-
-  // Intake 6th ring
-  bot.swingToPoint(ring7, lemlib::DriveSide::LEFT, 500,
-                   {.maxSpeed = 100, .minSpeed = 72, .earlyExitRange = 30});
-  // Scoop up by going parallel and next to wall
-  bot.moveToPose({ring7.x + DRIVE_LENGTH / 2 + 2, MIN_Y + DRIVE_WIDTH / 2 + 3,
-                  BLUE_STATION},
-                 1500, {.maxSpeed = 72, .minSpeed = 64, .earlyExitRange = 6});
-
-  bot.waitUntilDone();
-
-  // === Deposit Mogo
-
-  const Pose depositMogoCorner {MIN_X, MIN_Y};
-
-  // Wait a little before turning
-  pros::delay(300);
-
-  // Turn towards corner
-  bot.swingToPoint(depositMogoCorner, lemlib::DriveSide::RIGHT, 800,
-                   {.forwards = false});
-
-  // Go to corner
-  const Pose depositMogoTarget =
-      Pose::fromPolar(DRIVE_LENGTH / 2 + 8, REFEREE + 45) + depositMogoCorner;
-  bot.moveToPoint(depositMogoTarget, 1750, {.forwards = false});
-
-  // Wait until mogo is full
-  waitUntil([&] { return bot.intake.numOfMogoRings >= 6; }, 0, 1750);
-  pros::delay(100);
-
-  // Once near corner, release mogo
-  bot.mogoClamp.extend();
-  pros::delay(200);
-
-  bot.waitUntilDone();
-
-  // Prevent mogo from being held by hooks
-  bot.intake.outtake();
-
-  // Reset coordinate system
-  bot.setAlliance(ALLIANCE::RED);
-  
-
-
-
-  /*
   // 2nd ring (next to wall stake)
   const Pose ring2 {0, -TILE * 2.5};
   bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 3, AUDIENCE) + ring2, 1500,
@@ -248,8 +115,8 @@ void redQuadrant(SignTransform::SIGN sign) {
                   {.maxSpeed = 96, .minSpeed = 48, .earlyExitRange = 6});
 
   // Intake 4th and 5th rings
-  bot.moveToPose((ring5 + Pose {DRIVE_LENGTH / 2, 1}).withTheta(RED_STATION), 2000,
-                  {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
+  bot.moveToPose((ring5 + Pose {DRIVE_LENGTH / 2, 1}).withTheta(RED_STATION),
+                 2000, {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
   bot.waitUntilDone();
 
   // Wait for ring to go into mogo
@@ -279,11 +146,10 @@ void redQuadrant(SignTransform::SIGN sign) {
   // Go to corner
   const Pose depositMogoTarget =
       Pose::fromPolar(DRIVE_LENGTH / 2 + 8, REFEREE + 45) + depositMogoCorner;
-  bot.moveToPoint(depositMogoTarget, 1750, {.forwards = false});
+  bot.moveToPoint(depositMogoTarget, 1750, {.forwards = false, .minSpeed = 64});
 
   // Wait until mogo is full
   waitUntil([&] { return bot.intake.numOfMogoRings >= 6; }, 0, 1750);
-  pros::delay(100);
 
   // Once near corner, release mogo
   bot.mogoClamp.extend();
@@ -296,7 +162,6 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // Reset coordinate system
   bot.setAlliance(ALLIANCE::RED);
-  */
 }
 
 /** @brief Fills the third mogo. Assumes function is started after blue alliance
@@ -485,11 +350,12 @@ void skillsFunc(ALLIANCE _alliance) {
   bot.localization.enabled = true;
   bot.lady.collect();
 
+  bot.drivetrain.horizontalDrift = 2.f;
 
   bot.intake.numOfMogoRings = 0;
   bot.intake.numOfLiftRings = 0;
-  //bot.localization.enabled = false;
-  bot.setPose({-TILE * 2 - 11.25, - TILE * 0.5, -45}, 2);
+  // bot.localization.enabled = false;
+  bot.setPose({-TILE * 2 - 11.25, -TILE * 0.5, -45}, 2);
 
   bot.lady.flip();
   pros::delay(400);
@@ -502,8 +368,7 @@ void skillsFunc(ALLIANCE _alliance) {
   // === Score on red ally stake
 
   // Prevent Lady brown from goofing up and lifting
-    //bot.lady.setState(LadyBrown::COAST);
-
+  // bot.lady.setState(LadyBrown::COAST);
 
   // === Clamp mogo
 
@@ -531,7 +396,6 @@ void skillsFunc(ALLIANCE _alliance) {
   // === Do positive red quadrant
 
   redQuadrant(SignTransform::SIGN::POSITIVE);
-  return;
 
   // === Clamp negative mogo
 
