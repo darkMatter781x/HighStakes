@@ -93,8 +93,9 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 4, BLUE_STATION - 25) +  centerRing;
-  
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 4, BLUE_STATION - 25) + centerRing +
+      Pose {0, (bot.getColor() == COLOR::RED ? 2.f : 0.f)};
+
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
@@ -155,7 +156,7 @@ void negativeRushFunc(ALLIANCE alliance) {
   const Pose doinkedRing = bot.getPose() +
                            Pose {
                                13,
-                               ((bot.getColor() == COLOR::RED ? -1.f : 1.f) *
+                               ((bot.getColor() == COLOR::RED ? 1.f : 1.f) *
                                 (+DRIVE_WIDTH / 2.f - .25f)),
                            }
                                .rotate((90 - bot.getPose().theta) * M_PI / 180);
@@ -210,7 +211,6 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Continue pushing into corner
   tank(48, 48, 10, 0);
-
 
   // Once ring is sensed, we can continue on
   waitUntil([] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
@@ -293,7 +293,7 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Back away from wall stake to score on it
   const Pose allyStakeTarget =
-      Pose::fromPolar(-7, bot.getPose().theta) + bot.getPose() + Pose { 0, -5};
+      Pose::fromPolar(-7, bot.getPose().theta) + bot.getPose() + Pose {0, -5};
   bot.moveToPoint(allyStakeTarget, 1500, {.forwards = false, .maxSpeed = 64});
   bot.waitUntilDone();
   pros::delay(300);
