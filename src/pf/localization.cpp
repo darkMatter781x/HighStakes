@@ -77,6 +77,17 @@ void Localization::update() {
   static bool done = false;
   if (done) return;
 
+  // Sometimes the pose becomes NaN and idk why. This is an attempt to cope
+  if (std::isnan(this->m_odom->getPose().x) ||
+      std::isnan(this->m_odom->getPose().y)) {
+    printf("\x1b[1;31m"
+           "Localization: NaN-ed"
+           "\x1b[0m");
+
+    // Attempt to recover by globally localizing
+    this->setPose({0, 0, this->m_odom->getPose().theta}, 64);
+  }
+
   static size_t iteration = 0;
   static size_t lastStartTime = pros::millis();
   START_PROFILE("LL.update()") // Starts profiled section
@@ -107,8 +118,6 @@ void Localization::update() {
 
     m_odom->setPose({mean.x(), mean.y(), m_odom->getPose().theta});
 
-    // TODO:  Try denser telemetry. eg: send binary representation of floats
-    //        rather than strings.
     PROFILE_SECTION("PF.printParticles", {
       m_pf.modify([this](auto arg) -> auto {
         return this->printParticles(std::move(arg));
@@ -126,8 +135,8 @@ void Localization::update() {
   // Profiler::get().printReport();
 #endif
   // if (pros::millis() % 100 < 10)
-    // printf("Pose:\t(%03.3fin,\t%02.3fin,\t%03.2frad)\n", m_prevPose.x,
-    //        m_prevPose.y, m_prevPose.theta);
+  // printf("Pose:\t(%03.3fin,\t%02.3fin,\t%03.2frad)\n", m_prevPose.x,
+  //        m_prevPose.y, m_prevPose.theta);
 
   //   if (isMasterControllerPowerPressed() || iteration == 1000) {
   //     printf("[ProfSummary.Start]\n"); // Used by time script to identify
