@@ -1,4 +1,5 @@
 #include "dimensions.h"
+#include "lemlib/pose.hpp"
 #include "lemlib/util.hpp"
 #include "lemlib/timer.hpp"
 #include "pros/misc.h"
@@ -6,7 +7,7 @@
 #include <string>
 #include "pros/rtos.hpp"
 #include "subsystems/intake.h"
-//#include "leds/functions.h"
+// #include "leds/functions.h"
 #include "auton/util.h"
 #include "robot.h"
 #include "main.h"
@@ -79,9 +80,8 @@ void opcontrol() {
   bool prevIntakeBtn = false;
 
   if (strcmp(bot.selector.getAuton().label, "Skills") == 0) {
-    auton::util::waitUntil(
-        [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
-    skillsMacro();
+    // Lady Brown starts in collect for skills
+    bot.lady.collect();
   }
 
   /** Duration of hold for a hold */
@@ -201,7 +201,8 @@ void opcontrol() {
       tuningCLI();
     // if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
     //   bot.moveToPoint(
-    //       {-dimensions::field::TILE * 2, -dimensions::field::TILE * 2}, 3000);
+    //       {-dimensions::field::TILE * 2, -dimensions::field::TILE * 2},
+    //       3000);
     //   auton::util::waitUntil([&] {
     //     return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A) ||
     //            !bot.isInMotion();

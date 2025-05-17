@@ -81,10 +81,10 @@ void screen() {
       if (hotMotors.size() > 0) {
         std::stringstream ss;
         for (size_t i = 0; i < hotMotors.size(); i++) {
-          ss << hotMotors[i].port << ", ";
+          ss << std::to_string(hotMotors[i].port) << ", ";
         }
         pros::lcd::print(7, "hot motors: %s", ss.str().c_str());
-        printf("hot motors: %s", ss.str().c_str());
+        printf("hot motors: %s\n", ss.str().c_str());
         pros::c::controller_print(pros::E_CONTROLLER_MASTER, 3, 1, "HOT!!");
       } else {
         pros::lcd::clear_line(7);

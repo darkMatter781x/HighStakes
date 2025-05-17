@@ -105,6 +105,20 @@ class Robot : private lemlib::Chassis {
                     lemlib::MoveToPoseParams params = {}, bool async = true);
     void moveToPoint(lemlib::Pose target, int timeout,
                      lemlib::MoveToPointParams params = {}, bool async = true);
+
+    /**
+     * @warning Didn't work the single time I tested it.
+     * @brief Move the a point on the bot to a desired point and heading.
+     *
+     * @param target The desired target for the point.
+     * @param timeout How long to run the motion.
+     * @param offset The offset of the point relative to the center of the
+     * robot. X should be forwards/backwards, and Y, side to side.
+     */
+    void customMoveToPose(lemlib::Pose target, size_t timeout,
+                          lemlib::Pose offset = {0, 0},
+                          lemlib::MoveToPoseParams params = {},
+                          bool async = true);
 };
 
 inline Robot& bot = Robot::get();

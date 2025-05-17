@@ -76,6 +76,9 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.intake.numOfRings = 0;
   bot.intake.numOfLiftRings = 0;
 
+  // Default settings
+  const auto defaultAngularPID = bot.angularPID;
+
   // Front of bot facing opposite driver station
   // Aligned using Shreyas's setting tool
   // Starts on tile edge closest to mogo
@@ -93,8 +96,8 @@ void negativeRushFunc(ALLIANCE alliance) {
   /** Center ring 2nd closest to referee on our side. */
   const Pose centerRing {-RING_DIAM / 2, TILE * 2 - RING_DIAM / 2};
   const Pose centerRingTarget =
-      Pose::fromPolar(-DRIVE_LENGTH / 2 + 4, BLUE_STATION - 25) + centerRing +
-      Pose {0, (bot.getColor() == COLOR::RED ? 2.f : 0.f)};
+      Pose::fromPolar(-DRIVE_LENGTH / 2 + 3, BLUE_STATION - 25) + centerRing +
+      Pose {0, (bot.getColor() == COLOR::RED ? 1.5f : 0.f)};
 
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
@@ -104,7 +107,7 @@ void negativeRushFunc(ALLIANCE alliance) {
                    {
                        .horizontalDrift = 2,
                        .lead = .4,
-                       .minSpeed = 100,
+                       .minSpeed = 96,
                        .earlyExitRange = 6,
                    });
   }
@@ -118,20 +121,37 @@ void negativeRushFunc(ALLIANCE alliance) {
 
   // Once past safe stack, move on
   waitUntil([safeStack] {
-    return bot.getPose().x > (safeStack.x - 2) || !bot.isInMotion();
+    return bot.getPose().x > (safeStack.x - 5) || !bot.isInMotion();
   });
   bot.cancelMotion();
+
+  // Attempt to make angle more accurate
+  bot.angularPID.kP = 2;
+  bot.angularPID.kD = 48;
 
   // Intake center ring and grab other ring
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
+  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
   bot.moveToPose(centerRingTarget, 1000, {.horizontalDrift = 2, .lead = .4});
 
-  waitUntil([] {
-    return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion();
+  waitUntil([&] {
+    return bot.intake.getSensedRing() == bot.getColor() ||
+           !bot.isInMotion() /*  ||
+bot.getPose().distance(centerRingTarget) < 7 */
+        ;
   });
   if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
   bot.cancelMotion();
+
+  // // Go straight to ring center
+  // bot.moveToPoint(centerRingTarget, 1000);
+  // waitUntil([&] {
+  //   return bot.intake.getSensedRing() == bot.getColor() || !bot.isInMotion();
+  // });
+  // if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
+  // bot.cancelMotion();
+
+  bot.angularPID = defaultAngularPID;
 
   // === Score center ring on mogo
 
@@ -173,19 +193,16 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.moveToPoint(doinkedRing, 2000, {.maxSpeed = 72});
   bot.waitUntilDone();
   // Give time to intake
-  pros::delay(100);
+  pros::delay(250);
 
   // === Intake safe stack
 
   bot.moveToPoint(safeStack + Pose {0, 5}, 3000, {.maxSpeed = 72});
   bot.waitUntilDone();
-  pros::delay(100);
+  pros::delay(250);
 
   // === Intake corner ring into LB
 
-  // const Pose cornerTarget =
-  //     Pose::fromPolar(-DRIVE_LENGTH / 2 - RING_DIAM / 2 + 3, REFEREE - 15) +
-  //     Pose {MIN_X + RING_DIAM / 2, MAX_Y - RING_DIAM / 2};
   const Pose cornerTarget =
       Pose::fromPolar(-DRIVE_LENGTH / 2 - RING_DIAM / 2 + 2, REFEREE - 45) +
       Pose {MIN_X, MAX_Y} + Pose {0, 1};
@@ -230,86 +247,147 @@ void negativeRushFunc(ALLIANCE alliance) {
   bot.moveToPose((preloadRing + Pose {0, DRIVE_LENGTH / 2}).withTheta(AUDIENCE),
                  1500);
   bot.waitUntilDone();
-  pros::delay(300);
+  pros::delay(200);
 
-  // === Intake ring next to alliance wall stake
+  if (bool runAllianceStake = true) {
+    // === Intake ring next to alliance wall stake
 
-  const Pose allyStake {-TILE * 3 + 1, 0};
+    const Pose allyStake {-TILE * 3 + 1, 0};
 
-  /** Stack in front of ally stake  */
-  const Pose allyStackTarget {-TILE * 2, +DRIVE_LENGTH / 2, AUDIENCE};
+    /** Stack in front of ally stake  */
+    const Pose allyStackTarget {-TILE * 2 - 1, +DRIVE_LENGTH / 2 + 2, AUDIENCE};
 
-  // Move to stack
-  bot.moveToPose(allyStackTarget, 1500);
-  // Once prior ring intaked or near stack, lift intake
-  waitUntil(
-      [&] {
-        return bot.getColor() == bot.intake.getSensedRing() ||
-               bot.getPose().distance(allyStackTarget) < 15 ||
-               !bot.isInMotion();
-      },
-      0, 500);
-  bot.intakeLift.extend();
-  // Once near stack, raise LB to collect ring
-  waitUntilDistToPose(allyStackTarget, 3, 0, true);
-  // Disable dejamming when intaking to LB
-  bot.intake.dejamEnabled = false;
-  // Raise LB to collect ring
-  bot.lady.collect();
+    // Move to stack
+    bot.moveToPose(allyStackTarget, 1500);
+    // Once prior ring intaked or near stack, lift intake
+    waitUntil(
+        [&] {
+          return bot.getColor() == bot.intake.getSensedRing() ||
+                 bot.getPose().distance(allyStackTarget) < 15 ||
+                 !bot.isInMotion();
+        },
+        0, 500);
+    bot.intakeLift.extend();
+    // Once near stack, raise LB to collect ring
+    waitUntilDistToPose(allyStackTarget, 3, 0, true);
+    // Disable dejamming when intaking to LB
+    bot.intake.dejamEnabled = false;
+    // Raise LB to collect ring
+    bot.lady.collect();
 
-  bool lbRingSensed = false;
-  bool lbRingCollected = false;
-  // Wait until ring is sensed
-  waitUntilRingIsInLB(lbRingSensed, lbRingCollected, true);
-  bot.cancelMotion();
+    bool lbRingSensed = false;
+    bool lbRingCollected = false;
+    // Wait until ring is sensed
+    waitUntilRingIsInLB(lbRingSensed, lbRingCollected, true);
+    bot.cancelMotion();
 
-  // Drop intake on stack to intake the ring
-  bot.intakeLift.retract();
+    // Drop intake on stack to intake the ring
+    bot.intakeLift.retract();
 
-  waitUntilRingIsInLB(lbRingSensed, lbRingCollected, false, 500);
-  // Once ring is collected, stop intake
-  if (lbRingCollected) bot.intake.stop();
+    waitUntilRingIsInLB(lbRingSensed, lbRingCollected, false, 500);
+    // Once ring is collected, stop intake
+    if (lbRingCollected) bot.intake.stop();
 
-  // === Score on alliance wall stake
+    // === Score on alliance wall stake
 
-  // Turn in order to score on ally stake, clearing front of stake
-  // Turn backwards to avoid red ring at the bottom of ally stack
-  bot.swingToPoint(allyStake, lemlib::DriveSide::LEFT, 500);
-  waitUntilRingIsInLB(lbRingSensed, lbRingCollected, true);
-  // Once ring is collected, stop intake
-  if (lbRingCollected) bot.intake.stop();
-  bot.waitUntilDone();
+    // Turn in order to score on ally stake, clearing front of stake
+    // Turn backwards to avoid red ring at the bottom of ally stack
+    bot.swingToPoint(allyStake, lemlib::DriveSide::LEFT, 500);
+    waitUntilRingIsInLB(lbRingSensed, lbRingCollected, true);
+    // Once ring is collected, stop intake
+    if (lbRingCollected) bot.intake.stop();
+    bot.waitUntilDone();
 
-  // Index onto wall stake
-  tank(72, 72, 750, 0);
-  stop();
+    // Index onto wall stake
+    tank(72, 72, 750, 0);
+    stop();
 
-  // Wait a little longer to intake ring to LB
-  waitUntilRingIsInLB(lbRingSensed, lbRingCollected, false, 500);
-  // Once ring is collected, stop intake
-  bot.intake.stop();
-  // Move LB to score
-  bot.lady.score();
+    // Wait a little longer to intake ring to LB
+    waitUntilRingIsInLB(lbRingSensed, lbRingCollected, false, 500);
+    // Once ring is collected, stop intake
+    bot.intake.stop();
+    // Give time for intake to stop
+    pros::delay(250);
+    // Move LB to score
+    bot.lady.flip();
 
-  // Back away from wall stake to score on it
-  const Pose allyStakeTarget =
-      Pose::fromPolar(-7, bot.getPose().theta) + bot.getPose() + Pose {0, -5};
-  bot.moveToPoint(allyStakeTarget, 1500, {.forwards = false, .maxSpeed = 64});
-  bot.waitUntilDone();
-  pros::delay(300);
+    // Back away from wall stake to score on it
+    const Pose allyStakeTarget = Pose::fromPolar(-7.5, bot.getPose().theta) +
+                                 bot.getPose() + Pose {0, -5};
+    bot.moveToPoint(allyStakeTarget, 1500, {.forwards = false, .maxSpeed = 64});
+    bot.waitUntilDone();
+    pros::delay(300);
+    tank(-64, -64, 100, 0);
+    // // === Touch ladder
 
-  // === Touch ladder
+    // // Move to ladder
+    // bot.moveToPose({-TILE + (8. / 2 + DRIVE_LENGTH / 2 + 1),
+    //                 8. / 2 + DRIVE_LENGTH / 2 + 1, RED_STATION},
+    //                1500,
+    //                {
+    //                    .forwards = false,
+    //                });
+    // // Raise LB to go above ladder rung
+    // bot.waitUntil(8);
+    // bot.lady.goToIdleScore();
 
-  // Move to ladder
-  bot.moveToPose({-TILE + 3, 8. / 2 + DRIVE_LENGTH / 2 + 3, RED_STATION}, 1500,
-                 {.forwards = false});
-  // Raise LB to go above ladder rung
+    // bot.waitUntilDone();
+
+    // // // Stop intake to stop it from getting stuck on ladder
+    // // bot.intake.stop();
+
+    // // // Use hang to touch ladder rung from below
+    // // bot.waitUntilDone();
+    // // bot.lady.flip();
+
+  } else {
+    // // === Touch ladder (no alliance stake shenanigans)
+
+    // const Pose ladderTouchTarget {-TILE * .5, TILE * .5, REFEREE - 45};
+    // // Go to ladder
+    // bot.moveToPose(ladderTouchTarget, 5000,
+    //                {.forwards = false, .maxSpeed = 80 /* Go slow to give the
+    //                auto time to intake */});
+
+    // // Stop intake to prevent it from getting stuck on ladder
+    // waitUntilDistToPose(ladderTouchTarget, 12);
+    // bot.intake.stop();
+
+    // // Raise lady brown to touch ladder
+    // bot.lady.goToIdleScore();
+
+    // // Drop LB at last second
+    // waitUntil([startTime] {
+    //   return (pros::millis() * msec - startTime) > 14.8 * sec;
+    // });
+    // bot.lady.goToIdle();
+    // pros::delay(100);
+    // bot.lady.setState(LadyBrown::COAST);
+  }
+
+  const Pose corner {MIN_X, MIN_Y};
+  // === Deposit mogo in positive corner
+  const Pose clearCornerTarget =
+      Pose::fromPolar(-DRIVE_LENGTH / 2 - RING_DIAM * sqrt(2) - 2,
+                      AUDIENCE + 45) +
+      corner;
+  bot.moveToPose(clearCornerTarget, 3000,
+                 {
+                     .horizontalDrift = 2,
+                     .lead = .4,
+                     .minSpeed = 127,
+                 });
   bot.waitUntil(8);
   bot.lady.goToIdleScore();
-  // Stop intake to stop it from getting stuck on ladder
-  bot.intake.stop();
 
-  // Use hang to touch ladder rung from below
+  // Deploy doinker corner once close
+  waitUntilDistToPose(clearCornerTarget, 6, 0, true);
+  switch (bot.getColor()) {
+    case COLOR::RED: bot.rightDoinker.extend(); break;
+    case COLOR::BLUE: bot.leftDoinker.extend(); break;
+  }
   bot.waitUntilDone();
-  bot.lady.flip();
+
+  // Clear corner
+  bot.turnToPoint(corner, 750, {.forwards = false, .minSpeed = 64});
 }

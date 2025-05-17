@@ -33,16 +33,17 @@ EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION
 BINDIR=$(ROOT)/bin/sim
 endif
 
-EXTRA_C_BOTH_FLAGS+=-Ofast -lto
+# Maybe was the reason NaNs were appearing
+# EXTRA_C_BOTH_FLAGS+=-Ofast -lto
 
 ifdef PROF
 EXTRA_C_BOTH_FLAGS+=-DENABLE_PROFILING
 endif
 
-# ifndef TUNING
+ifndef TUNING
 # enable pid tuning
 EXTRA_C_BOTH_FLAGS+=-DTUNING
-# endif
+endif
 
 EXTRA_CFLAGS+=$(EXTRA_C_BOTH_FLAGS)
 EXTRA_CXXFLAGS+=$(EXTRA_C_BOTH_FLAGS)
