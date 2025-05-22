@@ -1,4 +1,5 @@
 #include "auton/autons.h"
+#include "auton/transform.h"
 #include "auton/util.h"
 #include "dimensions.h"
 #include "lemlib/util.hpp"
@@ -26,6 +27,12 @@ auton::Auton auton::autons::safePositive = {
 void safePositiveFunc(ALLIANCE alliance) {
   bot.setAlliance(alliance);
 
+  // Configure coordinate space to be the same as the safe awp
+  bot.setTransform(auton::ChainedTransform::make(
+      bot.m_transform,
+      std::make_shared<auton::SignTransform>(auton::SignTransform::POSITIVE,
+                                             auton::SignTransform::NEGATIVE)));
+
   const auto defaultAngPID = bot.angularPID;
   const auto defaultLatPID = bot.lateralPID;
   const auto defaultAngLargeExit = bot.angularLargeExit;
@@ -34,180 +41,117 @@ void safePositiveFunc(ALLIANCE alliance) {
   const auto defaultLatSmallExit = bot.lateralSmallExit;
 
   bot.intake.numOfMogoRings = 0;
+  bot.intake.numOfLiftRings = 0;
 
   const Time startTime = pros::millis() * msec;
 
-  const Pose startPose {-TILE * 2 - 4.4, -(TILE * 1 + DRIVE_WIDTH / 2 + .5),
-                        BLUE_STATION};
+  // Disable MCL during match auto
+  bot.localization.enabled = false;
+
+  // Start Lady Brown in collect
+  bot.lady.collect();
+
+  const Pose startPose {-TILE * 2 - 13.1, TILE - 11.2,
+                        180 - (REFEREE - 53.36 + 20.f)};
   bot.setPose(startPose);
 
-  // === Score preload on middle mogo
+  pros::delay(2000);
 
-  const Pose midMogo {0, -TILE * 2};
-  const Pose safeStack {-TILE, -TILE * 2};
-
-  // Go past mogo and safe ring stack
-  {
-    bot.moveToPoint((safeStack + Pose {4, RING_DIAM / 2 + DRIVE_WIDTH / 2 - 2})
-                        .withTheta(BLUE_STATION),
-                    1000, {.minSpeed = 64, .earlyExitRange = 6});
-  }
-
-  // Collect preload into LB
-  bot.lady.collect();
-  pros::delay(400); // Wait for LB to settle
-  bot.intake.intakeBothTo(Intake::MOGO); // Intake preload
-  bot.waitUntilDone();
-
-  // Go to actual mogo
-  const Pose midMogoTarget =
-      Pose::fromPolar(-15, BLUE_STATION + 30) + midMogo + Pose {-1, -1};
-  bot.lateralLargeExit.time = 10;
-  bot.lateralSmallExit.time = 10;
-  bot.lateralLargeExit.range = 1;
-  bot.lateralSmallExit.range = 1;
-
-  bot.moveToPoint(midMogoTarget, 2500);
-
-  // Move hook out of the way
-  bot.intake.outtake();
-  pros::delay(30);
-  bot.intake.stop();
-
-  // Once ready, score on mogo
-  bot.waitUntilDone();
-  bot.lady.score();
-  pros::delay(400); // Give time to score
-
-  bot.lateralLargeExit = defaultLatLargeExit;
-  bot.lateralSmallExit = defaultLatSmallExit;
-
-  // Tip the mid mogo
+  // === Score preload on ally stake
   bot.lady.flip();
-  bot.turnToHeading(AUDIENCE + 30, 500,
-                    {.minSpeed = 127, .earlyExitRange = 10});
-
-  // Turn towards mogo
-  const Pose posMogo {-TILE, -TILE};
-  bot.turnToPoint(posMogo, 500, {.forwards = false});
-  bot.waitUntilDone();
-
-  // Go to mogo
-  bot.moveToPoint(posMogo, 500, {.forwards = false});
-
-  // Retract mogo
-  bot.waitUntil(9);
-  bot.mogoClamp.retract();
-
-  pros::delay(500);
-
-  const Pose posSafeStack = {-TILE, -TILE * 2};
-
-  bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-
-  // Turn towards stack
-  bot.swingToPoint(posSafeStack, lemlib::DriveSide::RIGHT, 500);
-  bot.waitUntilDone();
-
-  bot.moveToPoint(posSafeStack, 1000);
-
-  return;
-
-  pros::delay(600);
-
-  // Stop intake from heating up
-  bot.intake.stop();
-
-  // Push ring down onto stake
-  bot.lady.goToIdle();
-  pros::delay(100);
+  pros::delay(400);
 
   // Back straight out of stake
   tank(-96, -96, 400, 4);
+  // Reset LB
+  bot.lady.goToIdle();
 
   // === Intake top ring of stack next to ally stake
 
-  //   const Pose posMogo = {-TILE, -TILE};
+  const Pose negMogo = {-TILE, TILE + 1};
+  const Pose allySafeStack {-TILE * 2, 0};
 
-  // Turn towards mogo
-  bot.turnToPoint(posMogo, 500,
-                  {.forwards = false, .minSpeed = 72, .earlyExitRange = 45});
+  // Turn to ally stake
+  bot.turnToPoint(allySafeStack, 500);
+  bot.waitUntilDone();
 
-  // Make it more precise
-  bot.lateralLargeExit.range = 0.4;
-  bot.lateralLargeExit.time = 50;
-  bot.lateralSmallExit.range = 1;
-  bot.lateralSmallExit.time = 500;
+  // Intake stack
+  bot.intakeLift.extend();
+  const Pose allySafeStackTarget =
+      Pose::fromPolar(-DRIVE_LENGTH / 2 - 1, bot.getPose().theta) +
+      allySafeStack;
+
+  bot.moveToPoint(allySafeStackTarget, 1000);
+  bot.intake.intakeBothTo(Intake::MOGO);
+
+  // Once on top of stack, drop intake to intake the ring
+  waitUntilDistToPose(allySafeStack, DRIVE_LENGTH / 2 + 2, 0, true);
+  bot.intakeLift.retract();
+  bot.waitUntilDone();
+
+  // Give time to pickup
+  pros::delay(500);
+  // Back up for 200ms
+  tank(-32, -32, 0, 0);
+  waitUntil([&] { return bot.intake.getSensedRing() == bot.getColor(); }, 0,
+            200);
+  if (bot.intake.getSensedRing() == bot.getColor()) bot.intake.stop();
 
   // Push back of bot into mogo and index it
-  bot.moveToPose(posMogo.withTheta(RED_STATION + 30), 1500,
-                 {.forwards = false});
+  bot.moveToPoint(negMogo, 1500, {.forwards = false, .maxSpeed = 72});
 
-  // Clamp mogo
-  bot.waitUntilDone();
+  // Wait until red ring is sensed
+  waitUntil(
+      [&] {
+        return bot.intake.getSensedRing() == bot.getColor() ||
+               !bot.isInMotion() || bot.getPose().distance(negMogo) < 5;
+      },
+      0);
+  // Then stop the intake to hold the ring
+  bot.intake.stop();
+
+  // Once near mogo clamp it
+  waitUntilDistToPose(negMogo, 5);
   bot.mogoClamp.retract();
   // Reset mogo ring counter
   bot.intake.numOfMogoRings = 0;
 
+  bot.waitUntilDone();
+
   // Give robot time to clamp
   pros::delay(250);
 
-  // Reset settings
-  bot.lateralLargeExit = defaultLatLargeExit;
-  bot.lateralSmallExit = defaultLatSmallExit;
+  // === Score held ring and negative safe stack on mogo
 
-  // // === Intake bottom ring of corner stack
+  const Pose negSafeStack = {-TILE, TILE * 2};
 
-  // // Go around blue ring
-  // bot.moveToPoint({-TILE * 2.5, -TILE * 2}, 1000,
-  //                 {.minSpeed = 96, .earlyExitRange = 3});
-
-  // // Go to corner
-  // const Pose corner {MIN_X, MIN_Y};
-  // bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 10, AUDIENCE + 45) +
-  //                    corner,
-  //                1500, {.lead = .5});
-
-  // // Deploy doinker
-  // bot.waitUntil(12);
-  // bot.doinker.extend();
-
-  // // Doink stack
-  // bot.turnToHeading(bot.getColor() == COLOR::RED ? AUDIENCE : RED_STATION,
-  // 500,
-  //                   {
-  //                       .minSpeed = 64,
-  //                   });
-  // bot.waitUntilDone();
-  // bot.doinker.retract();
-  // bot.waitUntilDone();
-
-  // bot.moveToPoint(bot.getPose().withY(MIN_Y + DRIVE_LENGTH / 2 + 3), 500);
-
-  // === Score positive safe stack on mogo
-
-//   const Pose posSafeStack = {-TILE, -TILE * 2};
-
+  // Score on mogo
   bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
-
-  // Adjust odometry
-  bot.setPose(bot.getPose() + Pose {-5, 0}, 1);
+  bot.intake.intakeTo(!bot.getColor(), Intake::MOGO);
+  pros::delay(400);
 
   // Turn towards stack
-  bot.swingToPoint(posSafeStack, lemlib::DriveSide::LEFT, 500);
+  bot.turnToPoint(negSafeStack, 500, {.minSpeed = 64, .earlyExitRange = 30});
   bot.waitUntilDone();
 
-  // Go towards positive safe stack and intake it
-  bot.moveToPose(Pose::fromPolar(
-                     -DRIVE_LENGTH / 2 + 3,
-                     90 - lemlib::radToDeg(bot.getPose().angle(posSafeStack))) +
-                     posSafeStack,
-                 2000);
+  // Go towards negative safe stack and intake it
+  bot.moveToPoint(negSafeStack, 1000
+                  /* {.minSpeed = 64 , .earlyExitRange = 4} */);
   bot.waitUntilDone();
+  // Give time to intake
+  pros::delay(750);
+
+  // Reset coordinate space
+  bot.setAlliance(alliance);
 
   // === Yoink ring from corner
+
+  // Go around undesired rings
+  const Pose aroundBlueCornerRingTarget {-TILE * 2,
+                                         -TILE * 2 - DRIVE_WIDTH / 2};
+  bot.swingToPoint(aroundBlueCornerRingTarget, lemlib::DriveSide::LEFT, 500);
+  bot.moveToPoint({-TILE * 2, -TILE * 2 - DRIVE_WIDTH / 2}, 750,
+                  {.minSpeed = 64});
 
   bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 - 4, AUDIENCE + 45) +
                      Pose {MIN_X, MIN_Y},
@@ -215,13 +159,14 @@ void safePositiveFunc(ALLIANCE alliance) {
 
   // === Touch ladder
 
+  const Pose ladderTouchTarget {-TILE * .5, -TILE * .5, AUDIENCE + 45};
   // Go to ladder
-  bot.moveToPose({-TILE * .5, -TILE * .5, AUDIENCE + 45}, 2000,
-                 {.forwards = false});
+  bot.moveToPose(ladderTouchTarget, 5000, {.forwards = false, .maxSpeed = 64});
 
   // Stop intake to prevent it from getting stuck on ladder
-  bot.waitUntil(12);
+  waitUntilDistToPose(ladderTouchTarget, 12);
   bot.intake.stop();
+
   // Raise lady brown to touch ladder
   bot.lady.goToIdleScore();
 

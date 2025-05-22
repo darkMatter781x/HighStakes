@@ -1,5 +1,6 @@
 #include "pros/rtos.hpp"
 #include "subsystems.h"
+#include "units/units.hpp"
 #include <sys/_intsup.h>
 
 #define ANSI_RED "\x1b[31m"
@@ -19,6 +20,8 @@ SubsystemHandler::SubsystemHandler()
                 uint32_t iterationStartTime = pros::millis();
                 for (auto sub : m_subsystems) {
                   try {
+                    // printf("[%04.3fs]\trunning subsystem\n",
+                    //        (pros::micros() * usec).convert(sec));
                     if (sub.second != nullptr) sub.second->update();
                   } catch (std::exception& err) {
                     printf(

@@ -33,7 +33,7 @@ static constexpr size_t BUILDER_SIZE =
     Localization::N * (sizeof(Localization::P) + sizeof(float)) + 64;
 
 /** @brief Function to read, increment, and update a value in a file */
-static int incrementValueInFile(const std::string& filename) {
+static std::optional<int> incrementValueInFile(const std::string& filename) {
   // Step 1: Open the file for reading
   std::ifstream inFile(filename);
   if (!inFile) {
@@ -63,12 +63,13 @@ static int incrementValueInFile(const std::string& filename) {
   return value;
 }
 
-static std::string getLogFilename() {
+static std::optional<std::string> getLogFilename() {
   constexpr const char* indexFilename = "/usd/localization.index";
-  std::int64_t index = incrementValueInFile(indexFilename);
-  std::string logFileNameStr =
-      "/usd/localization." + std::to_string(index) + ".mcap";
-  return logFileNameStr;
+  return incrementValueInFile(indexFilename).transform([](int index) {
+    std::string logFileNameStr =
+        "/usd/localization." + std::to_string(index) + ".mcap";
+    return logFileNameStr;
+  });
 }
 
 static mcap::McapWriterOptions makeMcapWriterOpts() {
@@ -164,12 +165,16 @@ class QueuedMcapWriter {
     friend class LogTools;
 
     QueuedMcapWriter()
-      : m_writerMutex(), m_task([&] { this->loop(); }, TASK_PRIORITY_MIN) {
-      const std::string logFilename = getLogFilename();
-      const auto res =
-          this->getWriter()->open(logFilename, makeMcapWriterOpts());
-
-      std::cout << "Opened " << logFilename << " for writing!" << std::endl;
+      : m_writerMutex(), m_task([&] { this->loop(); }, TASK_PRIORITY_DEFAULT) {
+      const std::optional<std::string> logFilenameOpt = getLogFilename();
+      if (const auto logFilename = logFilenameOpt) {
+        const auto res =
+            this->getWriter()->open(*logFilename, makeMcapWriterOpts());
+        if (res.ok())
+          std::cout << "Opened " << *logFilename << " for writing!"
+                    << std::endl;
+        else std::cout << "Failed to open log file!" << std::endl;
+      } else std::cout << "Failed to open index file!" << std::endl;
     }
   public:
     /** @brief Locks and returns the underlying mcap writer */

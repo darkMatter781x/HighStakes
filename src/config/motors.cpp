@@ -2,8 +2,8 @@
 #include "config.h"
 
 RobotConfig::Motors RobotConfig::Motors::motors {
-    .left {7, -6, -17},
-    .right {-13, 11, 12},
-    .intake {{8, pros::E_MOTOR_GEAR_BLUE}},
-    .LadyBrown {{10, pros::E_MOTOR_GEAR_RED}},
+    .left {-19, 16, -18},
+    .right {20, -14, 17},
+    .intake {{-15}, pros::v5::MotorGears::blue},
+    .LadyBrown {{-4}, pros::v5::MotorGears::red},
 };

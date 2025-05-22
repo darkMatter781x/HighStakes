@@ -23,11 +23,11 @@ template <typename T> T clamp(T val, T min, T max) {
 }
 
 /** Constant for opposing torque from force of gravity */
-constexpr Voltage K_antiG = .75 * volt;
+constexpr Voltage K_antiG = .4 * volt;
 
 /** Angle that shall not be crossed in degrees */
 constexpr float doNotCrossAngle = 45;
-constexpr Voltage maxPower = 8720 * mvolt;
+constexpr Voltage maxPower = 12 * volt * 1.;
 
 void LadyBrown::update() {
   // Handle non-feedback control modes
@@ -44,14 +44,33 @@ void LadyBrown::update() {
     }
     default: break;
   }
+  m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
 
-  // PID CONTROL
+  // If the Rotation sense greater than 360 when being initialized, set it to
+  // pos - 2360
+  static size_t startTime = pros::millis();
+  // Initialize rotation sensor with proper position
+  if (pros::millis() - startTime < 100) {
+    // If rotation is something like 350, then set it to 10
+    int currCentidegree = m_rotation.get_position();
+    printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
+    if (currCentidegree > 180 * 100) {
+      printf("setting position\n");
+      m_rotation.set_position((currCentidegree - (360 * 100)));
+    }
+  }
+
+  // Motor CONTROL
 
   /** Angle of the Lady Brown */
   const Angle thetaLB = calcLBAngle() * deg;
+  // printf("thetaLB: %3.2fdeg\n", thetaLB.convert(deg));
   /** Angle of the force of gravity */
   const Angle thetaF_g = 90 * deg - thetaLB - 180 * deg;
+  // printf("thetaF_g: %3.2fdeg\n", thetaF_g.convert(deg));
   const Voltage antiGPower = sin(thetaF_g) * K_antiG;
+
+  // printf("antiGPower: %4.2fmV\n", antiGPower.convert(mvolt));
 
   const float error = calcError();
   const Voltage pidPower = m_pid.update(error) * mvolt;
@@ -60,67 +79,6 @@ void LadyBrown::update() {
   const Voltage limitedPower = clamp(desiredPower, -maxPower, maxPower);
 
   m_motors.move_voltage(limitedPower.convert(mvolt));
-
-  // Clear screen
-  // printf("\033[2J");
-  // printf("calcLBAngle():\t%3.2fdeg\n", calcLBAngle());
-  // printf("getTargetAngle():\t%3.2fdeg\n", getTargetAngle());
-  // printf("error:\t%3.2fdeg\n", error);
-  // printf("limitedPower:\t%2.3fV\n", limitedPower.convert(volt));
-
-  // static size_t startTime = pros::millis();
-  // // Initialize rotation sensor with proper position
-  // if (pros::millis() - startTime < 100) {
-  //   // If rotation is something like 350, then set it to 10
-  //   int currCentidegree = m_rotation.get_position();
-  //   printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
-  //   if (currCentidegree > 180 * 100) {
-  //     printf("setting position\n");
-  //     m_rotation.set_position((currCentidegree - (360 * 100)));
-  //   }
-  // }
-
-  // const float error = calcError();
-  // const float output = std::min(8720.0f, m_pid.update(error));
-  // bool shouldBrake = m_exitCondition.update(error);
-  // if (shouldBrake) {
-  //   // if error > smallError, then don't brake and reset exit condition
-  //   if (std::abs(error) > m_config.controllerSettings.smallError)
-  //     m_exitCondition.reset();
-  //   else {
-  //     switch (m_state) {
-  //       case State::IDLE:
-  //         m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_COAST);
-  //         break;
-  //       default: m_motors.set_brake_mode(pros::E_MOTOR_BRAKE_HOLD); break;
-  //     };
-  //     m_motors.brake();
-  //     if (bot.selector.isLocked()) pros::lcd::print(2, "braking");
-  //     return;
-  //   }
-  // }
-  // if (bot.selector.isLocked()) pros::lcd::print(2, "output: %4.2f", output);
-  // m_motors.move_voltage(output);
-
-  // if (m_state == LadyBrown::IDLE && calcLBAngle() > 350 && calcLBAngle() <
-  // 30) {
-  //   m_rotation.set_position(0);
-  // }
-
-  /*if (m_state == LadyBrown::SCORE) {
-    if (calcLBAngle() > 160) {
-      dir = AngDir::CCW_COUNTERCLOCKWISE;
-    } else {
-      dir = AngDir::AUTO;
-    }
-  }
-  if (m_state == LadyBrown::IDLE) {
-    if (calcLBAngle() < 290 && calcLBAngle() > 75) {
-      dir = AngDir::CW_CLOCKWISE;
-    } else {
-      dir = AngDir::AUTO;
-    }
-  } */
 }
 
 LadyBrown::LadyBrown(pros::MotorGroup& motors, pros::Rotation& rotation,
@@ -148,7 +106,8 @@ float LadyBrown::getTargetAngle() const {
 float LadyBrown::calcLBAngle() const {
   // Prevent lift from moving if rotation sensor is not installed
   if (!m_rotation.is_installed()) return getTargetAngle();
-  return m_rotation.get_position() / 100.0;
+  // printf("rot.get_pos()/100: %fdeg\n", m_rotation.get_position() / 100.f);
+  return m_rotation.get_position() / 100.0 * m_config.sensorGearRatio;
 }
 
 float LadyBrown::calcError() const {

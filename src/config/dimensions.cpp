@@ -3,14 +3,16 @@
 
 RobotConfig::Dimensions RobotConfig::Dimensions::dimensions = {
     .trackWidth = dimensions::robot::TRACK_WIDTH,
-    .driveWheelDiameter = lemlib::Omniwheel::NEW_275,
+    .driveWheelDiameter =
+        3.25f * 84.0 / 75.5 * 84.0 / 83.0 /** Scale factor to make more accurate */,
     .driveWheelRpm = 450,
-    .driveEncGearRatio = 0.024,
-    .vertEncDiameter = 2,
-    .vertEncDistance = 1.25,
-    .vertEncGearRatio = 1,
-    .horiEncDiameter = lemlib::Omniwheel::NEW_275,
-    .horiEncDistance = 1,
-    .horiEncGearRatio = 60.0 / 36,
+    .vertEncDiameter = 10000.f, /** Doesn't exist */
+    .vertEncDistance = 1.25f,
+    .vertEncGearRatio = 1.f,
+    .horiEncDiameter =
+        2.f * 72.0 / 73.0f, /** Scale factor to make more accurate */
+    .horiEncDistance = -2.25,
+    .horiEncGearRatio = 1,
     .drivetrainWidth = dimensions::robot::DRIVE_WIDTH,
-    .drivetrainLength = dimensions::robot::DRIVE_LENGTH};
+    .drivetrainLength = dimensions::robot::DRIVE_LENGTH,
+};

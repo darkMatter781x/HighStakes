@@ -1,3 +1,5 @@
+#include "dimensions.h"
+#include "lemlib/pose.hpp"
 #include "lemlib/util.hpp"
 #include "lemlib/timer.hpp"
 #include "pros/misc.h"
@@ -5,10 +7,11 @@
 #include <string>
 #include "pros/rtos.hpp"
 #include "subsystems/intake.h"
-#include "leds/functions.h"
+// #include "leds/functions.h"
 #include "auton/util.h"
 #include "robot.h"
 #include "main.h"
+#include "tuning.h"
 
 namespace controller_mapping {
 typedef pros::controller_analog_e_t axis_t;
@@ -19,13 +22,15 @@ constexpr axis_t RIGHT_DRIVE = pros::E_CONTROLLER_ANALOG_RIGHT_Y;
 
 constexpr button_t INTAKE = pros::E_CONTROLLER_DIGITAL_L1;
 constexpr button_t OUTTAKE = pros::E_CONTROLLER_DIGITAL_L2;
+constexpr button_t INTAKE_FILTER_COLOR_CHANGE = pros::E_CONTROLLER_DIGITAL_A;
 
 constexpr button_t NEXT_LIFT_STATE = pros::E_CONTROLLER_DIGITAL_R2;
 
 // Pneumatic controls
 constexpr button_t MOGO_CLAMP_TOGGLE = pros::E_CONTROLLER_DIGITAL_R1;
 constexpr button_t INTAKE_LIFT_TOGGLE = pros::E_CONTROLLER_DIGITAL_X;
-constexpr button_t DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
+constexpr button_t LEFT_DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_RIGHT;
+constexpr button_t RIGHT_DOINKER_TOGGLE = pros::E_CONTROLLER_DIGITAL_Y;
 }; // namespace controller_mapping
 namespace map = controller_mapping;
 
@@ -59,6 +64,14 @@ void skillsMacro() {}
  * task, not resume it from where it left off.
  */
 void opcontrol() {
+  COLOR filterColor = bot.selector.getAlliance();
+  auto intakeStateToStr = overloads(
+      [](Intake::FilteringState& state) { return destToStrOp(state.dest); },
+      [filterColor](Intake::Filtering& state) {
+        return destToStrOp(filterColor == COLOR::BLUE ? state.blue : state.red);
+      },
+      [](Intake::BaseState& state) { return std::string("none"); });
+
   pros::Controller master(pros::E_CONTROLLER_MASTER);
   // Drop intake automatically
   bot.intakeLift.retract();
@@ -67,9 +80,8 @@ void opcontrol() {
   bool prevIntakeBtn = false;
 
   if (strcmp(bot.selector.getAuton().label, "Skills") == 0) {
-    auton::util::waitUntil(
-        [&master] { return std::abs(master.get_analog(map::LEFT_DRIVE)) > 8; });
-    skillsMacro();
+    // Lady Brown starts in collect for skills
+    bot.lady.collect();
   }
 
   /** Duration of hold for a hold */
@@ -100,7 +112,10 @@ void opcontrol() {
     if (master.get_digital_new_press(map::INTAKE_LIFT_TOGGLE))
       bot.intakeLift.toggle();
     // Doinker control
-    if (master.get_digital_new_press(map::DOINKER_TOGGLE)) bot.doinker.toggle();
+    if (master.get_digital_new_press(map::LEFT_DOINKER_TOGGLE))
+      bot.leftDoinker.toggle();
+    if (master.get_digital_new_press(map::RIGHT_DOINKER_TOGGLE))
+      bot.rightDoinker.toggle();
 
     // Lift control
     if (master.get_digital(map::NEXT_LIFT_STATE)) {
@@ -146,6 +161,10 @@ void opcontrol() {
 
     // === Intake control
 
+    if (master.get_digital_new_press(map::INTAKE_FILTER_COLOR_CHANGE)) {
+      filterColor = !filterColor;
+    }
+
     // Intake button
     if (master.get_digital(map::INTAKE)) {
       // Rising edge of Intake button
@@ -154,7 +173,8 @@ void opcontrol() {
       releaseLBRingTimer.reset();
       releaseLBRingTimer.pause();
 
-      bot.intake.intakeBothTo(Intake::MOGO);
+      bot.intake.intakeTo(filterColor, Intake::LB);
+      bot.intake.intakeTo(!filterColor, Intake::KICK);
       // Outtake button
     } else if (master.get_digital(map::OUTTAKE)) {
       // Override lb release functionality
@@ -172,11 +192,23 @@ void opcontrol() {
     }
 
     auto intakeState = bot.intake.getState();
-    // #ifdef TUNING
-    //     if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
-    //         master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
-    //       tuningCLI();
-    // #endif
+    master.print(1, 0, "%s->%s", filterColor == COLOR::RED ? "R" : "B",
+                 std::visit(intakeStateToStr, intakeState));
+
+#ifdef TUNING
+    if (master.get_digital(pros::E_CONTROLLER_DIGITAL_Y) &&
+        master.get_digital(pros::E_CONTROLLER_DIGITAL_B))
+      tuningCLI();
+    // if (master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A)) {
+    //   bot.moveToPoint(
+    //       {-dimensions::field::TILE * 2, -dimensions::field::TILE * 2},
+    //       3000);
+    //   auton::util::waitUntil([&] {
+    //     return master.get_digital_new_press(pros::E_CONTROLLER_DIGITAL_A) ||
+    //            !bot.isInMotion();
+    //   });
+    // }
+#endif
     pros::delay(5); // Run every 20ms (refresh rate of the controller)
   }
 }

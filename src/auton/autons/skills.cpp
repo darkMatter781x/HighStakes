@@ -80,11 +80,11 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // 1st ring
   const Pose ring1 {-TILE, -TILE};
-  bot.swingToPoint(ring1, lemlib::DriveSide::RIGHT, 300,
-                   {.minSpeed = 127, .earlyExitRange = 45});
+  bot.swingToPoint(ring1, lemlib::DriveSide::RIGHT, 1000,
+                   {.maxSpeed = 100, .earlyExitRange = 45});
   bot.moveToPoint(ring1, 1250,
                   {
-                      .minSpeed = 64,
+                      .maxSpeed = 64,
                       .earlyExitRange = 6,
                   });
   waitUntilDistToPose(ring1, DRIVE_LENGTH / 2 + 3, 0, true);
@@ -93,7 +93,7 @@ void redQuadrant(SignTransform::SIGN sign) {
   // 2nd ring (next to wall stake)
   const Pose ring2 {0, -TILE * 2.5};
   bot.moveToPose(Pose::fromPolar(-DRIVE_LENGTH / 2 + 3, AUDIENCE) + ring2, 1500,
-                 {.lead = .3});
+                 {.lead = .3, .maxSpeed = 100});
   bot.waitUntilDone();
 
   // === Intake 4 more mogo rings
@@ -105,7 +105,7 @@ void redQuadrant(SignTransform::SIGN sign) {
 
   // Face ring3
   bot.swingToPoint(ring3, lemlib::DriveSide::LEFT, 500,
-                   {.minSpeed = 127, .earlyExitRange = 30});
+                   {.minSpeed = 100, .earlyExitRange = 30});
   bot.waitUntilDone();
 
   // Intake 3rd ring
@@ -115,8 +115,8 @@ void redQuadrant(SignTransform::SIGN sign) {
                   {.maxSpeed = 96, .minSpeed = 48, .earlyExitRange = 6});
 
   // Intake 4th and 5th rings
-  bot.moveToPoint(ring5 + Pose {DRIVE_LENGTH / 2, 1}, 2000,
-                  {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
+  bot.moveToPose((ring5 + Pose {DRIVE_LENGTH / 2, 1}).withTheta(RED_STATION),
+                 2000, {.maxSpeed = 48, .minSpeed = 24, .earlyExitRange = 6});
   bot.waitUntilDone();
 
   // Wait for ring to go into mogo
@@ -128,7 +128,7 @@ void redQuadrant(SignTransform::SIGN sign) {
   // Scoop up by going parallel and next to wall
   bot.moveToPose({ring6.x + DRIVE_LENGTH / 2 + 2, MIN_Y + DRIVE_WIDTH / 2 + 3,
                   BLUE_STATION},
-                 1500, {.maxSpeed = 100, .minSpeed = 72, .earlyExitRange = 6});
+                 1500, {.maxSpeed = 72, .minSpeed = 64, .earlyExitRange = 6});
 
   bot.waitUntilDone();
 
@@ -146,11 +146,10 @@ void redQuadrant(SignTransform::SIGN sign) {
   // Go to corner
   const Pose depositMogoTarget =
       Pose::fromPolar(DRIVE_LENGTH / 2 + 8, REFEREE + 45) + depositMogoCorner;
-  bot.moveToPoint(depositMogoTarget, 3000, {.forwards = false});
+  bot.moveToPoint(depositMogoTarget, 1750, {.forwards = false, .minSpeed = 64});
 
   // Wait until mogo is full
   waitUntil([&] { return bot.intake.numOfMogoRings >= 6; }, 0, 1750);
-  pros::delay(100);
 
   // Once near corner, release mogo
   bot.mogoClamp.extend();
@@ -191,7 +190,7 @@ void fillThirdMogo() {
   const Pose ring1 {TILE * 2, TILE * 2};
   bot.moveToPose(Pose::fromPolar(/* -DRIVE_LENGTH / 2 + 4 */ 0, REFEREE + 45) +
                      ring1,
-                 2000);
+                 2000, {.maxSpeed = 100});
 
   const Pose ring2 {TILE, TILE * 2};
   const Pose centerRing {0, 0};
@@ -348,43 +347,42 @@ void skillsFunc(ALLIANCE _alliance) {
   const auto defaultLatLargeExit = bot.lateralLargeExit;
   const auto defaultLatSmallExit = bot.lateralSmallExit;
 
+  bot.localization.enabled = true;
+  bot.lady.collect();
+
+  bot.drivetrain.horizontalDrift = 2.f;
+
   bot.intake.numOfMogoRings = 0;
   bot.intake.numOfLiftRings = 0;
+  // bot.localization.enabled = false;
+  bot.setPose({-TILE * 2 - 11.25, -TILE * 0.5, -45}, 2);
 
-  bot.setPose({-TILE * 2 - 13.25, 0, BLUE_STATION});
+  bot.lady.flip();
+  pros::delay(400);
+
+  // Back straight out of stake
+  tank(-96, -96, 400, 4);
+  // Reset LB
+  bot.lady.goToIdle();
 
   // === Score on red ally stake
 
   // Prevent Lady brown from goofing up and lifting
-  bot.lady.setState(LadyBrown::COAST);
-
-  // Score ring on ally stake
-  bot.intake.intakeTo(COLOR::RED, Intake::MOGO);
-  bot.intakeLift.retract();
-  pros::delay(500);
+  // bot.lady.setState(LadyBrown::COAST);
 
   // === Clamp mogo
 
   const Pose mogo1 = {-TILE * 2, -TILE, REF};
 
-  // Get out of alliance stake
-  bot.moveToPoint(bot.getPose().withX(mogo1.x), 1000, {.earlyExitRange = 2});
-  bot.waitUntilDone();
-
-  // Face mogo
-  bot.turnToPoint(mogo1, 500,
-                  {.forwards = false, .minSpeed = 32, .earlyExitRange = 20});
-  bot.waitUntilDone();
-
-  // Go to mogo
-  bot.moveToPoint(mogo1 + Pose {0, DRIVE_LENGTH / 2 - 4.5}, 2500,
-                  {
-                      .forwards = false,
-                      .maxSpeed = 64,
-                      .minSpeed = 24,
-                      .earlyExitRange = 3,
-                  });
-  bot.waitUntilDone();
+  // // Go to mogo
+  // bot.moveToPoint(mogo1 + Pose {0, DRIVE_LENGTH / 2 - 4.5}, 2500,
+  //                 {
+  //                     .forwards = false,
+  //                     .maxSpeed = 64,
+  //                     .minSpeed = 24,
+  //                     .earlyExitRange = 3,
+  //                 });
+  // bot.waitUntilDone();
 
   // Push into mogo
   tank(-32, -32, 0, 0);
@@ -410,7 +408,7 @@ void skillsFunc(ALLIANCE _alliance) {
   // Go to mogo
   bot.moveToPoint(mogo2 + Pose {0, -DRIVE_LENGTH / 2 + 4.5}, 3000,
                   {.forwards = false,
-                   .maxSpeed = 64,
+                   .maxSpeed = 100,
                    .minSpeed = 24,
                    .earlyExitRange = 18});
   waitUntilDistToPose(mogo2, 18, 0, true);
@@ -420,7 +418,7 @@ void skillsFunc(ALLIANCE _alliance) {
   bot.moveToPoint(mogo2 + Pose {0, -DRIVE_LENGTH / 2 + 4.5}, 2500,
                   {
                       .forwards = false,
-                      .maxSpeed = 24,
+                      .maxSpeed = 64,
                       .minSpeed = 24,
                       .earlyExitRange = 3,
                   });
@@ -518,7 +516,7 @@ void skillsFunc(ALLIANCE _alliance) {
                   {.forwards = false, .direction = AngDir::CW_CLOCKWISE});
   // Ram into ladder
   bot.moveToPose(ladder.withTheta(REFEREE + 45), 2000,
-                 {.forwards = false, .minSpeed = 96});
+                 {.forwards = false, .maxSpeed = 72, .minSpeed = 64});
   // Raise hang
   bot.waitUntil(12);
   bot.lady.flip();
@@ -528,4 +526,5 @@ void skillsFunc(ALLIANCE _alliance) {
   bot.lady.goToIdle();
   pros::delay(750);
   bot.lady.setState(LadyBrown::COAST);
+  bot.tank(42, 42);
 }

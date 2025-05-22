@@ -48,8 +48,10 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   bot.setPose(startPose);
   const Pose preloadRing {-TILE * 2 - 3, TILE * 1 - RING_DIAM / 2 - 1};
 
+  return;
+
   // Drop intake
-  //bot.intakeLift.retract();
+  // bot.intakeLift.retract();
 
   // === Yoink center ring
 
@@ -57,9 +59,10 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   const Pose safeStack {-TILE, TILE * 2};
   // Go past mogo and safe ring stack
   {
-    bot.moveToPoint((safeStack + Pose {4.2, -RING_DIAM / 2 - DRIVE_WIDTH / 2 + 3})
-                        .withTheta(BLUE_STATION),
-                    1000, {.minSpeed = 72, .earlyExitRange = 6});
+    bot.moveToPoint(
+        (safeStack + Pose {4.2, -RING_DIAM / 2 - DRIVE_WIDTH / 2 + 3})
+            .withTheta(BLUE_STATION),
+        1000, {.minSpeed = 72, .earlyExitRange = 6});
   }
   // Once past safe stack, move on
   waitUntil([safeStack] {
@@ -110,16 +113,16 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   const Pose goofyOtherSpot {-TILE * 1, TILE * 2 - 2};
   // // Get in front of stack
   const Pose negCornerTarget =
-       Pose::fromPolar(-DRIVE_LENGTH / 2 - 8 +
-                           (bot.getColor() == COLOR::RED ? 1 : 0),
-                       REFEREE - 55) +
-       negCorner;
-  
+      Pose::fromPolar(-DRIVE_LENGTH / 2 - 8 +
+                          (bot.getColor() == COLOR::RED ? 1 : 0),
+                      REFEREE - 55) +
+      negCorner;
+
   bot.intake.intakeTo(ALLIANCE::RED, Intake::MOGO);
 
-  bot.moveToPose(goofyOtherSpot, 500, {.minSpeed = 42, .earlyExitRange=6});
+  bot.moveToPose(goofyOtherSpot, 500, {.minSpeed = 42, .earlyExitRange = 6});
   bot.waitUntilDone();
-  //bot.turnToHeading(REFEREE - 55, 5000);
+  // bot.turnToHeading(REFEREE - 55, 5000);
   bot.moveToPose(negCornerTarget, 2000, {.minSpeed = 42});
   pros::delay(500);
 
@@ -186,23 +189,23 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   stop();
 
   // // === Score on ally stake
-   const Pose scoreOnAllyStake {-TILE * 2.5 + 1.5, -2 , RED_STATION};
-   bot.moveToPose(scoreOnAllyStake, 2500);
-   bot.waitUntilDone();
-   bot.intake.outtake();
-   bot.lady.flip();
+  const Pose scoreOnAllyStake {-TILE * 2.5 + 1.5, -2, RED_STATION};
+  bot.moveToPose(scoreOnAllyStake, 2500);
+  bot.waitUntilDone();
+  bot.intake.outtake();
+  bot.lady.flip();
 
-   // Give time to score LB
-   pros::delay(600);
-   // Back out to release LB
-   tank(-127, -127, 300, 0);
-   stop();
+  // Give time to score LB
+  pros::delay(600);
+  // Back out to release LB
+  tank(-127, -127, 300, 0);
+  stop();
 
   // // === Touch ladder
 
-   const Pose ladderTarget {-TILE * .5 - 1, TILE * .5 - 1, REFEREE - 45};
+  const Pose ladderTarget {-TILE * .5 - 1, TILE * .5 - 1, REFEREE - 45};
   // // Go to ladder
-   bot.moveToPose(ladderTarget, 3000, {.forwards = false});
+  bot.moveToPose(ladderTarget, 3000, {.forwards = false});
 
   // // Stop intake to prevent it from getting stuck on ladder
   // waitUntilDistToPose(ladderTarget, 12, 0, true);
@@ -228,23 +231,23 @@ static void negativeElimsFunc(ALLIANCE alliance) {
   // === Doink pos corner stack
 
   // Go around stack
-  //bot.moveToPoint({-TILE * 1.6, 0}, 1000,
+  // bot.moveToPoint({-TILE * 1.6, 0}, 1000,
   //                {.minSpeed = 127, .earlyExitRange = 6});
 
-  //const Pose posCorner {MIN_X, MIN_Y};
+  // const Pose posCorner {MIN_X, MIN_Y};
 
   // Move in front of pos corner stack
-  //const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
-  //bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
+  // const Pose posCornerTarget = {-TILE * 2.5, -TILE * 2.5, AUDIENCE};
+  // bot.moveToPose(posCornerTarget, 3000, {.lead = .5});
 
-  //bot.waitUntil(12);
-  //bot.lady.goToIdle();
+  // bot.waitUntil(12);
+  // bot.lady.goToIdle();
 
-  //bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
-  //bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
+  // bot.intake.intakeTo(bot.getColor(), Intake::MOGO);
+  // bot.intake.intakeTo(!bot.getColor(), Intake::KICK);
 
   // Once near, deploy doinker
-  //waitUntilDistToPose(posCornerTarget, 11, 0, true);
+  // waitUntilDistToPose(posCornerTarget, 11, 0, true);
   // bot.doinker.extend();
 
   // // Spin to doink rings

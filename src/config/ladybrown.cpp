@@ -2,12 +2,14 @@
 #include "lemlib/chassis/chassis.hpp"
 
 LadyBrown::Config LadyBrown::Config::config {
-    .idle = 6,
-    .collect = 342,
-    .idle_score = 295.00,
+    .idle = 10,
+    .collect = 345,
+    /* Angle just above ladder rung, useful for touching bar using hang */
+    .idle_score = 330,
     .score = 180 - 30,
     .run_into_ally = 203.f,
-    .flip = 127.5,
+    .flip = 100.f,
     .controllerSettings =
         lemlib::ControllerSettings {300, 0, 2500, 0, 4, 100, 8, 100, 0},
+    .sensorGearRatio = 1 / 2.0f,
 };

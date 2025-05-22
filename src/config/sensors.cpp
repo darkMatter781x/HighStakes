@@ -3,34 +3,35 @@
 #include "pros/distance.hpp"
 #include <cmath>
 
-pros::Distance laserFront {1};
-pros::Distance laserLeft {21};
-pros::Distance laserRight {2};
-pros::Distance laserBack {3};
+pros::Distance laserFront {3};
+pros::Distance laserLeft {2};
+pros::Distance laserRight {1};
+pros::Distance laserBack {11};
 
 RobotConfig::Sensors RobotConfig::Sensors::sensors {
-    .vert {20},
-    .hori {30},
-    .lb {5},
-    .imu {19},
-    .intake {9},
+    .vert {30},
+    .hori {-13},
+    .lb {-5},
+    .imu {12},
+    .intake {6},
+    .intakeKick = pros::adi::AnalogIn{'G'},
     .autonSelector = pros::adi::Potentiometer {'D'},
     .lasers =
         {
             {
-                .pose {7, 4.1, 0},
+                .pose {5, 2.25, 0}, // TODO: Configure position
                 .sensor {laserFront},
             },
             {
-                .pose {2, 6, M_PI_2},
+                .pose {2.4, 5.8, M_PI_2}, // TODO: Configure position
                 .sensor {laserLeft},
             },
             {
-                .pose {2, -6, -M_PI_2},
+                .pose {2.4, -5.8, -M_PI_2}, // TODO: Configure position
                 .sensor {laserRight},
             },
             {
-                .pose {-2.1, 5.8, M_PI},
+                .pose {-5, -3, M_PI}, // TODO: Configure position
                 .sensor {laserBack},
             },
         },

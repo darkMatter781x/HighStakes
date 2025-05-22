@@ -2,10 +2,67 @@
 #include "color.h"
 #include "config.h"
 #include "dimensions.h"
+#include "liblvgl/llemu.hpp"
+#include "pros/misc.h"
 #include "pros/misc.hpp"
+#include "pros/motor_group.hpp"
+#include "pros/motors.h"
 #include "pros/rtos.hpp"
 #include "robot.h"
 #include "pros/apix.h"
+#include "units/units.hpp"
+#include "units/Temperature.hpp"
+#include <iterator>
+#include <sstream>
+
+std::vector<std::int8_t> getAllMotors() {
+  std::vector<std::int8_t> ports;
+
+  // Combine multiple vectors into the ports vector
+  auto leftPorts = bot.m_config.motors.left.get_port_all();
+  auto rightPorts = bot.m_config.motors.right.get_port_all();
+  auto intakePorts = bot.m_config.motors.intake.get_port_all();
+  auto ladyPorts = bot.m_config.motors.LadyBrown.get_port_all();
+
+  // Insert all ports into the ports vector
+  ports.insert(ports.end(), leftPorts.begin(), leftPorts.end());
+  ports.insert(ports.end(), rightPorts.begin(), rightPorts.end());
+  ports.insert(ports.end(), intakePorts.begin(), intakePorts.end());
+  ports.insert(ports.end(), ladyPorts.begin(), ladyPorts.end());
+
+  return ports;
+}
+
+struct MotorTemp {
+    std::int8_t port;
+    Temperature temp;
+};
+
+/** @returns motor ports that are so hot that vexos limits current */
+std::vector<MotorTemp> getHotMotors() {
+  /** Temperature above which the motors are limited */
+  constexpr Temperature limitedTemp = 55.0_celsius; // degrees celsius
+  static const std::vector<std::int8_t> allMotors = getAllMotors();
+  std::vector<MotorTemp> motorTemps;
+  std::transform(
+      allMotors.begin(), allMotors.end(), std::back_inserter(motorTemps),
+      [](std::int8_t port) -> MotorTemp {
+        return {port,
+                units::from_celsius(pros::c::motor_get_temperature(port))};
+      });
+  std::vector<MotorTemp> hotMotors;
+
+  // for (auto& mTemp : motorTemps) {
+  //   printf("[MotorTemp] %d: %f\n", mTemp.port,
+  //   units::to_celsius(mTemp.temp));
+  // }
+
+  std::copy_if(motorTemps.begin(), motorTemps.end(),
+               std::back_inserter(hotMotors),
+               [&](MotorTemp& mTemp) { return mTemp.temp >= limitedTemp; });
+
+  return hotMotors;
+}
 
 void screen() {
   while (1) {
@@ -19,6 +76,19 @@ void screen() {
       pros::lcd::print(5, "theta:\t%fdeg", bot.getPose().theta);
       pros::lcd::print(6, "intake:\t%1.3frpm",
                        bot.m_config.motors.intake.get_actual_velocity());
+
+      auto hotMotors = getHotMotors();
+      if (hotMotors.size() > 0) {
+        std::stringstream ss;
+        for (size_t i = 0; i < hotMotors.size(); i++) {
+          ss << std::to_string(hotMotors[i].port) << ", ";
+        }
+        pros::lcd::print(7, "hot motors: %s", ss.str().c_str());
+        printf("hot motors: %s\n", ss.str().c_str());
+        pros::c::controller_print(pros::E_CONTROLLER_MASTER, 3, 1, "HOT!!");
+      } else {
+        pros::lcd::clear_line(7);
+      }
     }
     pros::delay(50);
   }
@@ -31,8 +101,9 @@ void screen() {
  * to keep execution time for this mode under a few seconds.
  */
 void initialize() {
-  // pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
-
+#ifdef VEXIDE_SIMULATION
+  pros::c::serctl(SERCTL_DISABLE_COBS, NULL);
+#endif
   // ensure robot is initialized
   Robot::get();
   // indicate calibration
@@ -41,6 +112,7 @@ void initialize() {
 
   bot.setAlliance(ALLIANCE::RED);
   bot.setPose({0, 0, dimensions::field::REFEREE}, 72);
+  bot.localization.enabled = true;
   pros::delay(250);
 
   printf("Initialized!\n");

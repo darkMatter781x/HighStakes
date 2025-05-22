@@ -43,6 +43,9 @@ class LadyBrown : Subsystem {
         /* Controller Settings for lift */
         lemlib::ControllerSettings controllerSettings;
 
+        /** Sensor Angle * sensorGearRatio = LB angle */
+        float sensorGearRatio;
+
         /* default config */
         static Config config;
     };

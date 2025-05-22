@@ -18,34 +18,32 @@ EXTRA_C_BOTH_FLAGS=-D_PROS_INCLUDE_LIBLVGL_LLEMU_H -D_PROS_INCLUDE_LIBLVGL_LLEMU
 
 EXTRA_CXXFLAGS+=-Wno-deprecated-enum-enum-conversion
 
-ifndef SIM
+USE_PACKAGE:=1
 
+ifndef SIM 
 $(info COMPILING FOR V5 BRAIN)
 
 # Set to 1 to enable hot/cold linking
-USE_PACKAGE:=1
 BINDIR=$(ROOT)/bin/bot
+
 else
 $(info COMPILING FOR SIM)
-
-USE_PACKAGE:=0
-# TODO: Measure performance impact of -Ofast vs -O3
-# TODO: Figure out potential safety concerns of -Ofast
-# TODO: Add flag for all targets
-EXTRA_C_BOTH_FLAGS+=-Ofast -lto
 
 EXTRA_C_BOTH_FLAGS+=-DVEXIDE_SIMULATION
 BINDIR=$(ROOT)/bin/sim
 endif
 
+# Maybe was the reason NaNs were appearing
+# EXTRA_C_BOTH_FLAGS+=-Ofast -lto
+
 ifdef PROF
 EXTRA_C_BOTH_FLAGS+=-DENABLE_PROFILING
 endif
 
-# ifndef TUNING
+ifndef TUNING
 # enable pid tuning
 EXTRA_C_BOTH_FLAGS+=-DTUNING
-# endif
+endif
 
 EXTRA_CFLAGS+=$(EXTRA_C_BOTH_FLAGS)
 EXTRA_CXXFLAGS+=$(EXTRA_C_BOTH_FLAGS)

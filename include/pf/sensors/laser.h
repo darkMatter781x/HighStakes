@@ -4,34 +4,23 @@
 
 #include "Eigen/src/Core/Array.h"
 #include "Eigen/src/Core/Matrix.h"
+#include "dimensions.h"
 #include "lemlib/pose.hpp"
 #include "pf/sensors/sensor.h"
 #include "pf/util/lines.h"
 #include "pf/util/stats.h"
 #include "units/units.hpp"
 #include "math.h"
+#include <optional>
 
 namespace sensors {
-// constexpr double DENSITY_OF_UNTRACKED_OBSTACLES =
 
-auto square(auto a) { return a * a; }
+/** Sensor model for range sensors */
+namespace range_model {
+namespace _impl {
+constexpr auto square(auto a) { return a * a; }
 
-constexpr double getDensityOfUntrackedObstacles() {
-  Area ring = square(7 * in) * M_PI;
-  Area mogo = ring;
-  Area robot = square(18 * in);
-  Area ladderPost = 2 * in * 2 * in;
-  Area field = square(144 * in);
-  Area ringStack = ring;
-  Area untrackedObstacles =
-      mogo * 5 + robot * 3 + ladderPost * 4 + ringStack * 4;
-
-  Area totalNotIncludingMe = field - robot;
-  Number density = (untrackedObstacles / totalNotIncludingMe);
-  return density.internal();
-}
-
-auto my_erf(auto x) {
+auto cwiseErf(auto x) {
   return x.unaryExpr([](auto y) { return erf(y); });
 }
 
@@ -39,40 +28,132 @@ auto normPDF(auto mu, auto sigma, auto x) {
   return 1 / (sqrt(2 * M_PI) * sigma) *
          exp(-1. / 2 * square(mu - x) / square(sigma));
 };
+} // namespace _impl
 
-struct RangeSensorModel {
-    struct Parameters {
-        float alpha_hit;
-        float alpha_short;
-        float alpha_max;
-        float alpha_rand;
-        float sigma_hit;
-        float lambda_short;
-        float z_max;
-    } p;
+namespace density {
+namespace areas {
+constexpr Area ring = _impl::square(7. / 2 * in) * M_PI;
+constexpr Area mogo = _impl::square(.42 * in) * M_PI;
+constexpr Area wallStake = _impl::square(.42 * in) * M_PI;
+constexpr Area fullMogo = ring;
+constexpr Area robot = _impl::square(18 * in);
+constexpr Area ladderPost = 1. / 2 * (7. / 2 * in) * (7. / 2 * in);
+constexpr Area field = _impl::square(dimensions::field::FIELD_LENGTH * in);
+constexpr Area ringStack = ring;
 
-    /**
-     * @brief
-     *
-     * @param z The actual measurement
-     * @param z_star The expected measurement
-     * @return T The likelihood of the measurement
-     */
-    auto prob(auto z, auto z_star) {
-      auto p_hit =
-          ((0 < z && z < p.z_max)) *
-          (sqrt(M_PI) / 2.f * abs(my_erf(-z_star) - my_erf(p.z_max - z_star)) *
-           normPDF(z_star, p.sigma_hit, z));
-      auto p_short = ((0 < z) * (z < z_star))
-                         .select(1 / (1 - exp(-p.lambda_short * z_star)) *
-                                     p.lambda_short * exp(-p.lambda_short * z),
-                                 0); // 0 < z < z_star
-      // auto p_max = z >= p.z_max; // z >= z_max
-      // auto p_rand = (0 < z && z < p.z_max) / p.z_max; // 0 < z < z_max
-      return p_hit * p.alpha_hit + p_short * p.alpha_short;
-      //  p_max * p.alpha_max + p_rand * p.alpha_rand;
-    };
+/** Assumes worst case during a match. */
+constexpr Area untrackedObstaclesMatch =
+    mogo * 5 + robot * 3 + ladderPost * 4 + ringStack * 4 + wallStake * 4;
+/** Average over course of 1 minute skills run. */
+constexpr Area untrackedObstaclesSkills =
+    fullMogo * 3. / 2 + mogo * (2 + 3. / 2) + ladderPost * 4 + wallStake * 4;
+/** I dont have all the elements :(. */
+constexpr Area untrackedObstaclesLazySkills = ladderPost * 4;
+
+/** Total area of the field, not including our robot. */
+constexpr Area totalNotIncludingMe = field - robot;
+
+} // namespace areas
+
+/** Density of untracked obstacles during a match. Assumes worst case. */
+constexpr double untrackedObstaclesMatch =
+    (areas::untrackedObstaclesMatch / areas::totalNotIncludingMe).internal();
+/** Density of untracked obstacles during a 1 minute skills run. Attempts to
+ * use average density over time. */
+constexpr double untrackedObstaclesSkills =
+    (areas::untrackedObstaclesSkills / areas::totalNotIncludingMe).internal();
+
+}; // namespace density
+
+/** @brief Parameters for the range sensor model */
+struct Parameters {
+    /** Probability of a measurement that resulted from uniform measurement
+     * noise. */
+    float alpha_rand;
+
+    /** Probability of a measurement that resulted from random measurement
+     * errors. */
+    float alpha_maxMiss;
+
+    /** Standard deviation of measurements that resulted from hitting mapped
+     * obstacles. Assumes such measurements are normally distributed. */
+    float sigma_hit;
+
+    /** Rate of hitting an obstacle for every given that the measurement
+     * resulted from hitting an unmapped obstacle. Density of unmapped obstacles
+     * seems to be a good heuristic. */
+    float lambda_short;
+
+    /** Value that represents a measurement error, often because the measurement
+     * was outside the sensor's measurable range. */
+    float z_max;
 };
+
+/**
+ * @brief
+ *
+ * @param z The actual measurement
+ * @param z_star The expected measurement
+ *
+ * @return The likelihood of the measurement
+ */
+auto model(auto z, auto z_star, const Parameters& p) {
+  // Drawn from discussion with Benjamin of 687D and Probabilistic Robotics by
+  // S. Thrun, W. Burgard, and D. Fox (2005).
+  // The above book can be found for free at:
+  // https://docs.ufpr.br/~danielsantos/ProbabilisticRobotics.pdf
+
+  // Desmos graph: https://www.desmos.com/calculator/o7eciudddh
+
+  using namespace _impl;
+
+  /** Probability that the laser hits an unmapped obstacle before the mapped
+   * obstacle. */
+  auto alpha_short =
+      (1 - p.alpha_maxMiss - p.alpha_rand) * exp(-p.lambda_short * z_star);
+  /** Probability that the laser hits a mapped obstacle.  */
+  auto alpha_hit = (1 - alpha_short - p.alpha_maxMiss - p.alpha_rand);
+  /** Probability that the laser hits a mapped obstacle and the measurement
+   * is greater than z_max. */
+  auto alpha_maxHit =
+      1. / 2 * alpha_hit *
+      (1 - cwiseErf((p.z_max - z_star) / (p.sigma_hit * sqrt(2))));
+  /** Probability that the laser returns a measurement error (z>=z_max). */
+  auto alpha_max = alpha_maxHit + p.alpha_maxMiss;
+
+  /**
+   * Probability of z, given that the measurement results from hitting a
+   * mapped obstacle.
+   * Normalized such that ∫_0^infinity p_hit(z)dz = 1, where p_hit(z) does
+   * not have bounds.
+   */
+  auto p_hit = ((0 < z && z < p.z_max)) *
+               (2.f * (1 - cwiseErf(-z_star / (p.sigma_hit * sqrt(2)))) *
+                normPDF(z_star, p.sigma_hit, z));
+  /**
+   * Probability of z, given that the measurement results from hitting an
+   * unmapped obstacle.
+   * Normalized such that ∫_0^z_star p_short(z)dz = 1
+   */
+  auto p_short = ((0 < z) * (z < z_star))
+                     .select(1 / (1 - exp(-p.lambda_short * z_star)) *
+                                 p.lambda_short * exp(-p.lambda_short * z),
+                             0);
+  /**
+   * Probability of z, given that the measurement results from a measurement
+   * error.
+   */
+  auto p_max = z >= p.z_max;
+  /**
+   * Probability of z, given that the measurement results from uniform
+   * measurement noise.
+   */
+  auto p_rand = (0 < z && z < p.z_max) / p.z_max;
+
+  return p_hit * alpha_hit + p_short * alpha_short + p_max * alpha_max +
+         p_rand * p.alpha_rand;
+};
+} // namespace range_model
 
 /**
  * @brief Updates weights with distance sensor measurement.
@@ -103,17 +184,25 @@ class Laser {
 
     std::vector<lines::Segment>& obstacles;
   public:
-    struct Measurement {
-        float dist;
-        float stdDev;
-    };
+    static constexpr float MAX_MEASUREMENT = (2000 * mm).convert(in);
+    
+    /**
+     * @brief Represents a distance measurement from the sensor.
+     *
+     * Is std::nullopt if sensor is in failure state (disconnected for example).
+     * Is >=MAX_MEASUREMENT if sensor failed to measure object.
+     * Is <MAX_MEASUREMENT if measurement succeeded.
+     */
+    typedef std::optional<float> Measurement;
 
     /**
      * @brief Returns the distance sensed by the sensor and the variance in the
      * reading.
      * @return Measurement of the sensor.
+     * @return std::nullopt if sensor is disconnected or malfunctioning.
+     * @return >=MAX_MEASUREMENT if object is out of range.
      */
-    virtual std::optional<Measurement> sense() = 0;
+    virtual Measurement sense() = 0;
 
     /** Creates a ray from this laser object. */
     lines::Ray toRay(const Vec2& robotPos) const;
@@ -147,26 +236,20 @@ class Laser {
 
         void update(const Eigen::Array<Vec2, N, 1>& particles,
                     Eigen::Array<float, N, 1>& weights) override {
-          auto measurement_opt = laser.sense();
-          static RangeSensorModel model {
-              .p = {
-                  .alpha_hit = 0.9,
-                  .alpha_short = 0.1,
-                  .alpha_max = 0,
-                  .alpha_rand = 0,
-                  .sigma_hit = 8.f,
-                  .lambda_short = (float)getDensityOfUntrackedObstacles(),
-                  .z_max = 2000.f,
-              }};
+          auto measurement = laser.sense();
+          static range_model::Parameters model_params {
+              .alpha_rand = 0.02f,
+              .alpha_maxMiss = 0.025f,
+              .sigma_hit = 2.f,
+              .lambda_short = range_model::density::untrackedObstaclesSkills,
+              .z_max = MAX_MEASUREMENT,
+          };
 
-          if (!measurement_opt) return;
-          auto& measurement = *measurement_opt;
+          if (!measurement) return;
+          auto& z = *measurement;
           const lines::Ray ray = laser.toRay({0, 0});
 
-          constexpr float fieldRadius = 140.25 / 2;
-          const float mu = measurement.dist;
-          const float sigma = measurement.stdDev;
-          const float pdfCoeff = 1 / (sqrt(2 * M_PI) * sigma);
+          constexpr float fieldRadius = dimensions::field::FIELD_LENGTH / 2;
 
           Eigen::Array<Eigen::Array<float, 2, 1>, N, 1> bothDirDists =
               (((fieldRadius * ray.direction.cwiseSign()) -
@@ -178,7 +261,7 @@ class Laser {
           auto yDists = bothDirDists.unaryExpr(&getY);
           auto expectedDists = xDists.min(yDists);
 
-          weights *= model.prob(mu, expectedDists);
+          weights *= range_model::model(z, expectedDists, model_params);
         }
 
         Sensor(Laser& laser) : laser(laser) {}

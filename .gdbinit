@@ -5,9 +5,10 @@ python
 if 'rerunGuard' not in globals():
   rerunGuard = True
 
-  print("Adding monolith symbol file")
-  gdb.execute("add-symbol-file ./bin/sim/monolith.elf")
-  print("Added monolith symbol file")
+  print("Adding hot and cold symbol files")
+  gdb.execute("add-symbol-file ./bin/sim/hot.package.elf")
+  gdb.execute("add-symbol-file ./bin/sim/cold.package.elf")
+  print("Added hot and cold symbol files")
 
   # add kernel symbol file
   import os
