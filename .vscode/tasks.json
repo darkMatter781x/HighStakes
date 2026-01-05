@@ -17,7 +17,7 @@
     {
       "label": "Run Sim in GDB Mode",
       "type": "shell",
-      "command": "echo \"starting simulator in debug mode!\" && simulator hot-cold ./bin/sim/hot.package.bin ./bin/sim/cold.package.bin --gdb",
+      "command": "echo \"starting simulator in debug mode!\" && simulator --program ./bin/sim/hot.package.bin --load-addr=125829120 --link ./bin/sim/cold.package.bin --link-addr 0x03800000 --gdb",
       "isBackground": true,
       "dependsOn": "Build for Sim",
       "problemMatcher": [

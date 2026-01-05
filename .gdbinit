@@ -32,11 +32,14 @@ if 'rerunGuard' not in globals():
   register_eigen_printers(None)
   print("Added pretty printers")
 
-  print("Adding pros kernel substitute path")
+  print("Adding pros kernel and vex-v5-qemu substitute path")
   gdb.execute(
       "set substitute-path C:/Users/noama/Documents/pros/pros {template_path}/kernel".format(
           template_path=os.environ["TEMPLATES_SOURCE_PATH"]))
-  print("Added pros kernel substitute path")
+  gdb.execute(
+      "set substitute-path /vex-v5-qemu {v5_sim}".format(
+          v5_sim=os.environ["V5_SIM_SOURCE_PATH"]))
+  print("Added pros kernel and vex-v5-qemu substitute path")
 
   gdb.execute("alias connect = target remote localhost:1234")
   gdb.execute("alias b_pros_init = b /.templates/kernel/src/system/startup.c:36")

@@ -9,13 +9,13 @@ RUN mkdir /vex-v5-qemu                                                          
   && curl -L --output                                                                                 \
     -H "Accept: application/vnd.github+json"                                                          \
     -H "X-GitHub-Api-Version: 2022-11-28"                                                             \
-    https://api.github.com/repos/vexide/vex-v5-qemu/tarball/f9a57b3516fdda27c5c9fc4d02128882e45e3ee9  \
+    https://api.github.com/repos/meiszwflz/vex-v5-qemu/tarball/cece3b8bb0f353c8ecd82d9322376728a1b1671b  \
   | tar zxf - -C /vex-v5-qemu --strip-components=1
 
 WORKDIR /vex-v5-qemu
 RUN cd packages/kernel; cargo build --target-dir /target/kernel
 
-RUN cd packages/client-cli; cargo install --path . --root /target/client-cli
+RUN cd packages/client-cli; cargo install --locked --path . --root /target/client-cli
 
 # ------------
 # Build cargo-v5
@@ -26,7 +26,8 @@ RUN apt-get install libudev-dev -y
 RUN apt-get clean # Cleanup image
 
 RUN cargo install                                 \
-  --git https://github.com/meiszwflz/cargo-v5.git    \
+  --locked                                        \ 
+  --git https://github.com/meiszwflz/cargo-v5.git \
   --rev a849dd5937f78edca2b28e0978aecaa2f041317b  \
   --no-default-features                           \
   -F "clap"                                       \
@@ -55,6 +56,7 @@ COPY ./.devcontainer/pip_packagelist /pip_packagelist
 RUN pip install --break-system-packages $(cat /pip_packagelist | sed 's/\r//') 
 RUN rm /pip_packagelist # Cleanup image
 
+ARG TARGETPLATFORM
 # ------------
 # Install Clangd
 # ------------
@@ -71,8 +73,31 @@ ENV PATH="$PATH:/usr/local/share/clangd/bin"
 # ------------ 
 # Install ARM Toolchain
 # ------------
-COPY --from=ghcr.io/lemlib/pros-build:v3.0.0 /arm-none-eabi-toolchain /usr/local/share/arm-none-eabi
-ENV PATH="$PATH:/usr/local/share/arm-none-eabi/bin"  
+ENV ARM_NONE_EABI_TOOLCHAIN_PATH="/usr/local/share/arm-none-eabi"
+RUN <<EOF
+  # Exit on error
+  set -e
+
+  AARCH64_URL="https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-aarch64-arm-none-eabi.tar.xz"
+  X86_64_URL="https://developer.arm.com/-/media/Files/downloads/gnu/13.3.rel1/binrel/arm-gnu-toolchain-13.3.rel1-x86_64-arm-none-eabi.tar.xz"
+
+  # Select toolchain URL based on target platform
+  if [ "${TARGETPLATFORM}" = "linux/arm64" ]; then 
+    TOOLCHAIN_URL=$AARCH64_URL; 
+  elif [ "${TARGETPLATFORM}" = "linux/amd64" ]; then
+    TOOLCHAIN_URL=$X86_64_URL; 
+  else 
+    echo "Unsupported platform: ${TARGETPLATFORM}"; 
+    exit 1; 
+  fi
+  
+  # Prepare installation directory
+  mkdir $ARM_NONE_EABI_TOOLCHAIN_PATH
+  # Download and extract toolchain
+  wget -O- "$TOOLCHAIN_URL" | tar Jxf - -C ${ARM_NONE_EABI_TOOLCHAIN_PATH} --strip-components=1
+EOF
+# Add toolchain to PATH
+ENV PATH="$PATH:$ARM_NONE_EABI_TOOLCHAIN_PATH/bin"  
 
 # Copy the simulator binary
 COPY --from=simulator /target/client-cli/bin/client-cli /usr/local/bin/simulator

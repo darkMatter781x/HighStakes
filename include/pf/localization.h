@@ -99,7 +99,7 @@ class Localization : Subsystem {
     void calibrate();
 
     /** @brief Whether particle filter is being used or not */
-    bool enabled = false;
+    bool enabled = true;
 
     /**
      * @brief Construct a new Localizer object
