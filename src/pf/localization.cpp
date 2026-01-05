@@ -93,12 +93,12 @@ void Localization::update() {
   START_PROFILE("LL.update()") // Starts profiled section
   m_mutex.take();
 
-  if (pros::millis() - lastStartTime > 20)
-    printf("\x1b[1;35m"
-           "Time jump:"
-           "\x1b[0m"
-           "\t%5i -> %5i\tDIFF: %5i\n",
-           lastStartTime, pros::millis(), pros::millis() - lastStartTime);
+  // if (pros::millis() - lastStartTime > 20)
+  //   printf("\x1b[1;35m"
+  //          "Time jump:"
+  //          "\x1b[0m"
+  //          "\t%5i -> %5i\tDIFF: %5i\n",
+  //          lastStartTime, pros::millis(), pros::millis() - lastStartTime);
   lastStartTime = pros::millis();
 
   m_odom->update();

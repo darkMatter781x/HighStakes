@@ -53,7 +53,7 @@ void LadyBrown::update() {
   if (pros::millis() - startTime < 100) {
     // If rotation is something like 350, then set it to 10
     int currCentidegree = m_rotation.get_position();
-    printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
+    // printf("LadyBrown::update(): currCentidegree: %i\n", currCentidegree);
     if (currCentidegree > 180 * 100) {
       printf("setting position\n");
       m_rotation.set_position((currCentidegree - (360 * 100)));

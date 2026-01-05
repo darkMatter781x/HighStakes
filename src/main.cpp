@@ -177,7 +177,7 @@ void initialize() {
   //   pros::delay(30);
   // }
 
-  new pros::Task {screen};
+  // new pros::Task {screen};
 }
 
 /**
