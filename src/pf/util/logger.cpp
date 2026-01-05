@@ -6,6 +6,8 @@
 #include "foxglove/Pose_generated.h"
 #include "foxglove/schema.h"
 
+#include "base64/base64.hpp"
+
 #include "mcap/types.hpp"
 #include "mcap/writer.hpp"
 #include "pf/localization.h"
@@ -74,13 +76,14 @@ static std::optional<std::string> getLogFilename() {
 
 static mcap::McapWriterOptions makeMcapWriterOpts() {
   mcap::McapWriterOptions opts {""};
-  opts.compression = mcap::Compression::None;
-  // opts.compressionLevel = mcap::CompressionLevel::Fastest;
+  opts.compression = mcap::Compression::Lz4;
+  opts.compressionLevel = mcap::CompressionLevel::Slowest;
 
   opts.noRepeatedSchemas = true;
   opts.noRepeatedChannels = true;
 
   opts.noChunking = true;
+  opts.chunkSize = 1024;
   return opts;
 };
 
@@ -113,6 +116,51 @@ struct QueuedMessage {
     }
 };
 
+constexpr size_t MAX_CHUNK_SIZE = 1024;
+
+class StdOutWriter : public mcap::IWritable {
+  public:
+    void handleWrite(const std::byte* data, uint64_t size) override;
+    void end() override;
+    void flush() override;
+    uint64_t size() const override;
+    /** Writes the entire buffer, unless it is too large. If the buffer is too large, it writes in chunks of size MAX_CHUNK_SIZE. */
+    void write_buffer();
+  private:
+    std::vector<std::byte> m_buffer;
+    uint64_t m_size = 0;
+};
+
+constexpr const char* PREFIX = "l0GSow:";
+void StdOutWriter::handleWrite(const std::byte* data, uint64_t size) {
+  m_buffer.insert(m_buffer.end(), data, data + size);
+  // printf("size: %llu\n", size);
+  // printf("%s%s\n", PREFIX, base64::to_base64(std::string_view{reinterpret_cast<const char*>(data), size}).c_str());
+  m_size += size;
+  this->write_buffer();
+}
+
+void StdOutWriter::write_buffer() {
+  const size_t chunkSize = std::min(static_cast<size_t>(m_buffer.size()), MAX_CHUNK_SIZE);
+  printf("chunkSize: %u\n", chunkSize);
+  std::string_view chunkData{
+      reinterpret_cast<const char*>(m_buffer.data()), chunkSize};
+  printf("%s%s\n", PREFIX, base64::to_base64(chunkData).c_str());
+  m_buffer.erase(m_buffer.begin(), m_buffer.begin() + chunkSize);
+}
+
+void StdOutWriter::end() {
+  // No-op
+}
+
+void StdOutWriter::flush() {
+  std::cout << "FLUSH!" << std::endl << std::flush;
+}
+
+uint64_t StdOutWriter::size() const {
+  return m_size;
+}
+
 /**
  * @brief Queues messages sent to it, and writes them in its own task
  */
@@ -120,6 +168,11 @@ class QueuedMcapWriter {
     pros::Task m_task;
     pros::MutexVar<mcap::McapWriter> m_writerMutex;
     pros::MutexVar<std::queue<std::unique_ptr<QueuedMessage>>> m_queueMutex;
+  
+
+    #ifdef VEXIDE_SIMULATION
+    StdOutWriter stdoutWriter;
+    #endif
 
     /** @returns Number of mcap messages that are queued */
     size_t size() { return m_queueMutex.lock()->size(); }
@@ -145,36 +198,42 @@ class QueuedMcapWriter {
 
         std::unique_ptr<QueuedMessage> msg = this->popFront();
 
-        // {
-        //   PROFILE_SECTION("writer.write()", {
-        //     auto writer = this->getWriter();
-        //     const auto res = writer->write(msg->msg);
-        //     if (!res.ok()) {
-        //       static std::string prevErrMsg = "";
-        //       if (res.message != prevErrMsg)
-        //         fprintf(stderr, "[%2.6f]:\tfailed to log to sd card!:\n\t%s\n",
-        //                 float(pros::micros()) / 1000.f / 1000.f,
-        //                 res.message.c_str());
-        //       prevErrMsg = res.message;
-        //       writer->terminate();
-        //     }
-        //   })
-        // }
+        #ifdef VEXIDE_SIMULATION
+        {
+          PROFILE_SECTION("writer.write()", {
+            auto writer = this->getWriter();
+            const auto res = writer->write(msg->msg);
+            if (!res.ok()) {
+              static std::string prevErrMsg = "";
+              if (res.message != prevErrMsg)
+                fprintf(stderr, "[%2.6f]:\tfailed to log to sd card!:\n\t%s\n",
+                        float(pros::micros()) / 1000.f / 1000.f,
+                        res.message.c_str());
+              prevErrMsg = res.message;
+              writer->terminate();
+            }
+          })
+        }
+        #endif
       }
     }
     friend class LogTools;
 
     QueuedMcapWriter()
       : m_writerMutex(), m_task([&] { this->loop(); }, TASK_PRIORITY_DEFAULT) {
-      const std::optional<std::string> logFilenameOpt = getLogFilename();
-      if (const auto logFilename = logFilenameOpt) {
-        const auto res =
-            this->getWriter()->open(*logFilename, makeMcapWriterOpts());
-        if (res.ok())
-          std::cout << "Opened " << *logFilename << " for writing!"
-                    << std::endl;
-        else std::cout << "Failed to open log file!" << std::endl;
-      } else std::cout << "Failed to open index file!" << std::endl;
+        #ifdef VEXIDE_SIMULATION 
+          this->getWriter()->open(stdoutWriter, makeMcapWriterOpts());
+        #else
+          const std::optional<std::string> logFilenameOpt = getLogFilename();
+          if (const auto logFilename = logFilenameOpt) {
+            const auto res =
+                this->getWriter()->open(*logFilename, makeMcapWriterOpts());
+            if (res.ok())
+              std::cout << "Opened " << *logFilename << " for writing!"
+                        << std::endl;
+            else std::cout << "Failed to open log file!" << std::endl;
+          } else std::cout << "Failed to open index file!" << std::endl;
+        #endif
     }
   public:
     /** @brief Locks and returns the underlying mcap writer */
